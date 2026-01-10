@@ -54,7 +54,7 @@ let datePickerInstance = null;
 
             /* 1. Empujar el cuerpo general */
             body.platform-ios {
-                padding-top: var(--safe-top) !important;
+                /* padding-top: var(--safe-top) !important; REMOVED TO FIX NOTCH GAP */
                 background-color: #fff; /* O el color de fondo de tu cabecera blanca */
             }
 
@@ -96,11 +96,27 @@ function toggleMobileMenu() {
 
     isMenuOpen = !isMenuOpen;
 
+    const logo = document.getElementById('header-logo');
+    const cta = document.getElementById('header-cta');
+
     if (isMenuOpen) {
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        document.body.classList.add('overflow-hidden'); // Lock scroll
+
+        // Hide visible header elements to clean up view
+        if (logo) logo.classList.add('opacity-0', 'pointer-events-none');
+        if (cta) cta.classList.add('opacity-0', 'pointer-events-none');
+
         menu.classList.remove('opacity-0', 'pointer-events-none');
         icon.classList.remove('ph-list');
         icon.classList.add('ph-x');
     } else {
+        document.body.classList.remove('overflow-hidden'); // Unlock scroll
+
+        // Show header elements again
+        if (logo) logo.classList.remove('opacity-0', 'pointer-events-none');
+        if (cta) cta.classList.remove('opacity-0', 'pointer-events-none');
+
         menu.classList.add('opacity-0', 'pointer-events-none');
         icon.classList.remove('ph-x');
         icon.classList.add('ph-list');

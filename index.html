@@ -46,8 +46,8 @@
 
     <nav id="public-header" class="absolute md:fixed w-full z-50 top-0 transition-all duration-300 bg-transparent py-4">
         <div class="max-w-7xl mx-auto px-6 flex justify-between items-center">
-            <a href="#" onclick="showLanding(); window.scrollTo(0,0);"
-                class="flex items-center gap-3 group relative z-50">
+            <a href="#" onclick="showLanding(); window.scrollTo(0,0);" id="header-logo"
+                class="flex items-center gap-3 group relative z-50 transition-opacity duration-300">
                 <div
                     class="w-10 h-10 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white shadow-lg group-hover:scale-105 transition">
                     <span class="brand-font font-bold text-xl pb-1 italic">H</span>
@@ -61,8 +61,8 @@
             <!-- Right Side Container -->
             <div class="flex items-center gap-3 md:gap-8">
                 <!-- Unified CTA Button -->
-                <button onclick="goToLogin()"
-                    class="bg-white text-gray-900 px-5 py-2 md:px-8 md:py-4 rounded-full hover:bg-gold-400 hover:text-white transition shadow-xl font-bold uppercase tracking-widest text-[10px] md:text-sm transform hover:-translate-y-0.5">
+                <button onclick="goToLogin()" id="header-cta"
+                    class="bg-white text-gray-900 px-5 py-2 md:px-8 md:py-4 rounded-full hover:bg-gold-400 hover:text-white transition shadow-xl font-bold uppercase tracking-widest text-[10px] md:text-sm transform hover:-translate-y-0.5 transition-opacity duration-300">
                     Yo soy Conexión
                 </button>
 
@@ -77,7 +77,7 @@
         <div id="mobile-menu"
             class="fixed inset-0 bg-gray-900/95 backdrop-blur-xl z-40 flex flex-col items-center justify-center gap-8 opacity-0 pointer-events-none transition-all duration-500">
             <a href="#filosofia" onclick="toggleMobileMenu()"
-                class="text-2xl text-white brand-font font-bold hover:text-gold-400 transition">Yo soy Tribu</a>
+                class="text-2xl text-white brand-font font-bold hover:text-gold-400 transition">Yo soy Esencia</a>
             <a href="#clases-detalle" onclick="toggleMobileMenu()"
                 class="text-2xl text-white brand-font font-bold hover:text-gold-400 transition">Yo soy Movimiento</a>
             <a href="#santuario" onclick="toggleMobileMenu()"
@@ -209,9 +209,8 @@
                     </div>
                 </div>
                 <div>
-                    <span class="text-gold-600 font-bold tracking-[0.2em] text-xs uppercase mb-4 block">Yo soy
-                        Esencia</span>
-                    <h2 class="brand-font text-5xl text-gray-900 mb-6 leading-tight">Yo soy Uno con el todo</h2>
+                    <h2 class="brand-font text-5xl md:text-6xl text-gray-900 mb-6 leading-tight">YO SOY <span
+                            class="text-gold-500 italic">ESENCIA</span></h2>
                     <p class="text-gray-600 text-lg font-light leading-relaxed mb-6">
                         HAM Yoga by Farmacia Q19 nace de la fusión entre la salud clínica y el bienestar holístico.
                         No solo venimos a hacer ejercicio; venimos a firmar nuestra identidad.
