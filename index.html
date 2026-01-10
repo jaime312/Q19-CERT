@@ -53,8 +53,8 @@
                     <span class="brand-font font-bold text-xl pb-1 italic">H</span>
                 </div>
                 <div class="flex flex-col">
-                    <h1 class="brand-font font-bold text-2xl text-white leading-none tracking-tight">HAM Yoga</h1>
-                    <span class="text-[9px] tracking-[0.25em] text-gold-400 uppercase font-bold">by Farmacia Q19</span>
+                    <h1 class="brand-font font-bold text-4xl text-white leading-none tracking-tight">HAM Yoga</h1>
+                    <span class="text-[12px] tracking-[0.25em] text-gold-400 uppercase font-bold">by Farmacia Q19</span>
                 </div>
             </a>
 
@@ -64,7 +64,7 @@
                 <div
                     class="hidden md:flex items-center gap-8 text-sm font-bold uppercase tracking-widest text-white/90">
                     <a href="#filosofia" class="hover:text-gold-400 transition">Yo soy Tribu</a>
-                    <a href="#estilos" class="hover:text-gold-400 transition">Yo soy Movimiento</a>
+                    <a href="#clases-detalle" class="hover:text-gold-400 transition">Yo soy Movimiento</a>
                     <a href="#tarifas" class="hover:text-gold-400 transition">Yo soy Inversión</a>
                 </div>
 
@@ -86,7 +86,7 @@
             class="fixed inset-0 bg-gray-900/95 backdrop-blur-xl z-40 flex flex-col items-center justify-center gap-8 opacity-0 pointer-events-none transition-all duration-500">
             <a href="#filosofia" onclick="toggleMobileMenu()"
                 class="text-2xl text-white brand-font font-bold hover:text-gold-400 transition">Yo soy Tribu</a>
-            <a href="#estilos" onclick="toggleMobileMenu()"
+            <a href="#clases-detalle" onclick="toggleMobileMenu()"
                 class="text-2xl text-white brand-font font-bold hover:text-gold-400 transition">Yo soy Movimiento</a>
             <a href="#tarifas" onclick="toggleMobileMenu()"
                 class="text-2xl text-white brand-font font-bold hover:text-gold-400 transition">Yo soy Inversión</a>
@@ -107,7 +107,7 @@
 
             <div class="relative z-10 text-center px-4 max-w-4xl mx-auto mt-20">
                 <span
-                    class="inline-block py-1 px-4 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-gold-400 font-bold tracking-[0.3em] text-xs uppercase mb-6 fade-in">
+                    class="inline-block py-2 px-5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-gold-400 font-bold tracking-[0.3em] text-xs uppercase mb-6 shadow-sm fade-in">
                     Studio & Wellness
                 </span>
                 <h1
@@ -123,7 +123,7 @@
                         class="px-8 py-4 bg-white text-gray-900 rounded-full font-bold uppercase tracking-widest text-sm hover:bg-gold-400 hover:text-white transition shadow-xl">
                         Empieza tu transformación
                     </button>
-                    <a href="#estilos"
+                    <a href="#clases-detalle"
                         class="px-8 py-4 bg-transparent border border-white text-white rounded-full font-bold uppercase tracking-widest text-sm hover:bg-white/10 transition backdrop-blur-sm">
                         Descubre quién eres
                     </a>
@@ -131,7 +131,23 @@
             </div>
 
             <script>
-                const words = ["CALMA", "FUERZA", "EQUILIBRIO", "YOGA"];
+                const words = [
+                    "CALMA",
+                    "FUERZA",
+                    "EQUILIBRIO",
+                    "CONEXIÓN",
+                    "MOVIMIENTO",
+                    "SANACIÓN",
+                    "YOGA",
+                    "ARMONÍA",
+                    "BIENESTAR",
+                    "RESPIRACIÓN",
+                    "PAZ",
+                    "MEDITACIÓN",
+                    "PRESENCIA",
+                    "VITALIDAD",
+                    "ENERGÍA"
+                ];
                 let i = 0;
                 let timer;
 
@@ -223,66 +239,259 @@
             </div>
         </section>
 
-        <section id="estilos" class="py-24 bg-white border-t border-gray-100">
-            <div class="max-w-7xl mx-auto px-6">
-                <div class="text-center mb-16">
-                    <h2 class="brand-font text-5xl text-gray-900 mb-4">Yo soy Movimiento</h2>
-                    <p class="text-gray-500 max-w-xl mx-auto">Prácticas diseñadas para despertar tu verdadero ser.</p>
+        <section id="clases-detalle" class="py-24 bg-white border-t border-gray-100 relative overflow-hidden">
+            <!-- Background Decoration - Subtle & Elegant -->
+            <div
+                class="absolute top-0 right-0 -mr-32 -mt-32 w-[30rem] h-[30rem] bg-gray-50 rounded-full blur-3xl opacity-40 pointer-events-none">
+            </div>
+
+            <div class="max-w-7xl mx-auto px-6 relative z-10">
+                <div class="text-center mb-20">
+                    <span
+                        class="inline-block py-1 px-4 border border-gray-100 rounded-full text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 mb-6 bg-white shadow-sm">
+                        Nuestra Práctica
+                    </span>
+                    <h2 class="brand-font text-5xl md:text-6xl text-gray-900 mb-6">YO SOY <span
+                            class="text-gold-500 italic">RITUAL</span></h2>
+                    <p class="text-gray-500 font-serif italic text-xl max-w-2xl mx-auto">
+                        "Un santuario para el cuerpo, un refugio para la mente."
+                    </p>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div class="group cursor-pointer">
-                        <div class="relative h-96 rounded-2xl overflow-hidden mb-6">
-                            <img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=2070&auto=format&fit=crop"
-                                class="w-full h-full object-cover transition duration-700 group-hover:scale-110">
-                            <div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition"></div>
-                            <div class="absolute bottom-6 left-6 text-white">
-                                <h3 class="brand-font text-3xl">Yo soy Resistencia</h3>
-                                <p class="text-xs uppercase tracking-widest mt-1 opacity-80">Pilates Reformer</p>
-                            </div>
-                        </div>
-                        <p class="text-gray-600 text-sm leading-relaxed px-2">
-                            Tonificación profunda, alineación y control. Utilizamos máquinas Reformer para asistir y
-                            resistir el movimiento, logrando un cuerpo fuerte y flexible sin impacto.
-                        </p>
-                    </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
 
-                    <div class="group cursor-pointer">
-                        <div class="relative h-96 rounded-2xl overflow-hidden mb-6">
-                            <img src="https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?q=80&w=2069&auto=format&fit=crop"
-                                class="w-full h-full object-cover transition duration-700 group-hover:scale-110">
-                            <div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition"></div>
-                            <div class="absolute bottom-6 left-6 text-white">
-                                <h3 class="brand-font text-3xl">Yo soy Energía</h3>
-                                <p class="text-xs uppercase tracking-widest mt-1 opacity-80">Vinyasa Flow</p>
+                    <!-- CLASE 1: VINYASA FLOW -->
+                    <article
+                        class="group flex flex-col h-full bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-700 ease-out border border-gray-50">
+                        <!-- Image Container -->
+                        <div class="relative h-[28rem] overflow-hidden">
+                            <div
+                                class="absolute inset-0 bg-gray-900/10 group-hover:bg-transparent transition-colors duration-500 z-10">
                             </div>
-                        </div>
-                        <p class="text-gray-600 text-sm leading-relaxed px-2">
-                            Meditación en movimiento. Secuencias fluidas coordinadas con la respiración que generan
-                            calor interno y depuran el organismo.
-                        </p>
-                    </div>
+                            <img src="https://images.unsplash.com/photo-1575052814086-f385e2e2ad1b?q=80&w=2000&auto=format&fit=crop"
+                                class="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-105"
+                                alt="Vinyasa Flow Group Class">
 
-                    <div class="group cursor-pointer">
-                        <div class="relative h-96 rounded-2xl overflow-hidden mb-6">
-                            <img src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=1999&auto=format&fit=crop"
-                                class="w-full h-full object-cover transition duration-700 group-hover:scale-110">
-                            <div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition"></div>
-                            <div class="absolute bottom-6 left-6 text-white">
-                                <h3 class="brand-font text-3xl">Yo soy Paz</h3>
-                                <p class="text-xs uppercase tracking-widest mt-1 opacity-80">Hatha & Yin</p>
+                            <!-- Floating Badge -->
+                            <div class="absolute top-6 left-6 z-20">
+                                <span
+                                    class="bg-white/90 backdrop-blur-md px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest text-gray-900">
+                                    Fluir
+                                </span>
                             </div>
                         </div>
-                        <p class="text-gray-600 text-sm leading-relaxed px-2">
-                            La base del yoga. Posturas estáticas para trabajar el alineamiento (Hatha) o estiramientos
-                            profundos pasivos (Yin) para soltar tensión fascial.
-                        </p>
-                    </div>
+
+                        <!-- Content Body -->
+                        <div class="p-8 flex-1 flex flex-col relative bg-white">
+                            <h3
+                                class="brand-font text-4xl text-gray-900 mb-2 group-hover:text-gold-500 transition-colors">
+                                Vinyasa Flow</h3>
+                            <p class="text-gold-500 font-serif italic text-lg mb-6">"Poesía en movimiento."</p>
+
+                            <p class="text-gray-500 font-light leading-relaxed mb-8 text-sm flex-1">
+                                Una danza entre la respiración y el cuerpo. Secuencias creativas y dinámicas diseñadas
+                                para despertar tu fuego interno y calmar la mente a través del ritmo constante.
+                            </p>
+
+                            <!-- Pills -->
+                            <div class="flex flex-wrap gap-2 mb-8">
+                                <span
+                                    class="px-3 py-1 bg-gray-50 text-gray-400 text-[10px] font-bold uppercase tracking-wider rounded-md">Dinámico</span>
+                                <span
+                                    class="px-3 py-1 bg-gray-50 text-gray-400 text-[10px] font-bold uppercase tracking-wider rounded-md">Calor</span>
+                                <span
+                                    class="px-3 py-1 bg-gray-50 text-gray-400 text-[10px] font-bold uppercase tracking-wider rounded-md">Respiración</span>
+                            </div>
+
+                        </div>
+                    </article>
+
+                    <!-- CLASE 2: PILATES REFORMER -->
+                    <article
+                        class="group flex flex-col h-full bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-700 ease-out border border-gray-50 transform md:-translate-y-8">
+                        <!-- Image Container -->
+                        <div class="relative h-[28rem] overflow-hidden">
+                            <div
+                                class="absolute inset-0 bg-gray-900/10 group-hover:bg-transparent transition-colors duration-500 z-10">
+                            </div>
+                            <img src="https://images.unsplash.com/photo-1518310383802-640c2de311b2?q=80&w=2070&auto=format&fit=crop"
+                                class="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-105"
+                                alt="Pilates Reformer Aesthetic">
+
+                            <div class="absolute top-6 left-6 z-20">
+                                <span
+                                    class="bg-white/90 backdrop-blur-md px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest text-gray-900">
+                                    Poder
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="p-8 flex-1 flex flex-col relative bg-white">
+                            <h3
+                                class="brand-font text-4xl text-gray-900 mb-2 group-hover:text-q19-500 transition-colors">
+                                Pilates Reformer</h3>
+                            <p class="text-q19-500 font-serif italic text-lg mb-6">"Fuerza consciente."</p>
+
+                            <p class="text-gray-500 font-light leading-relaxed mb-8 text-sm flex-1">
+                                Conecta con tu centro. Un trabajo profundo de alineación y resistencia que esculpe el
+                                cuerpo desde dentro hacia fuera, cultivando una estabilidad inquebrantable.
+                            </p>
+
+                            <div class="flex flex-wrap gap-2 mb-8">
+                                <span
+                                    class="px-3 py-1 bg-gray-50 text-gray-400 text-[10px] font-bold uppercase tracking-wider rounded-md">Control</span>
+                                <span
+                                    class="px-3 py-1 bg-gray-50 text-gray-400 text-[10px] font-bold uppercase tracking-wider rounded-md">Definición</span>
+                                <span
+                                    class="px-3 py-1 bg-gray-50 text-gray-400 text-[10px] font-bold uppercase tracking-wider rounded-md">Núcleo</span>
+                            </div>
+
+                        </div>
+                    </article>
+
+                    <!-- CLASE 3: YIN / RESTAURATIVO -->
+                    <article
+                        class="group flex flex-col h-full bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-700 ease-out border border-gray-50">
+                        <!-- Image Container -->
+                        <div class="relative h-[28rem] overflow-hidden">
+                            <div
+                                class="absolute inset-0 bg-gray-900/10 group-hover:bg-transparent transition-colors duration-500 z-10">
+                            </div>
+                            <img src="https://images.unsplash.com/photo-1593811167562-9cef47bfc4d7?q=80&w=2072&auto=format&fit=crop"
+                                class="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-105"
+                                alt="Meditation Sunlight">
+
+                            <div class="absolute top-6 left-6 z-20">
+                                <span
+                                    class="bg-white/90 backdrop-blur-md px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest text-gray-900">
+                                    Pausa
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="p-8 flex-1 flex flex-col relative bg-white">
+                            <h3
+                                class="brand-font text-4xl text-gray-900 mb-2 group-hover:text-emerald-500 transition-colors">
+                                Yin & Restaurativo</h3>
+                            <p class="text-emerald-500 font-serif italic text-lg mb-6">"El arte de la pausa."</p>
+
+                            <p class="text-gray-500 font-light leading-relaxed mb-8 text-sm flex-1">
+                                Un refugio de quietud. Posturas sostenidas que invitan a soltar tensiones profundas,
+                                estirar el tejido conectivo y recuperar la paz interior en un mundo ruidoso.
+                            </p>
+
+                            <div class="flex flex-wrap gap-2 mb-8">
+                                <span
+                                    class="px-3 py-1 bg-gray-50 text-gray-400 text-[10px] font-bold uppercase tracking-wider rounded-md">Flexibilidad</span>
+                                <span
+                                    class="px-3 py-1 bg-gray-50 text-gray-400 text-[10px] font-bold uppercase tracking-wider rounded-md">Calma</span>
+                                <span
+                                    class="px-3 py-1 bg-gray-50 text-gray-400 text-[10px] font-bold uppercase tracking-wider rounded-md">Meditación</span>
+                            </div>
+                        </div>
+                    </article>
+
                 </div>
             </div>
         </section>
 
-        <section id="tarifas" class="py-24 bg-[#fafaf9]">
+        <section id="equipo" class="py-24 bg-[#fafaf9] border-t border-gray-100">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="text-center mb-16">
+                    <span
+                        class="inline-block py-1.5 px-4 rounded-full bg-white text-q19-700 font-bold tracking-[0.25em] text-[10px] uppercase mb-5 border border-q19-100 backdrop-blur-sm shadow-sm">
+                        Maestros del camino interior
+                    </span>
+                    <h2 class="text-5xl md:text-6xl brand-font font-medium text-gray-900 mb-4 tracking-tight">
+                        YO SOY <span class="italic text-gold-500">GUÍA</span>
+                    </h2>
+                    <p class="text-gray-500 font-serif italic text-xl max-w-2xl mx-auto leading-relaxed">
+                        "Acompañantes en tu viaje hacia el ser."
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12 px-4 md:px-0">
+
+                    <!-- Perfil 1: Elena Vives -->
+                    <article
+                        class="group relative bg-white rounded-[2rem] p-4 shadow-sm hover:shadow-xl transition-all duration-500 ease-out border border-gray-100 hover:border-gold-200">
+                        <div class="relative overflow-hidden rounded-[1.5rem] aspect-[3/4] mb-6">
+                            <div
+                                class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition duration-500 z-10">
+                            </div>
+                            <img src="https://images.unsplash.com/photo-1599447292180-45fd84092ef0?q=80&w=1951&auto=format&fit=crop"
+                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                alt="Elena Vives">
+                        </div>
+                        <div class="text-center relative z-20 pb-4">
+                            <h3 class="brand-font text-3xl text-gray-900 mb-1 group-hover:text-gold-600 transition">
+                                Yo soy Impulso</h3>
+                            <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Elena Vives
+                            </p>
+
+                            <div
+                                class="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-md border border-gray-200 text-xs text-gray-500 font-mono">
+                                <i class="ph-fill ph-sparkle text-gold-500"></i>
+                                <span>Esencia: <strong class="text-gray-800">Espíritu</strong></span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Perfil 2: Marc Torres -->
+                    <article
+                        class="group relative bg-white rounded-[2rem] p-4 shadow-sm hover:shadow-xl transition-all duration-500 ease-out border border-gray-100 hover:border-q19-200">
+                        <div class="relative overflow-hidden rounded-[1.5rem] aspect-[3/4] mb-6">
+                            <div
+                                class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition duration-500 z-10">
+                            </div>
+                            <img src="https://images.unsplash.com/photo-1758599879559-efc4a3fb4243?q=80&w=1632&auto=format&fit=crop"
+                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                alt="Marc Torres">
+                        </div>
+                        <div class="text-center relative z-20 pb-4">
+                            <h3 class="brand-font text-3xl text-gray-900 mb-1 group-hover:text-q19-700 transition">Yo
+                                soy
+                                Estructura</h3>
+                            <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Marc Torres
+                            </p>
+
+                            <div
+                                class="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-md border border-gray-200 text-xs text-gray-500 font-mono">
+                                <i class="ph-fill ph-scales text-q19-600"></i>
+                                <span>Foco: <strong class="text-gray-800">Precisión</strong></span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Perfil 3: Sofía Luz -->
+                    <article
+                        class="group relative bg-white rounded-[2rem] p-4 shadow-sm hover:shadow-xl transition-all duration-500 ease-out border border-gray-100 hover:border-emerald-200">
+                        <div class="relative overflow-hidden rounded-[1.5rem] aspect-[3/4] mb-6">
+                            <div
+                                class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition duration-500 z-10">
+                            </div>
+                            <img src="https://images.unsplash.com/photo-1552196563-55cd4e45efb3?q=80&w=2072&auto=format&fit=crop"
+                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                alt="Sofía Luz">
+                        </div>
+                        <div class="text-center relative z-20 pb-4">
+                            <h3 class="brand-font text-3xl text-gray-900 mb-1 group-hover:text-emerald-700 transition">
+                                Yo soy Pausa</h3>
+                            <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Sofía Luz</p>
+
+                            <div
+                                class="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-md border border-gray-200 text-xs text-gray-500 font-mono">
+                                <i class="ph-fill ph-lotus text-emerald-500"></i>
+                                <span>Energía: <strong class="text-gray-800">Calma</strong></span>
+                            </div>
+                        </div>
+                    </article>
+
+                </div>
+            </div>
+        </section>
+
+        <section id="tarifas" class="py-24 bg-white">
             <div class="max-w-5xl mx-auto px-6">
                 <div class="text-center mb-16">
                     <span class="text-gold-600 font-bold tracking-[0.2em] text-xs uppercase mb-4 block">Yo soy
@@ -294,7 +503,7 @@
                     <div
                         class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-lg transition text-center">
                         <h3 class="text-gray-500 font-bold uppercase tracking-widest text-xs mb-4">Clase Suelta</h3>
-                        <p class="brand-font text-5xl text-gray-900 mb-2">15€</p>
+                        <p class="brand-font text-5xl text-gray-900 mb-2">XX€</p>
                         <p class="text-gray-400 text-xs mb-8">Caducidad 30 días</p>
                         <ul class="text-left text-sm text-gray-600 space-y-3 mb-8 px-4">
                             <li class="flex gap-2"><i class="ph-bold ph-check text-gold-500"></i> Acceso a 1 clase</li>
@@ -312,8 +521,8 @@
                             Más Popular</div>
                         <h3 class="text-gray-400 font-bold uppercase tracking-widest text-xs mb-4 mt-2">Bono 5 Clases
                         </h3>
-                        <p class="brand-font text-5xl text-white mb-2">65€</p>
-                        <p class="text-gray-400 text-xs mb-8">13€ / clase</p>
+                        <p class="brand-font text-5xl text-white mb-2">XX€</p>
+                        <p class="text-gray-400 text-xs mb-8">XX€ / clase</p>
                         <ul class="text-left text-sm text-gray-300 space-y-3 mb-8 px-4">
                             <li class="flex gap-2"><i class="ph-bold ph-check text-gold-500"></i> Acceso a 5 clases</li>
                             <li class="flex gap-2"><i class="ph-bold ph-check text-gold-500"></i> Validez 3 meses</li>
@@ -326,8 +535,8 @@
                     <div
                         class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-lg transition text-center">
                         <h3 class="text-gray-500 font-bold uppercase tracking-widest text-xs mb-4">Bono 10 Clases</h3>
-                        <p class="brand-font text-5xl text-gray-900 mb-2">120€</p>
-                        <p class="text-gray-400 text-xs mb-8">12€ / clase</p>
+                        <p class="brand-font text-5xl text-gray-900 mb-2">XX€</p>
+                        <p class="text-gray-400 text-xs mb-8">XX€ / clase</p>
                         <ul class="text-left text-sm text-gray-600 space-y-3 mb-8 px-4">
                             <li class="flex gap-2"><i class="ph-bold ph-check text-gold-500"></i> Acceso a 10 clases
                             </li>
@@ -341,38 +550,40 @@
             </div>
         </section>
 
+
+
+
         <footer class="bg-gray-900 text-white py-16">
-            <div class="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
+            <div class="max-w-4xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12">
                 <div>
                     <h3 class="brand-font text-3xl mb-4">HAM Yoga</h3>
                     <p class="text-gray-400 text-sm leading-relaxed">
-                        Un espacio de calma en la ciudad.
-                        Calle Dr. Ferrán, 38, Albacete<br>
-                        600 000 000<br>
-                        hola@farmaciaq19.com
+                        Un espacio de calma en la ciudad.<br>
+                        Calle Dr. Ferrán, 38, 02004<br>
+                        Albacete<br>
                     </p>
+                    <div class="mt-8">
+                        <h4 class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">Síguenos</h4>
+                        <div class="flex gap-4">
+                            <a href="#"
+                                class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-gold-500 transition"><i
+                                    class="ph-fill ph-instagram-logo text-xl"></i></a>
+                            <a href="#"
+                                class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-gold-500 transition"><i
+                                    class="ph-fill ph-whatsapp-logo text-xl"></i></a>
+                        </div>
+                    </div>
                 </div>
                 <div class="flex flex-col gap-2">
                     <h4 class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Enlaces</h4>
                     <a href="#" onclick="goToLogin()" class="text-gray-300 hover:text-white transition">Área Privada</a>
                     <a href="#" class="text-gray-300 hover:text-white transition">Aviso Legal</a>
                     <a href="#" class="text-gray-300 hover:text-white transition">Política de Privacidad</a>
-                    <a href="#" class="text-gray-500 hover:text-white transition">Versión 1.3.0</a>
+                    <a href="#" class="text-gray-500 hover:text-white transition">Versión 1.3.5</a>
                 </div>
             </div>
-            <div>
-                <h4 class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">Síguenos</h4>
-                <div class="flex gap-4">
-                    <a href="#"
-                        class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-gold-500 transition"><i
-                            class="ph-fill ph-instagram-logo text-xl"></i></a>
-                    <a href="#"
-                        class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-gold-500 transition"><i
-                            class="ph-fill ph-whatsapp-logo text-xl"></i></a>
-                </div>
-            </div>
-    </div>
-    </footer>
+
+        </footer>
     </div>
 
 
@@ -391,8 +602,8 @@
         <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 relative z-10 items-center">
             <div class="text-white fade-in order-2 lg:order-1 text-center lg:text-left">
                 <div
-                    class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-[10px] font-bold uppercase tracking-[0.25em] mb-6 backdrop-blur-md">
-                    <i class="ph-fill ph-sparkle text-gold-400"></i> Studio & Wellness
+                    class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-[10px] font-bold uppercase tracking-[0.25em] mb-6 backdrop-blur-md shadow-sm">
+                    <i class="ph-fill ph-yoga text-gold-400"></i> Studio & Wellness
                 </div>
                 <h1 class="brand-font text-7xl md:text-7xl font-bold leading-tight mb-2 text-white drop-shadow-sm">HAM
                     Yoga</h1>
@@ -753,17 +964,97 @@
             </div>
 
             <div id="view-profesores" class="hidden fade-in">
-                <div class="text-center mb-12">
+                <div class="text-center mb-16">
                     <span
-                        class="inline-block py-1 px-3 rounded-full bg-gold-50 text-gold-700 font-bold tracking-widest text-[10px] uppercase mb-4 border border-gold-100">Instructores
-                        Expertos</span>
-                    <h2 class="text-4xl md:text-5xl brand-font font-bold text-gray-900 mb-4">Nuestro Equipo</h2>
-                    <p class="text-gray-500 font-light text-lg max-w-2xl mx-auto leading-relaxed">
-                        Conoce a los profesionales que guiarán tu práctica. Cada uno aporta una energía única y años de
-                        experiencia para ayudarte a crecer.
+                        class="inline-block py-1.5 px-4 rounded-full bg-q19-50 text-q19-700 font-bold tracking-[0.25em] text-[10px] uppercase mb-5 border border-q19-100 backdrop-blur-sm">
+                        Maestros del Alma
+                    </span>
+                    <h2 class="text-5xl md:text-6xl brand-font font-medium text-gray-900 mb-4 tracking-tight">
+                        YO SOY <span class="italic text-gold-500">MAESTRÍA</span>
+                    </h2>
+                    <p class="text-gray-500 font-serif italic text-xl max-w-2xl mx-auto leading-relaxed">
+                        "Guías del movimiento y la anatomía sutil."
                     </p>
                 </div>
-                <div id="public-profesores-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+
+                <div id="public-profesores-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12 px-4 md:px-0">
+
+                    <!-- Perfil 1: Elena Vives -->
+                    <article
+                        class="group relative bg-white rounded-[2rem] p-4 shadow-sm hover:shadow-xl transition-all duration-500 ease-out border border-gray-100 hover:border-gold-200">
+                        <div class="relative overflow-hidden rounded-[1.5rem] aspect-[3/4] mb-6">
+                            <div
+                                class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition duration-500 z-10">
+                            </div>
+                            <img src="https://images.unsplash.com/photo-1599447421405-0c325d26d77e?q=80&w=1951&auto=format&fit=crop"
+                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                alt="Elena Vives">
+                        </div>
+                        <div class="text-center relative z-20 pb-4">
+                            <h3 class="brand-font text-3xl text-gray-900 mb-1 group-hover:text-gold-600 transition">
+                                Elena Vives</h3>
+                            <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Vinyasa Yoga
+                            </p>
+
+                            <div
+                                class="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-md border border-gray-200 text-xs text-gray-500 font-mono">
+                                <i class="ph-fill ph-flask text-gold-500"></i>
+                                <span>Principio Activo: <strong class="text-gray-800">Espíritu</strong></span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Perfil 2: Marc Torres -->
+                    <article
+                        class="group relative bg-white rounded-[2rem] p-4 shadow-sm hover:shadow-xl transition-all duration-500 ease-out border border-gray-100 hover:border-q19-200">
+                        <div class="relative overflow-hidden rounded-[1.5rem] aspect-[3/4] mb-6">
+                            <div
+                                class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition duration-500 z-10">
+                            </div>
+                            <img src="https://images.unsplash.com/photo-1518310383802-640c2de311b2?q=80&w=2070&auto=format&fit=crop"
+                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                alt="Marc Torres">
+                        </div>
+                        <div class="text-center relative z-20 pb-4">
+                            <h3 class="brand-font text-3xl text-gray-900 mb-1 group-hover:text-q19-700 transition">Marc
+                                Torres</h3>
+                            <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Reformer &
+                                Biomecánica</p>
+
+                            <div
+                                class="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-md border border-gray-200 text-xs text-gray-500 font-mono">
+                                <i class="ph-fill ph-dna text-q19-600"></i>
+                                <span>Composición: <strong class="text-gray-800">Precisión</strong></span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Perfil 3: Sofía Luz -->
+                    <article
+                        class="group relative bg-white rounded-[2rem] p-4 shadow-sm hover:shadow-xl transition-all duration-500 ease-out border border-gray-100 hover:border-emerald-200">
+                        <div class="relative overflow-hidden rounded-[1.5rem] aspect-[3/4] mb-6">
+                            <div
+                                class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition duration-500 z-10">
+                            </div>
+                            <img src="https://images.unsplash.com/photo-1544367563-12123d8965cd?q=80&w=2070&auto=format&fit=crop"
+                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                alt="Sofía Luz">
+                        </div>
+                        <div class="text-center relative z-20 pb-4">
+                            <h3 class="brand-font text-3xl text-gray-900 mb-1 group-hover:text-emerald-700 transition">
+                                Sofía Luz</h3>
+                            <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Yin Yoga &
+                                Mindfulness</p>
+
+                            <div
+                                class="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-md border border-gray-200 text-xs text-gray-500 font-mono">
+                                <i class="ph-fill ph-drop text-emerald-500"></i>
+                                <span>Efecto: <strong class="text-gray-800">Calma</strong></span>
+                            </div>
+                        </div>
+                    </article>
+
+                </div>
             </div>
 
             <div id="view-asistencias" class="hidden fade-in">
