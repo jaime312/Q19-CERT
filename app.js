@@ -98,10 +98,19 @@ function toggleMobileMenu() {
 
     const logo = document.getElementById('header-logo');
     const cta = document.getElementById('header-cta');
+    const header = document.getElementById('public-header');
 
     if (isMenuOpen) {
+        // 1. Force scroll properly
         window.scrollTo({ top: 0, behavior: 'instant' });
-        document.body.classList.add('overflow-hidden'); // Lock scroll
+
+        // 2. Lock scroll completely
+        document.body.style.overflow = 'hidden';
+        document.body.classList.add('overflow-hidden');
+
+        // 3. Ensure header background is solid for readability
+        header.classList.remove('bg-transparent');
+        header.classList.add('bg-gray-900', 'shadow-md');
 
         // Hide visible header elements to clean up view
         if (logo) logo.classList.add('opacity-0', 'pointer-events-none');
@@ -111,7 +120,15 @@ function toggleMobileMenu() {
         icon.classList.remove('ph-list');
         icon.classList.add('ph-x');
     } else {
-        document.body.classList.remove('overflow-hidden'); // Unlock scroll
+        // Unlock scroll
+        document.body.style.overflow = '';
+        document.body.classList.remove('overflow-hidden');
+
+        // Restore header transparency check manually or let scroll listener handle it
+        if (window.scrollY < 50) {
+            header.classList.add('bg-transparent');
+            header.classList.remove('bg-gray-900', 'shadow-md');
+        }
 
         // Show header elements again
         if (logo) logo.classList.remove('opacity-0', 'pointer-events-none');

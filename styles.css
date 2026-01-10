@@ -21,7 +21,7 @@ body {
 
 /* Añadir al principio de styles.css */
 html {
-    scroll-behavior: smooth;
+    /* scroll-behavior: smooth; -- DISABLED to ensure instant menu opening */
 }
 
 /* Ocultar elementos específicos cuando no tocan */
