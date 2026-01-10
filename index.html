@@ -44,7 +44,7 @@
 
 <body class="antialiased">
 
-    <nav id="public-header" class="fixed w-full z-50 top-0 transition-all duration-300 bg-transparent py-4">
+    <nav id="public-header" class="absolute md:fixed w-full z-50 top-0 transition-all duration-300 bg-transparent py-4">
         <div class="max-w-7xl mx-auto px-6 flex justify-between items-center">
             <a href="#" onclick="showLanding(); window.scrollTo(0,0);"
                 class="flex items-center gap-3 group relative z-50">
@@ -60,23 +60,15 @@
 
             <!-- Right Side Container -->
             <div class="flex items-center gap-3 md:gap-8">
-                <!-- Desktop Links -->
-                <div
-                    class="hidden md:flex items-center gap-8 text-sm font-bold uppercase tracking-widest text-white/90">
-                    <a href="#filosofia" class="hover:text-gold-400 transition">Yo soy Tribu</a>
-                    <a href="#clases-detalle" class="hover:text-gold-400 transition">Yo soy Movimiento</a>
-                    <a href="#tarifas" class="hover:text-gold-400 transition">Yo soy Inversión</a>
-                </div>
-
                 <!-- Unified CTA Button -->
                 <button onclick="goToLogin()"
                     class="bg-white text-gray-900 px-5 py-2 md:px-8 md:py-4 rounded-full hover:bg-gold-400 hover:text-white transition shadow-xl font-bold uppercase tracking-widest text-[10px] md:text-sm transform hover:-translate-y-0.5">
                     Yo soy Conexión
                 </button>
 
-                <!-- Mobile Menu Icon -->
+                <!-- Menu Icon (Visible on all screens) -->
                 <button onclick="toggleMobileMenu()"
-                    class="md:hidden text-white bg-white/10 p-2 rounded-lg backdrop-blur-md relative z-50 hover:bg-white/20 transition">
+                    class="text-white bg-white/10 p-2 rounded-lg backdrop-blur-md relative z-50 hover:bg-white/20 transition">
                     <i id="menu-icon" class="ph-bold ph-list text-2xl"></i>
                 </button>
             </div>
@@ -88,6 +80,10 @@
                 class="text-2xl text-white brand-font font-bold hover:text-gold-400 transition">Yo soy Tribu</a>
             <a href="#clases-detalle" onclick="toggleMobileMenu()"
                 class="text-2xl text-white brand-font font-bold hover:text-gold-400 transition">Yo soy Movimiento</a>
+            <a href="#santuario" onclick="toggleMobileMenu()"
+                class="text-2xl text-white brand-font font-bold hover:text-gold-400 transition">Yo soy Santuario</a>
+            <a href="#equipo" onclick="toggleMobileMenu()"
+                class="text-2xl text-white brand-font font-bold hover:text-gold-400 transition">Yo soy Guía</a>
             <a href="#tarifas" onclick="toggleMobileMenu()"
                 class="text-2xl text-white brand-font font-bold hover:text-gold-400 transition">Yo soy Inversión</a>
             <button onclick="toggleMobileMenu(); goToLogin()"
@@ -654,7 +650,7 @@
                     <a href="#" onclick="goToLogin()" class="text-gray-300 hover:text-white transition">Área Privada</a>
                     <a href="#" class="text-gray-300 hover:text-white transition">Aviso Legal</a>
                     <a href="#" class="text-gray-300 hover:text-white transition">Política de Privacidad</a>
-                    <a href="#" class="text-gray-500 hover:text-white transition">Versión 1.3.7</a>
+                    <a href="#" class="text-gray-500 hover:text-white transition">Versión 1.3.8</a>
                 </div>
             </div>
 
