@@ -38,7 +38,8 @@
     </script>
 </head>
 
-<body class="bg-cocoa text-ivory h-screen w-screen overflow-hidden relative selection:bg-lilac selection:text-cocoa">
+<body
+    class="bg-cocoa text-ivory h-screen w-screen overflow-y-auto md:overflow-hidden relative selection:bg-lilac selection:text-cocoa">
 
     <div class="fixed inset-0 z-0 bg-cocoa">
     </div>
@@ -49,7 +50,7 @@
     </div>
 
     <aside
-        class="fixed left-20 bottom-0 h-full flex flex-col justify-center items-center gap-40 px-6 z-20 w-32 md:w-48">
+        class="fixed left-20 bottom-0 h-full hidden md:flex flex-col justify-center items-center gap-40 px-6 z-20 w-32 md:w-48">
 
         <button onclick="openModal('clases')" class="side-btn group">
             <span
@@ -81,10 +82,22 @@
         <p class="text-ivory/80 text-lg md:text-xl font-light max-w-xl mx-auto mb-12 leading-relaxed opacity-90">
             Un santuario urbano en el corazón de la ciudad.<br>Transforma tu identidad.
         </p>
+
+        <!-- Mobile Menu -->
+        <div class="flex flex-col gap-4 mb-12 md:hidden w-full max-w-xs z-30">
+            <button onclick="openModal('clases')"
+                class="py-3 border border-ivory/30 rounded-full text-ivory tracking-[0.2em] text-sm hover:bg-lilac/20 transition backdrop-blur-sm">CLASES</button>
+            <button onclick="openModal('precios')"
+                class="py-3 border border-ivory/30 rounded-full text-ivory tracking-[0.2em] text-sm hover:bg-lilac/20 transition backdrop-blur-sm">TARIFAS</button>
+            <button onclick="openModal('profesores')"
+                class="py-3 border border-ivory/30 rounded-full text-ivory tracking-[0.2em] text-sm hover:bg-lilac/20 transition backdrop-blur-sm">MAESTROS</button>
+            <button onclick="openModal('area-personal')"
+                class="py-3 border border-ivory/30 rounded-full text-ivory tracking-[0.2em] text-sm hover:bg-lilac/20 transition backdrop-blur-sm">PERFIL</button>
+        </div>
     </main>
 
     <aside
-        class="fixed right-20 bottom-0 h-full flex flex-col justify-center items-center gap-40 px-6 z-20 w-32 md:w-48">
+        class="fixed right-20 bottom-0 h-full hidden md:flex flex-col justify-center items-center gap-40 px-6 z-20 w-32 md:w-48">
 
         <button onclick="openModal('profesores')" class="side-btn group">
             <span
@@ -98,7 +111,8 @@
         </button>
     </aside>
 
-    <div class="absolute bottom-8 w-full flex justify-center items-center gap-8 z-20">
+    <div
+        class="relative mt-12 md:mt-0 md:absolute md:bottom-8 w-full flex justify-center items-center gap-8 z-20 pb-8 md:pb-0">
         <div class="flex gap-8">
             <button onclick="openModal('socials')"
                 class="text-ivory/40 hover:text-lilac hover:scale-110 transition duration-300"><i
@@ -107,7 +121,7 @@
                 class="text-ivory/40 hover:text-lilac hover:scale-110 transition duration-300"><i data-lucide="facebook"
                     class="w-6 h-6"></i></button>
         </div>
-        <span class="text-[10px] text-white/50 uppercase tracking-widest ml-4">v2.0.0</span>
+        <span class="text-[10px] text-white/50 uppercase tracking-widest ml-4">v2.0.1</span>
     </div>
 
     <div id="modal-overlay"
