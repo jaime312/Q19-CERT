@@ -76,3 +76,49 @@ if (modalOverlay) {
         if (e.target === modalOverlay) closeModal();
     });
 }
+
+// 4. LOGICA DEL CURSOR PERSONALIZADO Y DETECCIÓN DE PLATAFORMA
+document.addEventListener('DOMContentLoaded', () => {
+
+    // --- DETECCIÓN DE PLATAFORMA ---
+    const ua = navigator.userAgent.toLowerCase();
+    const body = document.body;
+
+    // Variables de control global
+    window.isIOS = /ipad|iphone|ipod/.test(ua) && !window.MSStream;
+    window.isAndroid = /android/.test(ua);
+    window.isWeb = !window.isIOS && !window.isAndroid; // Si no es móvil, asumimos Web/Desktop
+
+    // Limpiar clases previas
+    body.classList.remove('platform-ios', 'platform-android', 'platform-web');
+
+    if (window.isIOS) {
+        body.classList.add('platform-ios');
+        console.log("Modo: iOS App");
+    } else if (window.isAndroid) {
+        body.classList.add('platform-android');
+        console.log("Modo: Android App");
+    } else {
+        body.classList.add('platform-web');
+        console.log("Modo: Web Desktop");
+    }
+
+    // --- CURSOR EMOJI ---
+    // Solo creamos el cursor si estamos en web para ahorrar recursos, 
+    // aunque CSS ya lo oculta en móvil.
+    if (window.isWeb) {
+        const cursor = document.createElement('div');
+        cursor.classList.add('wink-cursor');
+        cursor.innerText = '🧘🏼';
+        document.body.appendChild(cursor);
+
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+        document.addEventListener('mousedown', () => cursor.classList.add('clicking'));
+        document.addEventListener('mouseup', () => cursor.classList.remove('clicking'));
+        document.addEventListener('mouseout', (e) => { if (!e.relatedTarget) cursor.style.display = 'none'; });
+        document.addEventListener('mouseover', () => cursor.style.display = 'block');
+    }
+});

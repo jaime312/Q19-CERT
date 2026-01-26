@@ -14,7 +14,7 @@
 
     <script src="https://unpkg.com/lucide@latest"></script>
 
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="styles.css">
 
     <script>
         tailwind.config = {
@@ -39,9 +39,9 @@
 </head>
 
 <body
-    class="bg-cocoa text-ivory h-screen w-screen overflow-y-auto md:overflow-hidden relative selection:bg-lilac selection:text-cocoa">
+    class="bg-ivory h-screen w-screen overflow-y-auto md:overflow-hidden relative selection:bg-sand selection:text-cocoa">
 
-    <div class="fixed inset-0 z-0 bg-cocoa">
+    <div class="fixed inset-0 z-0 bg-ivory">
     </div>
 
     <div class="absolute top-8 left-20 z-30">
@@ -54,12 +54,12 @@
 
         <button onclick="openModal('clases')" class="side-btn group">
             <span
-                class="vertical-text text-4xl md:text-4xl font-serif tracking-widest text-ivory/60 group-hover:text-lilac transition-all duration-500">CLASES</span>
+                class="vertical-text text-4xl md:text-4xl font-serif tracking-widest text-cocoa/40 group-hover:text-cocoa transition-all duration-500 text-shadow-sm">CLASES</span>
         </button>
 
         <button onclick="openModal('precios')" class="side-btn group">
             <span
-                class="vertical-text text-4xl md:text-4xl font-serif tracking-widest text-ivory/60 group-hover:text-lilac transition-all duration-500">TARIFAS</span>
+                class="vertical-text text-4xl md:text-4xl font-serif tracking-widest text-cocoa/40 group-hover:text-cocoa transition-all duration-500 text-shadow-sm">TARIFAS</span>
         </button>
 
     </aside>
@@ -68,31 +68,31 @@
         class="relative z-10 flex flex-col items-center justify-center h-full text-center px-4 w-full max-w-5xl mx-auto pt-0">
 
         <span
-            class="inline-block py-1 px-4 rounded-full border border-ivory/20 text-olive font-bold tracking-[0.3em] text-[10px] md:text-xs uppercase mb-8 backdrop-blur-sm">
+            class="inline-block py-1 px-4 rounded-full border border-cocoa/20 text-olive font-bold tracking-[0.3em] text-[10px] md:text-xs uppercase mb-8 backdrop-blur-sm">
             Studio & Wellness
         </span>
 
         <h1
-            class="brand-font text-5xl md:text-7xl lg:text-8xl text-ivory font-medium mb-6 leading-tight drop-shadow-2xl">
+            class="brand-font text-5xl md:text-7xl lg:text-8xl text-cocoa font-medium mb-6 leading-tight drop-shadow-sm text-shadow-md">
             YO SOY...<br>
             <span id="dynamic-text"
-                class="text-lilac italic transition-opacity duration-500 inline-block min-w-[300px]">CALMA</span>
+                class="text-olive italic transition-opacity duration-500 inline-block min-w-[300px]">CALMA</span>
         </h1>
 
-        <p class="text-ivory/80 text-lg md:text-xl font-light max-w-xl mx-auto mb-12 leading-relaxed opacity-90">
+        <p class="text-cocoa/70 text-lg md:text-xl font-light max-w-xl mx-auto mb-12 leading-relaxed opacity-90">
             Un santuario urbano en el corazón de la ciudad.<br>Transforma tu identidad.
         </p>
 
         <!-- Mobile Menu -->
         <div class="flex flex-col gap-4 mb-12 md:hidden w-full max-w-xs z-30">
             <button onclick="openModal('clases')"
-                class="py-3 border border-ivory/30 rounded-full text-ivory tracking-[0.2em] text-sm hover:bg-lilac/20 transition backdrop-blur-sm">CLASES</button>
+                class="py-3 border border-cocoa/30 rounded-full text-cocoa tracking-[0.2em] text-sm hover:bg-sand/20 transition backdrop-blur-sm">CLASES</button>
             <button onclick="openModal('precios')"
-                class="py-3 border border-ivory/30 rounded-full text-ivory tracking-[0.2em] text-sm hover:bg-lilac/20 transition backdrop-blur-sm">TARIFAS</button>
+                class="py-3 border border-cocoa/30 rounded-full text-cocoa tracking-[0.2em] text-sm hover:bg-sand/20 transition backdrop-blur-sm">TARIFAS</button>
             <button onclick="openModal('profesores')"
-                class="py-3 border border-ivory/30 rounded-full text-ivory tracking-[0.2em] text-sm hover:bg-lilac/20 transition backdrop-blur-sm">MAESTROS</button>
-            <button onclick="openModal('area-personal')"
-                class="py-3 border border-ivory/30 rounded-full text-ivory tracking-[0.2em] text-sm hover:bg-lilac/20 transition backdrop-blur-sm">PERFIL</button>
+                class="py-3 border border-cocoa/30 rounded-full text-cocoa tracking-[0.2em] text-sm hover:bg-sand/20 transition backdrop-blur-sm">MAESTROS</button>
+            <a href="profile.html"
+                class="block py-3 border border-cocoa/30 rounded-full text-cocoa tracking-[0.2em] text-sm hover:bg-sand/20 transition backdrop-blur-sm text-center relative z-50 cursor-pointer">PERFIL</a>
         </div>
     </main>
 
@@ -101,34 +101,34 @@
 
         <button onclick="openModal('profesores')" class="side-btn group">
             <span
-                class="vertical-text-rl text-4xl md:text-4xl font-serif tracking-widest text-ivory/60 group-hover:text-lilac transition-all duration-500">MAESTROS</span>
+                class="vertical-text-rl text-4xl md:text-4xl font-serif tracking-widest text-cocoa/40 group-hover:text-cocoa transition-all duration-500 text-shadow-sm">MAESTROS</span>
         </button>
 
-        <button onclick="openModal('area-personal')" class="side-btn group">
+        <a href="profile.html" class="side-btn group">
             <span
-                class="vertical-text-rl text-4xl md:text-4xl font-serif tracking-widest text-ivory/60 group-hover:text-lilac transition-all duration-500">MI
+                class="vertical-text-rl text-4xl md:text-4xl font-serif tracking-widest text-cocoa/40 group-hover:text-cocoa transition-all duration-500 text-shadow-sm">MI
                 PERFIL</span>
-        </button>
+        </a>
     </aside>
 
     <div
         class="relative mt-12 md:mt-0 md:absolute md:bottom-8 w-full flex justify-center items-center gap-8 z-20 pb-8 md:pb-0">
         <div class="flex gap-8">
             <button onclick="openModal('socials')"
-                class="text-ivory/40 hover:text-lilac hover:scale-110 transition duration-300"><i
+                class="text-cocoa/40 hover:text-olive hover:scale-110 transition duration-300"><i
                     data-lucide="instagram" class="w-6 h-6"></i></button>
             <button onclick="openModal('socials')"
-                class="text-ivory/40 hover:text-lilac hover:scale-110 transition duration-300"><i data-lucide="facebook"
+                class="text-cocoa/40 hover:text-olive hover:scale-110 transition duration-300"><i data-lucide="facebook"
                     class="w-6 h-6"></i></button>
         </div>
-        <span class="text-[10px] text-white/50 uppercase tracking-widest ml-4">v2.0.1</span>
+        <span class="text-[10px] text-cocoa/40 uppercase tracking-widest ml-4">v2.1.0</span>
     </div>
 
     <div id="modal-overlay"
-        class="fixed inset-0 bg-cocoa/95 backdrop-blur-xl z-50 hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4">
+        class="fixed inset-0 bg-olive/95 backdrop-blur-3xl z-50 hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4">
 
         <button onclick="closeModal()"
-            class="absolute top-8 right-8 text-ivory/50 hover:text-lilac transition z-50 flex items-center gap-2 group">
+            class="absolute top-8 right-8 text-white/70 hover:text-white transition z-50 flex items-center gap-2 group">
             <span class="text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition">Cerrar</span>
             <i data-lucide="x" class="w-10 h-10"></i>
         </button>
@@ -137,35 +137,35 @@
             <h2 class="brand-font text-5xl md:text-6xl text-center text-olive mb-16">Horario Semanal</h2>
             <div class="space-y-6">
                 <div
-                    class="flex flex-col md:flex-row items-center justify-between p-8 border border-white/10 hover:border-gold-400/50 hover:bg-white/5 transition duration-300 group cursor-pointer">
+                    class="flex flex-col md:flex-row items-center justify-between p-8 border border-cocoa/10 hover:border-olive/50 hover:bg-cocoa/5 transition duration-300 group cursor-pointer">
                     <div class="flex items-center gap-8">
-                        <span class="text-4xl font-serif text-white group-hover:text-gold-400 transition">07:00</span>
+                        <span class="text-4xl font-serif text-olive group-hover:text-cocoa transition">07:00</span>
                         <div class="text-left">
-                            <span class="block text-xl uppercase tracking-widest font-light text-white">Morning
+                            <span class="block text-xl uppercase tracking-widest font-light text-cocoa">Morning
                                 Flow</span>
-                            <span class="text-sm text-gray-500">Sala Aire • 60 min</span>
+                            <span class="text-sm text-slate">Sala Aire • 60 min</span>
                         </div>
                     </div>
                     <div class="mt-4 md:mt-0 flex items-center gap-6">
-                        <span class="text-lg font-serif italic text-gray-400">con Elena García</span>
+                        <span class="text-lg font-serif italic text-cocoa/60">con Elena García</span>
                         <button
-                            class="px-6 py-2 bg-white/10 text-white text-xs uppercase tracking-widest hover:bg-gold-400 hover:text-black transition">Reservar</button>
+                            class="px-6 py-2 bg-cocoa text-ivory text-xs uppercase tracking-widest hover:bg-olive hover:text-white transition">Reservar</button>
                     </div>
                 </div>
                 <div
-                    class="flex flex-col md:flex-row items-center justify-between p-8 border border-white/10 hover:border-gold-400/50 hover:bg-white/5 transition duration-300 group cursor-pointer">
+                    class="flex flex-col md:flex-row items-center justify-between p-8 border border-cocoa/10 hover:border-olive/50 hover:bg-cocoa/5 transition duration-300 group cursor-pointer">
                     <div class="flex items-center gap-8">
-                        <span class="text-4xl font-serif text-white group-hover:text-gold-400 transition">09:30</span>
+                        <span class="text-4xl font-serif text-olive group-hover:text-cocoa transition">09:30</span>
                         <div class="text-left">
-                            <span class="block text-xl uppercase tracking-widest font-light text-white">Vinyasa
+                            <span class="block text-xl uppercase tracking-widest font-light text-cocoa">Vinyasa
                                 Power</span>
-                            <span class="text-sm text-gray-500">Sala Fuego • 75 min</span>
+                            <span class="text-sm text-slate">Sala Fuego • 75 min</span>
                         </div>
                     </div>
                     <div class="mt-4 md:mt-0 flex items-center gap-6">
-                        <span class="text-lg font-serif italic text-gray-400">con Marc Soler</span>
+                        <span class="text-lg font-serif italic text-cocoa/60">con Marc Soler</span>
                         <button
-                            class="px-6 py-2 bg-white/10 text-white text-xs uppercase tracking-widest hover:bg-gold-400 hover:text-black transition">Reservar</button>
+                            class="px-6 py-2 bg-cocoa text-ivory text-xs uppercase tracking-widest hover:bg-olive hover:text-white transition">Reservar</button>
                     </div>
                 </div>
             </div>
@@ -174,28 +174,28 @@
         <div id="modal-precios" class="modal-content hidden w-full max-w-6xl">
             <h2 class="brand-font text-5xl md:text-6xl text-center text-olive mb-16">Tarifas</h2>
             <div class="grid md:grid-cols-3 gap-8 px-4">
-                <div class="p-10 border border-ivory/10 bg-ivory/5 text-center hover:bg-ivory/10 transition group">
-                    <h3 class="text-2xl font-serif text-white mb-2">Single Class</h3>
-                    <p class="text-gray-400 text-xs uppercase tracking-widest mb-8">Acceso puntual</p>
-                    <div class="text-5xl font-serif text-sand mb-8">XX€</div>
+                <div class="p-10 border border-cocoa/10 bg-white/40 text-center hover:bg-white/60 transition group">
+                    <h3 class="text-2xl font-serif text-cocoa mb-2">Single Class</h3>
+                    <p class="text-cocoa/60 text-xs uppercase tracking-widest mb-8">Acceso puntual</p>
+                    <div class="text-5xl font-serif text-olive mb-8">XX€</div>
                     <button
-                        class="w-full py-4 border border-ivory/20 text-ivory text-xs uppercase tracking-widest group-hover:bg-olive group-hover:text-white group-hover:border-olive transition">Comprar</button>
+                        class="w-full py-4 border border-cocoa/20 text-cocoa text-xs uppercase tracking-widest group-hover:bg-cocoa group-hover:text-ivory transition">Comprar</button>
                 </div>
                 <div class="p-10 border border-olive bg-olive/10 text-center transform scale-105 shadow-2xl">
                     <span
                         class="inline-block bg-olive text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 mb-6">Recomendado</span>
-                    <h3 class="text-2xl font-serif text-white mb-2">Pack 10</h3>
-                    <p class="text-gray-300 text-xs uppercase tracking-widest mb-8">Para constantes</p>
-                    <div class="text-5xl font-serif text-white mb-8">XXX€</div>
+                    <h3 class="text-2xl font-serif text-cocoa mb-2">Pack 10</h3>
+                    <p class="text-cocoa/60 text-xs uppercase tracking-widest mb-8">Para constantes</p>
+                    <div class="text-5xl font-serif text-olive mb-8">XXX€</div>
                     <button
-                        class="w-full py-4 bg-olive text-white font-bold text-xs uppercase tracking-widest hover:bg-white hover:text-black transition">Comprar</button>
+                        class="w-full py-4 bg-olive text-white font-bold text-xs uppercase tracking-widest hover:bg-cocoa hover:text-white transition">Comprar</button>
                 </div>
-                <div class="p-10 border border-ivory/10 bg-ivory/5 text-center hover:bg-ivory/10 transition group">
-                    <h3 class="text-2xl font-serif text-white mb-2">Unlimited</h3>
-                    <p class="text-gray-400 text-xs uppercase tracking-widest mb-8">Mensualidad</p>
-                    <div class="text-5xl font-serif text-sand mb-8">XX€</div>
+                <div class="p-10 border border-cocoa/10 bg-white/40 text-center hover:bg-white/60 transition group">
+                    <h3 class="text-2xl font-serif text-cocoa mb-2">Unlimited</h3>
+                    <p class="text-cocoa/60 text-xs uppercase tracking-widest mb-8">Mensualidad</p>
+                    <div class="text-5xl font-serif text-olive mb-8">XX€</div>
                     <button
-                        class="w-full py-4 border border-ivory/20 text-ivory text-xs uppercase tracking-widest group-hover:bg-olive group-hover:text-white group-hover:border-olive transition">Suscribirse</button>
+                        class="w-full py-4 border border-cocoa/20 text-cocoa text-xs uppercase tracking-widest group-hover:bg-cocoa group-hover:text-ivory transition">Suscribirse</button>
                 </div>
             </div>
         </div>

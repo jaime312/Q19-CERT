@@ -2,12 +2,25 @@
 
 /* Reglas Base */
 body {
-    background-color: #5D4037;
+    background-color: #FAF0E6;
+    /* Ivory */
+    color: #5D4037;
     /* Cocoa */
+    background-image: radial-gradient(#A4A05D 0.5px, transparent 0.5px);
+    background-size: 20px 20px;
+    background-attachment: fixed;
 }
 
 .brand-font {
     font-family: 'Playfair Display', serif;
+}
+
+.text-shadow-sm {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.text-shadow-md {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Ocultar Scrollbars pero permitir funcionalidad */
@@ -36,8 +49,8 @@ body {
 
 /* Texto vertical lado izquierdo (lectura abajo->arriba) */
 .vertical-text {
-    writing-mode: vertical-rl;
-    transform: rotate(180deg);
+    /* writing-mode: vertical-rl; */
+    /* transform: rotate(180deg); */
     white-space: nowrap;
     cursor: pointer;
     /* Color base visible */
@@ -46,7 +59,7 @@ body {
 
 /* Texto vertical lado derecho (lectura arriba->abajo) */
 .vertical-text-rl {
-    writing-mode: vertical-rl;
+    /* writing-mode: vertical-rl; */
     white-space: nowrap;
     cursor: pointer;
     /* Color base visible */
@@ -88,3 +101,66 @@ body {
 
 /* Clase para aplicar si quisiéramos animación CSS pura, 
    pero usaremos JS para control total */
+
+/* ======================================================= */
+/* LOGICA DEL CURSOR PERSONALIZADO (WEB)                   */
+/* ======================================================= */
+
+/* El elemento visual del cursor */
+.wink-cursor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    font-size: 2rem;
+    line-height: 1;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    transition: transform 0.1s ease-out;
+    user-select: none;
+    /* Solo visible por defecto en Web. En móviles se oculta abajo */
+}
+
+.wink-cursor.clicking {
+    transform: translate(-50%, -50%) scale(0.8) rotate(-10deg);
+}
+
+/* Forzar ocultación del cursor nativo SOLO en Web */
+body.platform-web,
+body.platform-web a,
+body.platform-web button,
+body.platform-web input,
+body.platform-web select,
+body.platform-web textarea,
+body.platform-web .cursor-pointer {
+    cursor: none !important;
+}
+
+/* ======================================================= */
+/* ADAPTACIONES MÓVILES (iOS + ANDROID)                    */
+/* ======================================================= */
+
+/* REGLAS COMUNES APP (iOS y Android) */
+body.platform-ios,
+body.platform-android {
+    /* Restaurar cursor nativo (invisible en táctil) */
+    cursor: auto !important;
+}
+
+/* Ocultar cursor personalizado en apps */
+body.platform-ios .wink-cursor,
+body.platform-android .wink-cursor {
+    display: none !important;
+}
+
+/* Restaurar punteros en elementos interactivos para Apps */
+body.platform-ios a,
+body.platform-android a,
+body.platform-ios button,
+body.platform-android button,
+body.platform-ios input,
+body.platform-android input,
+body.platform-ios select,
+body.platform-android select {
+    cursor: auto !important;
+}
