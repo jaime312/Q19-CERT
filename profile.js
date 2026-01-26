@@ -474,9 +474,9 @@ function renderizarClases() {
 
     if (clasesAMostrar.length === 0) {
         container.innerHTML = `
-                    <div class="bg-white rounded-2xl p-12 text-center border border-gray-100">
-                        <i class="ph-duotone ph-calendar-x text-5xl text-gray-300 mb-4"></i>
-                        <p class="text-gray-500 font-medium">No hay clases en esta fecha</p>
+                    <div class="bg-ivory rounded-2xl p-12 text-center border border-cocoa/10">
+                        <i class="ph-duotone ph-calendar-x text-5xl text-cocoa/20 mb-4"></i>
+                        <p class="text-cocoa/60 font-medium">No hay clases en esta fecha</p>
                         <button onclick="limpiarFiltroFecha()" class="mt-4 text-olive hover:underline text-sm font-bold">Ver todas</button>
                     </div>`;
         return;
@@ -498,16 +498,16 @@ function renderizarClases() {
         const mes = dateObj.toLocaleDateString('es-ES', { month: 'long' });
 
         const section = document.createElement('div');
-        section.className = 'bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden';
+        section.className = 'bg-ivory rounded-3xl border border-cocoa/10 shadow-sm overflow-hidden';
 
         section.innerHTML = `
-                    <div class="bg-gradient-to-r from-gray-400 to-gray-200 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <div class="bg-gradient-to-r from-cocoa/10 to-sand/5 px-6 py-4 border-b border-cocoa/5 flex items-center justify-between">
                         <div class="flex items-baseline gap-2">
-                            <span class="brand-font text-xl font-bold text-gray-800 capitalize">${diaNombre}</span>
+                            <span class="brand-font text-xl font-bold text-cocoa capitalize">${diaNombre}</span>
                             <span class="text-xs font-semibold text-olive bg-olive/10 px-2 py-0.5 rounded-md border border-olive/20">${diaNumero} ${mes}</span>
                         </div>
                     </div>
-                    <div id="grid-${dateKey}" class="divide-y divide-gray-50"></div>
+                    <div id="grid-${dateKey}" class="divide-y divide-cocoa/5"></div>
                 `;
         container.appendChild(section);
 
@@ -519,14 +519,14 @@ function renderizarClases() {
             const isPilates = c.nombre.toLowerCase().includes('pilates') || c.nombre.toLowerCase().includes('reformer');
             const isHot = c.nombre.toLowerCase().includes('hot') || c.nombre.toLowerCase().includes('bikram');
 
-            let iconColorClass = 'bg-sky-50 text-sky-600 border-sky-100';
+            let iconColorClass = 'bg-sand/30 text-cocoa border-sand';
             let tipoTexto = 'Yoga';
 
             if (isPilates) {
-                iconColorClass = 'bg-emerald-50 text-emerald-600 border-emerald-100';
+                iconColorClass = 'bg-lilac/30 text-cocoa border-lilac';
                 tipoTexto = 'Reformer';
             } else if (isHot) {
-                iconColorClass = 'bg-rose-50 text-rose-600 border-rose-100';
+                iconColorClass = 'bg-cocoa/10 text-cocoa border-cocoa/20';
                 tipoTexto = 'Hot';
             }
 
@@ -536,11 +536,11 @@ function renderizarClases() {
             let btnAction = '';
             if (reservada) {
                 btnAction = `
-                            <button onclick="cancelar(${c.miReserva.id})" class="group flex items-center gap-2 text-[11px] font-bold text-gray-400 hover:text-red-500 border border-gray-200 hover:border-red-200 bg-white px-4 py-2 rounded-full transition shadow-sm">
+                            <button onclick="cancelar(${c.miReserva.id})" class="group flex items-center gap-2 text-[11px] font-bold text-cocoa/40 hover:text-red-500 border border-cocoa/10 hover:border-red-200 bg-ivory px-4 py-2 rounded-full transition shadow-sm">
                                 <i class="ph-bold ph-x group-hover:scale-110 transition"></i> CANCELAR
                             </button>`;
             } else if (llena) {
-                btnAction = `<span class="text-[10px] font-bold text-gray-400 bg-gray-100 px-3 py-2 rounded-full uppercase tracking-wide border border-gray-200 cursor-not-allowed">Completa</span>`;
+                btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">Completa</span>`;
             } else {
                 const disabledClass = (userBonos < 1 && !isAdmin) ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:shadow-lg hover:brightness-110 active:scale-95';
                 const btnText = (userBonos < 1 && !isAdmin) ? '0 Bonos' : 'RESERVAR';
@@ -551,14 +551,14 @@ function renderizarClases() {
                             </button>`;
             }
 
-            const adminTrash = `<button onclick="borrarClase(${c.id})" class="admin-only hidden text-gray-300 hover:text-red-500 transition ml-2 p-1" title="Eliminar Clase"><i class="ph-bold ph-trash"></i></button>`;
+            const adminTrash = `<button onclick="borrarClase(${c.id})" class="admin-only hidden text-cocoa/20 hover:text-red-500 transition ml-2 p-1" title="Eliminar Clase"><i class="ph-bold ph-trash"></i></button>`;
 
             const profesorName = c.profesores ? c.profesores.nombre : 'Staff Q19';
             const profesorFoto = c.profesores && c.profesores.foto_url ? c.profesores.foto_url : null;
             const profesorAvatar = profesorFoto ? `<img src="${profesorFoto}" class="w-full h-full object-cover">` : `<div class="w-full h-full bg-olive/5 flex items-center justify-center text-olive text-[10px] font-bold">${profesorName.charAt(0)}</div>`;
 
             const row = document.createElement('div');
-            row.className = 'p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-gray-50/50 transition duration-300 group';
+            row.className = 'p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-sand/10 transition duration-300 group';
 
             row.innerHTML = `
                         <div class="flex items-start gap-4 w-full">
@@ -570,25 +570,25 @@ function renderizarClases() {
                             <div class="flex-grow">
                                 <div class="flex flex-col gap-1">
                                     <div class="flex flex-wrap items-center gap-3">
-                                        <h4 class="brand-font font-bold text-lg text-gray-800 group-hover:text-olive transition leading-tight">
+                                        <h4 class="brand-font font-bold text-lg text-cocoa group-hover:text-olive transition leading-tight">
                                             ${c.nombre}
                                         </h4>
-                                        <div class="flex items-center gap-2 bg-gray-50 px-2.5 py-1 rounded-full border border-gray-200 shadow-sm order-last sm:order-none" title="Instructor">
-                                            <div class="w-6 h-6 rounded-full overflow-hidden border border-gray-200 shadow-sm flex-shrink-0">
+                                        <div class="flex items-center gap-2 bg-sand/10 px-2.5 py-1 rounded-full border border-cocoa/10 shadow-sm order-last sm:order-none" title="Instructor">
+                                            <div class="w-6 h-6 rounded-full overflow-hidden border border-cocoa/10 shadow-sm flex-shrink-0">
                                                 ${profesorAvatar}
                                             </div>
-                                            <span class="text-xs sm:text-sm font-bold text-gray-700 truncate max-w-[150px]">${profesorName}</span>
+                                            <span class="text-xs sm:text-sm font-bold text-cocoa/70 truncate max-w-[150px]">${profesorName}</span>
                                         </div>
                                         ${adminTrash}
                                     </div>
 
                                     <div class="flex items-center gap-2 mt-1">
-                                         <div class="flex items-center gap-1.5 text-xs text-gray-500 bg-white border border-gray-200 px-2 py-0.5 rounded-md shadow-sm" title="Aforo">
-                                            <i class="ph-bold ph-users text-gray-300 text-sm"></i>
-                                            <span class="font-bold text-gray-700">${c.ocupadas}</span>
-                                            <span class="text-gray-300 text-[10px]">/ ${c.capacidad_max}</span>
+                                         <div class="flex items-center gap-1.5 text-xs text-cocoa/50 bg-ivory border border-cocoa/10 px-2 py-0.5 rounded-md shadow-sm" title="Aforo">
+                                            <i class="ph-bold ph-users text-cocoa/20 text-sm"></i>
+                                            <span class="font-bold text-cocoa/70">${c.ocupadas}</span>
+                                            <span class="text-cocoa/30 text-[10px]">/ ${c.capacidad_max}</span>
                                         </div>
-                                        ${reservada ? '<span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-fill ph-check-circle"></i> Tu Plaza</span>' : ''}
+                                        ${reservada ? '<span class="text-[10px] font-bold text-olive bg-olive/10 border border-olive/20 px-2 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-fill ph-check-circle"></i> Tu Plaza</span>' : ''}
                                     </div>
                                 </div>
                             </div>

@@ -6,9 +6,6 @@ body {
     /* Ivory White Theme */
     background-color: #FAF0E6;
     color: #5D4037;
-    background-image: radial-gradient(#A4A05D 0.5px, transparent 0.5px);
-    background-size: 20px 20px;
-    background-attachment: fixed;
 
     /* Configuración por defecto (WEB) */
     cursor: none;
@@ -131,13 +128,17 @@ h3,
 }
 
 .calendar-day.disabled {
-    color: #d1d5db;
+    color: #E1C699;
+    /* Sand */
+    filter: grayscale(1);
     cursor: not-allowed;
     opacity: 0.4;
 }
 
 .calendar-day.other-month {
-    color: #e5e7eb;
+    color: #E1C699;
+    /* Sand */
+    opacity: 0.3;
 }
 
 .calendar-day.today {
