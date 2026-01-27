@@ -4,11 +4,7 @@
 lucide.createIcons();
 
 // 2. TEXTO ROTATIVO (CORREGIDO Y PROBADO)
-const words = [
-    "CALMA", "FUERZA", "EQUILIBRIO", "CONEXIÓN",
-    "MOVIMIENTO", "SANACIÓN", "YOGA", "ARMONÍA",
-    "BIENESTAR", "RESPIRACIÓN", "PAZ", "MEDITACIÓN"
-];
+const words = ["🔥", "🤸", "🏃🏼", "🧘🏼", "🧎🏽‍♀️‍➡️"];
 
 let wordIndex = 0;
 const textElement = document.getElementById("dynamic-text");
