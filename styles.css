@@ -1,8 +1,22 @@
 /* style.css */
 
+@font-face {
+    font-family: 'Higuen';
+    src: url('fonts/Higuen-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'GeometricaSans';
+    src: url('fonts/GeometricaSans-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 /* Reglas Base */
 body {
-    background-color: #FAF0E6;
+    background-color: #F2E8DF;
     /* Ivory */
     color: #5D4037;
     /* Cocoa */
@@ -49,21 +63,16 @@ body {
 
 /* Texto vertical lado izquierdo (lectura abajo->arriba) */
 .vertical-text {
-    /* writing-mode: vertical-rl; */
-    /* transform: rotate(180deg); */
     white-space: nowrap;
     cursor: pointer;
     /* Color base visible */
-    text-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
 }
 
 /* Texto vertical lado derecho (lectura arriba->abajo) */
 .vertical-text-rl {
-    /* writing-mode: vertical-rl; */
     white-space: nowrap;
     cursor: pointer;
     /* Color base visible */
-    text-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
 }
 
 /* Efecto de brillo al hacer hover en el texto */

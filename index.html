@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HAM Yoga | Studio</title>
+    <title>GEN Yoga | Studio</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -25,12 +25,21 @@
                         lilac: '#D8BFD8',
                         sand: '#E1C699',
                         olive: '#A4A05D',
-                        ivory: '#FAF0E6',
+                        ivory: '#F2E8DF',
                         slate: '#708090'
+                    },
+                    spacing: {
+                        '100': '25rem',
+                        '120': '30rem',
+                        '140': '35rem',
+                        '160': '40rem',
+                        '180': '45rem',
+                        '200': '50rem',
                     },
                     fontFamily: {
                         serif: ['Playfair Display', 'serif'],
-                        sans: ['Lato', 'sans-serif']
+                        sans: ['Lato', 'sans-serif'],
+                        higuen: ['Higuen', 'serif']
                     }
                 }
             }
@@ -39,27 +48,33 @@
 </head>
 
 <body
-    class="bg-ivory h-screen w-screen overflow-y-auto md:overflow-hidden relative selection:bg-sand selection:text-cocoa">
+    class="bg-ivory/40 h-screen w-screen overflow-y-auto md:overflow-hidden relative selection:bg-sand selection:text-cocoa">
 
     <div class="fixed inset-0 z-0 bg-ivory">
     </div>
 
-    <div class="absolute top-0 left-20 z-30">
-        <img src="img/image.png" alt="HAM Yoga Logo"
-            class="w-64 md:w-80 opacity-90 hover:opacity-100 transition duration-300">
+    <div
+        class="absolute top-8 md:top-14 left-1/2 -translate-x-1/2 z-30 pointer-events-none flex flex-col items-center gap-2">
+        <h1 class="font-higuen text-7xl md:text-9xl text-olive tracking-[0.2em] leading-none select-none">
+            GEN
+        </h1>
+        <span
+            class="inline-block py-1 px-4 rounded-full border border-cocoa/20 text-olive font-bold tracking-[0.3em] text-[14px] md:text-xl uppercase backdrop-blur-sm">
+            YOGA & WELLNESS
+        </span>
     </div>
 
     <aside
-        class="fixed left-20 bottom-0 h-full hidden md:flex flex-col justify-center items-center gap-40 px-6 z-20 w-32 md:w-48">
+        class="fixed left-4 md:left-8 lg:left-12 xl:left-32 2xl:left-64 bottom-0 h-full hidden md:flex flex-col justify-center items-center gap-20 md:gap-32 xl:gap-60 px-6 z-20 w-32 md:w-48">
 
         <button onclick="openModal('clases')" class="side-btn group">
             <span
-                class="vertical-text text-4xl md:text-4xl font-serif tracking-widest text-cocoa/40 group-hover:text-cocoa transition-all duration-500 text-shadow-sm">CLASES</span>
+                class="vertical-text text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-higuen tracking-widest text-cocoa transition-all duration-500">CLASES</span>
         </button>
 
         <button onclick="openModal('precios')" class="side-btn group">
             <span
-                class="vertical-text text-4xl md:text-4xl font-serif tracking-widest text-cocoa/40 group-hover:text-cocoa transition-all duration-500 text-shadow-sm">TARIFAS</span>
+                class="vertical-text text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-higuen tracking-widest text-cocoa transition-all duration-500">TARIFAS</span>
         </button>
 
     </aside>
@@ -67,25 +82,21 @@
     <main
         class="relative z-10 flex flex-col items-center justify-center h-full text-center px-4 w-full max-w-5xl mx-auto pt-0">
 
-        <span
-            class="inline-block py-1 px-4 rounded-full border border-cocoa/20 text-olive font-bold tracking-[0.3em] text-[10px] md:text-xs uppercase mb-8 backdrop-blur-sm">
-            Studio & Wellness
-        </span>
-
         <h1
-            class="brand-font text-5xl md:text-7xl lg:text-8xl text-cocoa font-medium mb-6 leading-tight drop-shadow-sm text-shadow-md">
+            class="brand-font text-5xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-6xl text-cocoa font-medium mb-6 leading-tight drop-shadow-sm text-shadow-md">
             YO SOY...<br>
             <span id="dynamic-text"
                 class="text-olive italic transition-opacity duration-500 inline-block min-w-[300px]">🔥</span>
         </h1>
 
         <div class="max-w-xl mx-auto mb-12 opacity-90">
-            <p class="text-cocoa/70 text-lg md:text-xl font-light leading-relaxed mb-4">
-                En HAM Yoga fusionamos movimiento, respiración y consciencia para crear un espacio donde tu cuerpo y
-                mente encuentren su equilibrio natural.
+            <p class="text-cocoa text-lg md:text-2xl font-light leading-relaxed mb-4">
+                En GEN Yoga fusionamos <u>movimiento</u> 🏃 , <u>respiración</u> 🧘 y <u>consciencia</u> 🙇 para crear
+                un espacio donde
+                tu <u>cuerpo</u> 🏋️ y tu <u>mente</u> 🧠 encuentren su equilibrio natural 🗽
             </p>
             <p class="text-olive font-serif text-xl md:text-2xl italic tracking-wide">
-                "Tu refugio, tu energía, tu momento."
+                tu refugio, tu energía, tu momento
             </p>
         </div>
 
@@ -103,32 +114,40 @@
     </main>
 
     <aside
-        class="fixed right-20 bottom-0 h-full hidden md:flex flex-col justify-center items-center gap-40 px-6 z-20 w-32 md:w-48">
+        class="fixed right-4 md:right-8 lg:right-12 xl:right-32 2xl:right-64 bottom-0 h-full hidden md:flex flex-col justify-center items-center gap-20 md:gap-32 xl:gap-60 px-6 z-20 w-32 md:w-48">
 
         <button onclick="openModal('profesores')" class="side-btn group">
             <span
-                class="vertical-text-rl text-4xl md:text-4xl font-serif tracking-widest text-cocoa/40 group-hover:text-cocoa transition-all duration-500 text-shadow-sm">MAESTROS</span>
+                class="vertical-text-rl text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-higuen tracking-widest text-cocoa transition-all duration-500">MAESTROS</span>
         </button>
 
         <a href="profile.html" class="side-btn group">
             <span
-                class="vertical-text-rl text-4xl md:text-4xl font-serif tracking-widest text-cocoa/40 group-hover:text-cocoa transition-all duration-500 text-shadow-sm">MI
+                class="vertical-text-rl text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-higuen tracking-widest text-cocoa transition-all duration-500">MI
                 PERFIL</span>
         </a>
     </aside>
 
-    <div
-        class="relative mt-12 md:mt-0 md:absolute md:bottom-8 w-full flex justify-center items-center gap-8 z-20 pb-8 md:pb-0">
-        <div class="flex gap-8">
-            <button onclick="openModal('socials')"
-                class="text-cocoa/40 hover:text-olive hover:scale-110 transition duration-300"><i
-                    data-lucide="instagram" class="w-6 h-6"></i></button>
-            <button onclick="openModal('socials')"
-                class="text-cocoa/40 hover:text-olive hover:scale-110 transition duration-300"><i data-lucide="facebook"
-                    class="w-6 h-6"></i></button>
-        </div>
-        <span class="text-[10px] text-cocoa/40 uppercase tracking-widest ml-4">v2.2.2</span>
+    <div class="absolute bottom-40 left-1/2 -translate-x-1/2 z-40">
+        <button onclick="openModal('socials')"
+            class="text-cocoa/70 hover:text-olive hover:scale-110 transition duration-300">
+            <i data-lucide="instagram" class="w-20 h-20"></i>
+        </button>
     </div>
+
+    <footer
+        class="absolute bottom-0 left-0 w-full px-12 py-6 flex justify-between items-center text-[9px] md:text-[11px] text-cocoa uppercase tracking-[0.3em] font-sans z-30 border-t border-cocoa/20">
+        <div class="flex items-center gap-6">
+            <span>CALLE JOAQUIN QUIJADA, 11, ALBACETE</span>
+            <span class="hidden md:inline opacity-50">|</span>
+            <span class="hidden md:inline">HOLA@GENYOGA.COM</span>
+        </div>
+        <div class="flex items-center gap-8">
+            <a href="#" class="hover:text-olive transition font-medium">TERMS & CONDITIONS</a>
+            <span class="font-medium">© 2026 GEN YOGA</span>
+            <span class="text-[9px] opacity-60 ml-4 font-bold">V2.3.0</span>
+        </div>
+    </footer>
 
     <div id="modal-overlay"
         class="fixed inset-0 bg-ivory/95 backdrop-blur-xl z-50 hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4">
