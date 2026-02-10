@@ -106,31 +106,28 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // 5. HOVER IMAGES
-window.showHoverImage = function (side, imageSrc) {
-    const imgElement = document.getElementById(`hover-img-${side}`);
-    const containerElement = document.getElementById(`hover-container-${side}`);
+// 5. HOVER IMAGES
+window.showHoverImage = function (side, imgName) {
+    const container = document.getElementById(`hover-image-${side}`);
+    // Hide all images in this container first
+    if (container) {
+        const images = container.querySelectorAll('img');
+        images.forEach(img => img.classList.add('hidden'));
 
-    if (imgElement) {
-        imgElement.src = imageSrc;
-        // La opacidad la maneja el contenedor ahora, pero mantenemos por seguridad
-        imgElement.classList.remove('opacity-0');
-    }
+        // Show specific image
+        const targetImg = document.getElementById(`img-${imgName}`);
+        if (targetImg) {
+            targetImg.classList.remove('hidden');
+        }
 
-    if (containerElement) {
-        containerElement.classList.remove('opacity-0');
+        container.classList.remove('opacity-0');
     }
 }
 
 window.hideHoverImage = function (side) {
-    const imgElement = document.getElementById(`hover-img-${side}`);
-    const containerElement = document.getElementById(`hover-container-${side}`);
-
-    if (imgElement) {
-        imgElement.classList.add('opacity-0');
-    }
-
-    if (containerElement) {
-        containerElement.classList.add('opacity-0');
+    const container = document.getElementById(`hover-image-${side}`);
+    if (container) {
+        container.classList.add('opacity-0');
     }
 }
 
