@@ -215,7 +215,7 @@
     </style>
 </head>
 
-<body class="min-h-screen w-screen overflow-hidden relative selection:bg-sand selection:text-cocoa font-sans">
+<body class="min-h-screen w-screen relative selection:bg-sand selection:text-cocoa font-sans">
 
     <!-- Background Gradient: Adjusted for better contrast with white text -->
     <div
@@ -232,7 +232,7 @@
         class="relative z-10 w-full min-h-screen flex flex-col items-center justify-between p-4 md:p-8 overflow-x-hidden">
 
         <!-- HEADER / LOGO -->
-        <div class="flex flex-col items-center mt-8 z-20 transition-all duration-300 relative">
+        <div class="flex flex-col items-center mt-[2vh] z-20 transition-all duration-300 relative">
             <h1
                 class="font-ubuntu text-[clamp(3.5rem,8vw,5.5rem)] text-white font-bold tracking-tighter leading-none drop-shadow-sm">
                 GEN</h1>
@@ -241,24 +241,27 @@
         </div>
 
         <!-- CENTRAL CONTENT -->
-        <div class="flex-grow flex flex-col items-center justify-center text-center max-w-2xl space-y-6 my-8 z-10 px-4">
-            <h2 class="font-sans text-6xl lg:text-9xl text-white font-medium tracking-wide drop-shadow-md">Yo soy</h2>
+        <div
+            class="flex-grow flex flex-col items-center justify-center text-center max-w-2xl space-y-[2vh] my-[2vh] z-10 px-4">
+            <h2 class="font-sans text-[clamp(4rem,10vh,8rem)] text-white font-medium tracking-wide drop-shadow-md">Yo
+                soy</h2>
 
-            <div class="w-24 h-16 lg:w-48 lg:h-24 my-4">
+            <div class="w-auto h-[clamp(3rem,8vh,6rem)] my-[1vh]">
                 <svg viewBox="0 0 200 100" fill="none" xmlns="http://www.w3.org/2000/svg"
-                    class="w-full h-full drop-shadow-lg">
+                    class="w-full h-full drop-shadow-lg scale-125">
                     <path d="M40 80 C 40 80, 80 80, 80 50 C 80 20, 120 20, 120 50 C 120 80, 160 80, 160 80"
                         stroke="white" stroke-width="15" stroke-linecap="round" />
                     <circle cx="170" cy="70" r="10" fill="white" />
                 </svg>
             </div>
 
-            <p class="text-white/90 text-base lg:text-2xl font-light leading-relaxed max-w-lg mx-auto drop-shadow-sm">
+            <p
+                class="text-white/90 text-[clamp(0.9rem,1.8vh,1.5rem)] font-light leading-relaxed max-w-lg mx-auto drop-shadow-sm">
                 En GEN Yoga fusionamos movimiento, respiración y consciencia para crear un espacio donde tu cuerpo y tu
                 mente encuentren su equilibrio natural
             </p>
 
-            <p class="text-white font-medium text-lg lg:text-3xl tracking-wide drop-shadow-md pt-2">
+            <p class="text-white font-medium text-[clamp(1rem,2.2vh,1.875rem)] tracking-wide drop-shadow-md pt-[0.5vh]">
                 Tu refugio, tu energía, tu momento
             </p>
         </div>
@@ -278,12 +281,12 @@
                 onmouseleave="hideHoverImage('left')"
                 class="group transition-transform duration-300 hover:scale-105 text-left w-full">
                 <span
-                    class="text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80">CLASES</span>
+                    class="text-4xl xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80">CLASES</span>
             </button>
 
-            <!-- Hover Image Spacer -->
+            <!-- Hover Image Spacer: Responsive height -->
             <div id="hover-image-left"
-                class="flex items-center justify-center w-64 h-64 pointer-events-none transition-opacity duration-500 opacity-0 z-0 relative">
+                class="flex items-center justify-center w-64 h-[clamp(8rem,20vh,16rem)] pointer-events-none transition-opacity duration-500 opacity-0 z-0 relative">
                 <img id="img-clases" src="img/logo_clases.png"
                     class="absolute w-full h-full object-contain drop-shadow-2xl hidden" alt="">
                 <img id="img-tarifas" src="img/logo_tarifas.png"
@@ -294,7 +297,7 @@
                 onmouseleave="hideHoverImage('left')"
                 class="group transition-transform duration-300 hover:scale-105 text-left w-full">
                 <span
-                    class="text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80">TARIFAS</span>
+                    class="text-4xl xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80">TARIFAS</span>
             </button>
         </div>
 
@@ -304,12 +307,12 @@
                 onmouseleave="hideHoverImage('right')"
                 class="group transition-transform duration-300 hover:scale-105 text-right w-full">
                 <span
-                    class="text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80">MAESTROS</span>
+                    class="text-4xl xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80">MAESTROS</span>
             </button>
 
-            <!-- Hover Image Spacer -->
+            <!-- Hover Image Spacer: Responsive height -->
             <div id="hover-image-right"
-                class="flex items-center justify-center w-64 h-64 pointer-events-none transition-opacity duration-500 opacity-0 z-0 relative">
+                class="flex items-center justify-center w-64 h-[clamp(8rem,20vh,16rem)] pointer-events-none transition-opacity duration-500 opacity-0 z-0 relative">
                 <img id="img-maestros" src="img/logo_maestros.png"
                     class="absolute w-full h-full object-contain drop-shadow-2xl hidden" alt="">
                 <img id="img-perfil" src="img/logo_perfil.png"
@@ -318,11 +321,12 @@
 
             <a href="profile.html"
                 class="group transition-transform duration-300 hover:scale-105 block text-right w-full">
-                <span class="text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80">MI
+                <span
+                    class="text-4xl xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80">MI
                     PERFIL</span>
         </div>
         <!-- FOOTER -->
-        <footer class="w-full flex flex-col items-center gap-8 mt-12 pb-8 z-20 text-white">
+        <footer class="w-full flex flex-col items-center gap-8 mt-[3vh] pb-8 z-20 text-white">
             <!-- Instagram Icon -->
             <a href="https://instagram.com" target="_blank"
                 class="hover:text-white/80 transition-colors duration-300 transform hover:scale-110">
@@ -345,7 +349,7 @@
                 <div class="flex flex-col md:flex-row gap-4 md:gap-8 items-center text-center md:text-right">
                     <a href="#" class="hover:text-white transition">Terms & Conditions</a>
                     <span>© 2026 GEN YOGA</span>
-                    <span class="text-white">V2.5.0</span>
+                    <span class="text-white">V2.5.1</span>
                 </div>
             </div>
         </footer>
