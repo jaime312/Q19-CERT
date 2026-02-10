@@ -13,8 +13,9 @@
         rel="stylesheet">
 
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=3">
 
     <script>
         tailwind.config = {
@@ -38,28 +39,162 @@
                     },
                     fontFamily: {
                         serif: ['Playfair Display', 'serif'],
-                        sans: ['Lato', 'sans-serif'],
-                        higuen: ['Higuen', 'serif']
+                        sans: ['Ubuntu', 'sans-serif'],
+                        ubuntu: ['Ubuntu', 'sans-serif']
                     }
                 }
             }
         }
     </script>
+    <style>
+        @keyframes wander1 {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            33% {
+                transform: translate(50vw, -30vh) scale(1.4);
+            }
+
+            66% {
+                transform: translate(-20vw, 40vh) scale(0.8);
+            }
+
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+        }
+
+        @keyframes wander2 {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            33% {
+                transform: translate(-40vw, 50vh) scale(1.3);
+            }
+
+            66% {
+                transform: translate(30vw, -20vh) scale(0.9);
+            }
+
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+        }
+
+        @keyframes wander3 {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            45% {
+                transform: translate(60vw, 40vh) scale(1.2);
+            }
+
+            80% {
+                transform: translate(-30vw, -50vh) scale(0.8);
+            }
+
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+        }
+
+        @keyframes wander4 {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            40% {
+                transform: translate(-50vw, -40vh) scale(1.5);
+            }
+
+            70% {
+                transform: translate(40vw, 30vh) scale(0.8);
+            }
+
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+        }
+
+        .ambient-shape {
+            position: absolute;
+            filter: blur(90px);
+            opacity: 0.2;
+            /* Mucho más visibles como pidió el usuario */
+            border-radius: 50%;
+            mix-blend-mode: multiply;
+            will-change: transform;
+        }
+
+        .shape-1 {
+            top: 10%;
+            left: 10%;
+            width: 70vw;
+            /* El doble de grandes */
+            height: 70vw;
+            background: #A4A05D;
+            /* Olive 1 */
+            animation: wander1 35s infinite ease-in-out alternate;
+        }
+
+        .shape-2 {
+            top: 50%;
+            right: 10%;
+            width: 65vw;
+            height: 65vw;
+            background: #5D4037;
+            /* Cocoa 1 */
+            animation: wander2 41s infinite ease-in-out alternate;
+        }
+
+        .shape-3 {
+            top: 20%;
+            right: 30%;
+            width: 45vw;
+            height: 45vw;
+            background: #A4A05D;
+            /* Olive 2 */
+            animation: wander3 37s infinite ease-in-out alternate;
+            animation-delay: -10s;
+        }
+
+        .shape-4 {
+            bottom: 10%;
+            left: 10%;
+            width: 50vw;
+            height: 50vw;
+            background: #5D4037;
+            /* Cocoa 2 */
+            animation: wander4 43s infinite ease-in-out alternate;
+            animation-delay: -5s;
+        }
+    </style>
 </head>
 
-<body
-    class="bg-ivory/40 h-screen w-screen overflow-y-auto md:overflow-hidden relative selection:bg-sand selection:text-cocoa">
+<body class="bg-ivory/40 min-h-[100dvh] w-screen overflow-x-hidden relative selection:bg-sand selection:text-cocoa">
 
     <div class="fixed inset-0 z-0 bg-ivory">
     </div>
 
+    <!-- Ambient Background Animation -->
+    <div class="ambient-background" style="z-index: 1;">
+        <div class="ambient-shape shape-1"></div>
+        <div class="ambient-shape shape-2"></div>
+        <div class="ambient-shape shape-3"></div>
+        <div class="ambient-shape shape-4"></div>
+    </div>
+
     <div
-        class="absolute top-8 md:top-14 left-1/2 -translate-x-1/2 z-30 pointer-events-none flex flex-col items-center gap-2">
-        <h1 class="font-higuen text-7xl md:text-9xl text-olive tracking-[0.2em] leading-none select-none">
+        class="absolute top-4 md:top-8 left-1/2 -translate-x-1/2 z-30 pointer-events-none flex flex-col items-center gap-2 w-full text-center mix-blend-multiply">
+        <h1
+            class="font-ubuntu text-7xl md:text-8xl lg:text-9xl text-olive tracking-[0.2em] leading-none select-none transition-all duration-300">
             GEN
         </h1>
         <span
-            class="inline-block py-1 px-4 rounded-full border border-cocoa/20 text-olive font-bold tracking-[0.3em] text-[14px] md:text-xl uppercase backdrop-blur-sm">
+            class="inline-block mt-2 py-1 px-4 md:px-5 rounded-full border border-cocoa/20 text-olive font-bold tracking-[0.2em] md:tracking-[0.3em] text-[10px] md:text-lg lg:text-xl uppercase backdrop-blur-sm transition-all duration-300">
             YOGA & WELLNESS
         </span>
     </div>
@@ -67,85 +202,111 @@
     <aside
         class="fixed left-4 md:left-8 lg:left-12 xl:left-32 2xl:left-64 bottom-0 h-full hidden md:flex flex-col justify-center items-center gap-20 md:gap-32 xl:gap-60 px-6 z-20 w-32 md:w-48">
 
-        <button onclick="openModal('clases')" class="side-btn group">
+        <!-- Imagen Central Hover Izquierda (Con Marco Profesional) -->
+        <div id="hover-container-left"
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full border-4 border-olive overflow-hidden shadow-2xl flex items-center justify-center opacity-0 transition-opacity duration-500 pointer-events-none z-0">
+            <img id="hover-img-left" src="" alt="" class="w-full h-full object-cover rounded-full">
+        </div>
+
+        <button onclick="openModal('clases')" class="side-btn group z-10"
+            onmouseenter="showHoverImage('left', 'img/logo_clases.png')" onmouseleave="hideHoverImage('left')">
             <span
-                class="vertical-text text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-higuen tracking-widest text-cocoa transition-all duration-500">CLASES</span>
+                class="vertical-text text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-ubuntu tracking-widest text-cocoa transition-all duration-500">CLASES</span>
         </button>
 
-        <button onclick="openModal('precios')" class="side-btn group">
+        <button onclick="openModal('precios')" class="side-btn group z-10"
+            onmouseenter="showHoverImage('left', 'img/logo_tarifas.png')" onmouseleave="hideHoverImage('left')">
             <span
-                class="vertical-text text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-higuen tracking-widest text-cocoa transition-all duration-500">TARIFAS</span>
+                class="vertical-text text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-ubuntu tracking-widest text-cocoa transition-all duration-500">TARIFAS</span>
         </button>
 
     </aside>
 
     <main
-        class="relative z-10 flex flex-col items-center justify-center h-full text-center px-4 w-full max-w-5xl mx-auto pt-0">
+        class="relative z-10 flex flex-col items-center justify-center min-h-[100dvh] text-center px-4 w-full max-w-5xl mx-auto pt-64 md:pt-0">
 
         <h1
-            class="brand-font text-5xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-6xl text-cocoa font-medium mb-6 leading-tight drop-shadow-sm text-shadow-md">
+            class="brand-font text-6xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-6xl text-cocoa font-medium mb-6 leading-tight drop-shadow-sm text-shadow-md">
             YO SOY...<br>
             <span id="dynamic-text"
                 class="text-olive italic transition-opacity duration-500 inline-block min-w-[300px]">🔥</span>
         </h1>
 
-        <div class="max-w-xl mx-auto mb-12 opacity-90">
-            <p class="text-cocoa text-lg md:text-2xl font-light leading-relaxed mb-4">
+        <div class="max-w-xl mx-auto mb-6 opacity-90 px-4">
+            <p class="text-cocoa text-xs md:text-4xl font-light leading-relaxed mb-4 px-2">
                 En GEN Yoga fusionamos <u>movimiento</u> 🏃 , <u>respiración</u> 🧘 y <u>consciencia</u> 🙇 para crear
                 un espacio donde
                 tu <u>cuerpo</u> 🏋️ y tu <u>mente</u> 🧠 encuentren su equilibrio natural 🗽
             </p>
-            <p class="text-olive font-serif text-xl md:text-2xl italic tracking-wide">
+            <p class="text-olive font-serif text-base md:text-4xl italic tracking-wide">
                 tu refugio, tu energía, tu momento
             </p>
         </div>
 
         <!-- Mobile Menu -->
-        <div class="flex flex-col gap-4 mb-12 md:hidden w-full max-w-xs z-30">
+        <div class="flex flex-col gap-3 mb-24 md:hidden w-full max-w-sm z-30 px-6">
             <button onclick="openModal('clases')"
-                class="py-3 border border-cocoa/30 rounded-full text-cocoa tracking-[0.2em] text-sm hover:bg-sand/20 transition backdrop-blur-sm">CLASES</button>
+                class="py-3 border border-cocoa/30 rounded-full text-cocoa tracking-[0.2em] text-xs hover:bg-sand/20 transition backdrop-blur-sm">CLASES</button>
             <button onclick="openModal('precios')"
-                class="py-3 border border-cocoa/30 rounded-full text-cocoa tracking-[0.2em] text-sm hover:bg-sand/20 transition backdrop-blur-sm">TARIFAS</button>
+                class="py-3 border border-cocoa/30 rounded-full text-cocoa tracking-[0.2em] text-xs hover:bg-sand/20 transition backdrop-blur-sm">TARIFAS</button>
             <button onclick="openModal('profesores')"
-                class="py-3 border border-cocoa/30 rounded-full text-cocoa tracking-[0.2em] text-sm hover:bg-sand/20 transition backdrop-blur-sm">MAESTROS</button>
+                class="py-3 border border-cocoa/30 rounded-full text-cocoa tracking-[0.2em] text-xs hover:bg-sand/20 transition backdrop-blur-sm">MAESTROS</button>
             <a href="profile.html"
-                class="block py-3 border border-cocoa/30 rounded-full text-cocoa tracking-[0.2em] text-sm hover:bg-sand/20 transition backdrop-blur-sm text-center relative z-50 cursor-pointer">PERFIL</a>
+                class="block py-3 border border-cocoa/30 rounded-full text-cocoa tracking-[0.2em] text-xs hover:bg-sand/20 transition backdrop-blur-sm text-center relative z-50 cursor-pointer">PERFIL</a>
+
+            <!-- Mobile Social Button -->
+            <div class="flex justify-center mt-[calc(1.5rem+1cm)] w-full">
+                <button onclick="openModal('socials')"
+                    class="text-cocoa/70 hover:text-olive transition duration-300 p-2">
+                    <i data-lucide="instagram" class="w-16 h-16"></i>
+                </button>
+            </div>
         </div>
     </main>
 
     <aside
         class="fixed right-4 md:right-8 lg:right-12 xl:right-32 2xl:right-64 bottom-0 h-full hidden md:flex flex-col justify-center items-center gap-20 md:gap-32 xl:gap-60 px-6 z-20 w-32 md:w-48">
 
-        <button onclick="openModal('profesores')" class="side-btn group">
+        <!-- Imagen Central Hover Derecha (Con Marco Profesional) -->
+        <div id="hover-container-right"
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full border-4 border-cocoa overflow-hidden shadow-2xl flex items-center justify-center opacity-0 transition-opacity duration-500 pointer-events-none z-0">
+            <img id="hover-img-right" src="" alt="" class="w-full h-full object-cover rounded-full">
+        </div>
+
+        <button onclick="openModal('profesores')" class="side-btn group z-10"
+            onmouseenter="showHoverImage('right', 'img/logo_maestros.png')" onmouseleave="hideHoverImage('right')">
             <span
-                class="vertical-text-rl text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-higuen tracking-widest text-cocoa transition-all duration-500">MAESTROS</span>
+                class="vertical-text-rl text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-ubuntu tracking-widest text-cocoa transition-all duration-500">MAESTROS</span>
         </button>
 
-        <a href="profile.html" class="side-btn group">
+        <a href="profile.html" class="side-btn group z-10" onmouseenter="showHoverImage('right', 'img/logo_perfil.png')"
+            onmouseleave="hideHoverImage('right')">
             <span
-                class="vertical-text-rl text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-higuen tracking-widest text-cocoa transition-all duration-500">MI
+                class="vertical-text-rl text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-ubuntu tracking-widest text-cocoa transition-all duration-500">MI
                 PERFIL</span>
         </a>
     </aside>
 
-    <div class="absolute bottom-40 left-1/2 -translate-x-1/2 z-40">
+    <!-- Instagram Icon: Hidden on mobile/tablet, visible on large screens, positioned to avoid overlap -->
+    <div
+        class="hidden xl:block absolute bottom-[calc(8rem)] left-1/2 -translate-x-1/2 z-40 transition-opacity duration-300">
         <button onclick="openModal('socials')"
             class="text-cocoa/70 hover:text-olive hover:scale-110 transition duration-300">
-            <i data-lucide="instagram" class="w-20 h-20"></i>
+            <i data-lucide="instagram" class="w-16 h-16"></i>
         </button>
     </div>
 
     <footer
-        class="absolute bottom-0 left-0 w-full px-12 py-6 flex justify-between items-center text-[9px] md:text-[11px] text-cocoa uppercase tracking-[0.3em] font-sans z-30 border-t border-cocoa/20">
-        <div class="flex items-center gap-6">
+        class="absolute bottom-0 left-0 w-full px-6 py-4 flex flex-col md:flex-row justify-between items-center text-[11px] md:text-[18px] text-cocoa uppercase tracking-[0.3em] font-sans z-30 border-t border-cocoa/20 bg-ivory/30 backdrop-blur-md md:bg-transparent">
+        <div class="flex flex-col md:flex-row items-center gap-2 md:gap-6 mb-2 md:mb-0">
             <span>CALLE JOAQUIN QUIJADA, 11, ALBACETE</span>
             <span class="hidden md:inline opacity-50">|</span>
             <span class="hidden md:inline">HOLA@GENYOGA.COM</span>
         </div>
-        <div class="flex items-center gap-8">
+        <div class="flex items-center gap-4 md:gap-8">
             <a href="#" class="hover:text-olive transition font-medium">TERMS & CONDITIONS</a>
             <span class="font-medium">© 2026 GEN YOGA</span>
-            <span class="text-[9px] opacity-60 ml-4 font-bold">V2.3.0</span>
+            <span class="text-[10px] md:text-[16px] ml-1 md:ml-4 font-bold">V2.4.0</span>
         </div>
     </footer>
 
@@ -160,38 +321,11 @@
 
         <div id="modal-clases" class="modal-content hidden w-full max-w-5xl h-[85vh] overflow-y-auto hide-scrollbar">
             <h2 class="brand-font text-5xl md:text-6xl text-center text-olive mb-16">Horario Semanal</h2>
-            <div class="space-y-6">
-                <div
-                    class="flex flex-col md:flex-row items-center justify-between p-8 border border-cocoa/10 hover:border-olive/50 hover:bg-cocoa/5 transition duration-300 group cursor-pointer">
-                    <div class="flex items-center gap-8">
-                        <span class="text-4xl font-serif text-olive group-hover:text-cocoa transition">07:00</span>
-                        <div class="text-left">
-                            <span class="block text-xl uppercase tracking-widest font-light text-cocoa">Morning
-                                Flow</span>
-                            <span class="text-sm text-slate">Sala Aire • 60 min</span>
-                        </div>
-                    </div>
-                    <div class="mt-4 md:mt-0 flex items-center gap-6">
-                        <span class="text-lg font-serif italic text-cocoa/60">con Elena García</span>
-                        <button
-                            class="px-6 py-2 bg-cocoa text-ivory text-xs uppercase tracking-widest hover:bg-olive hover:text-white transition">Reservar</button>
-                    </div>
-                </div>
-                <div
-                    class="flex flex-col md:flex-row items-center justify-between p-8 border border-cocoa/10 hover:border-olive/50 hover:bg-cocoa/5 transition duration-300 group cursor-pointer">
-                    <div class="flex items-center gap-8">
-                        <span class="text-4xl font-serif text-olive group-hover:text-cocoa transition">09:30</span>
-                        <div class="text-left">
-                            <span class="block text-xl uppercase tracking-widest font-light text-cocoa">Vinyasa
-                                Power</span>
-                            <span class="text-sm text-slate">Sala Fuego • 75 min</span>
-                        </div>
-                    </div>
-                    <div class="mt-4 md:mt-0 flex items-center gap-6">
-                        <span class="text-lg font-serif italic text-cocoa/60">con Marc Soler</span>
-                        <button
-                            class="px-6 py-2 bg-cocoa text-ivory text-xs uppercase tracking-widest hover:bg-olive hover:text-white transition">Reservar</button>
-                    </div>
+            <div id="landing-clases-container" class="space-y-6">
+                <!-- Clases dinámicas aquí -->
+                <div class="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
+                    <i data-lucide="loader-2" class="animate-spin w-10 h-10 text-olive"></i>
+                    <span class="text-xs uppercase tracking-widest font-bold text-gray-500">Cargando clases...</span>
                 </div>
             </div>
         </div>
@@ -225,8 +359,16 @@
             </div>
         </div>
 
-        <div id="modal-profesores" class="modal-content hidden text-center">
-            <h2 class="text-5xl text-olive brand-font">Sección Maestros</h2>
+        <div id="modal-profesores"
+            class="modal-content hidden text-center w-full max-w-6xl h-[85vh] overflow-y-auto hide-scrollbar">
+            <h2 class="text-5xl text-olive brand-font mb-16">Sección Maestros</h2>
+            <div id="landing-profesores-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-4">
+                <!-- Profesores dinámicos aquí -->
+                <div class="col-span-full flex flex-col items-center justify-center py-20 gap-4 opacity-50">
+                    <i data-lucide="loader-2" class="animate-spin w-10 h-10 text-olive"></i>
+                    <span class="text-xs uppercase tracking-widest font-bold text-gray-500">Cargando maestros...</span>
+                </div>
+            </div>
         </div>
         <div id="modal-area-personal" class="modal-content hidden text-center">
             <h2 class="text-5xl text-olive brand-font">Área Privada</h2>
