@@ -215,7 +215,7 @@
     </style>
 </head>
 
-<body class="min-h-screen w-screen relative selection:bg-sand selection:text-cocoa font-sans">
+<body class="h-screen w-screen overflow-hidden relative selection:bg-sand selection:text-cocoa font-sans">
 
     <!-- Background Gradient: Adjusted for better contrast with white text -->
     <div
@@ -229,24 +229,24 @@
 
     <!-- Main Content Container: Flex Column for safe stacking -->
     <div
-        class="relative z-10 w-full min-h-screen flex flex-col items-center justify-between p-4 md:p-8 overflow-x-hidden">
+        class="relative z-10 w-full h-screen max-h-screen flex flex-col items-center justify-between p-4 md:p-8 overflow-hidden">
 
         <!-- HEADER / LOGO -->
-        <div class="flex flex-col items-center mt-[1vh] z-20 transition-all duration-300 relative">
+        <div class="flex flex-col items-center mt-[1vh] z-20 transition-all duration-300 relative flex-shrink-0">
             <h1
-                class="font-ubuntu text-[clamp(3.75rem,8vw,6.5rem)] text-white font-bold tracking-tighter leading-none drop-shadow-sm">
+                class="font-ubuntu text-[clamp(2rem,6vh,6.5rem)] text-white font-bold tracking-tighter leading-none drop-shadow-sm">
                 GEN</h1>
-            <p class="text-white text-[clamp(0.6rem,1.2vw,1.2rem)] tracking-[0.3em] font-medium mt-1">YOGA & WELL-BEING
+            <p class="text-white text-[clamp(0.5rem,1.5vh,1.2rem)] tracking-[0.3em] font-medium mt-1">YOGA & WELL-BEING
             </p>
         </div>
 
         <!-- CENTRAL CONTENT -->
         <div
-            class="flex-grow flex flex-col items-center justify-center text-center max-w-2xl space-y-[2vh] my-[2vh] z-10 px-4">
-            <h2 class="font-sans text-[clamp(4rem,10vh,8rem)] text-white font-medium tracking-wide drop-shadow-md">Yo
+            class="flex-grow flex-shrink flex flex-col items-center justify-center text-center max-w-2xl min-h-0 space-y-[1vh] my-[1vh] z-10 px-4">
+            <h2 class="font-sans text-[clamp(2.5rem,8vh,8rem)] text-white font-medium tracking-wide drop-shadow-md">Yo
                 soy</h2>
 
-            <div class="w-auto h-[clamp(2.5rem,7vh,6rem)] my-[1vh]">
+            <div class="w-auto h-[clamp(2rem,6vh,6rem)] my-[0.5vh]">
                 <svg viewBox="0 0 200 100" fill="none" xmlns="http://www.w3.org/2000/svg"
                     class="w-full h-full drop-shadow-lg scale-125">
                     <path d="M40 80 C 40 80, 80 80, 80 50 C 80 20, 120 20, 120 50 C 120 80, 160 80, 160 80"
@@ -256,12 +256,12 @@
             </div>
 
             <p
-                class="text-white/90 text-[clamp(1.8rem,2vh,1.8rem)] font-light leading-relaxed max-w-4xl mx-auto drop-shadow-sm">
+                class="text-white/90 text-[clamp(0.9rem,1.8vh,1.8rem)] font-light leading-relaxed max-w-4xl mx-auto drop-shadow-sm">
                 En GEN Yoga fusionamos movimiento, respiración y consciencia para crear un espacio donde tu cuerpo y tu
                 mente encuentren su equilibrio natural
             </p>
 
-            <p class="text-white font-medium text-[clamp(2rem,3vh,3rem)] tracking-wide drop-shadow-md mt-[0.5vh]">
+            <p class="text-white font-medium text-[clamp(1.2rem,2.5vh,3rem)] tracking-wide drop-shadow-md mt-[0.5vh]">
                 Tu refugio, tu energía, tu momento
             </p>
         </div>
@@ -326,7 +326,7 @@
                     PERFIL</span>
         </div>
         <!-- FOOTER -->
-        <footer class="w-full flex flex-col items-center gap-4 mt-[2vh] pb-4 z-20 text-white">
+        <footer class="w-full flex flex-col items-center gap-4 mt-[1vh] pb-4 z-20 text-white flex-shrink-0">
             <!-- Instagram Icon -->
             <a href="https://instagram.com" target="_blank"
                 class="hover:text-white/80 transition-colors duration-300 transform hover:scale-110">
@@ -349,7 +349,7 @@
                 <div class="flex flex-col md:flex-row gap-4 md:gap-8 items-center text-center md:text-right">
                     <a href="#" class="hover:text-white transition">Terms & Conditions</a>
                     <span>© 2026 GEN YOGA</span>
-                    <span class="text-white">V2.5.3</span>
+                    <span class="text-white">V2.5.5</span>
                 </div>
             </div>
         </footer>
@@ -368,18 +368,20 @@
 
         <!-- Content for Modals (Same IDs as before for JS compatibility) -->
         <div id="modal-clases"
-            class="modal-content hidden w-full max-w-5xl h-[85vh] overflow-y-auto hide-scrollbar rounded-xl p-8 text-cocoa bg-[linear-gradient(to_bottom,_#FFF9F0_0%,_#E6DCC3_20%,_#AFB090_40%,_#A07F65_65%,_#D27D60_100%)] shadow-2xl border border-white/20">
-            <h2 class="brand-font text-5xl md:text-7xl text-center text-white mb-16 drop-shadow-md">Horario Semanal
+            class="modal-content hidden w-full max-w-[95vw] md:max-w-4xl lg:max-w-5xl h-auto max-h-[85vh] overflow-y-auto hide-scrollbar rounded-xl p-4 md:p-8 text-cocoa bg-[linear-gradient(to_bottom,_#FFF9F0_0%,_#E6DCC3_20%,_#AFB090_40%,_#A07F65_65%,_#D27D60_100%)] shadow-2xl">
+            <h2 class="brand-font text-3xl md:text-5xl lg:text-7xl text-center text-white mb-8 md:mb-16 drop-shadow-md">
+                Horario Semanal
             </h2>
             <div id="landing-clases-container"
-                class="space-y-6 [&>*]:bg-white/80 [&>*]:backdrop-blur-sm [&>*]:rounded-xl [&>*]:border-white/40">
+                class="space-y-6 [&>*]:bg-white/80 [&>*]:backdrop-blur-sm [&>*]:rounded-xl [&>*]:border-white/10">
                 <!-- Clases dinámicas aquí -->
             </div>
         </div>
 
         <div id="modal-precios"
-            class="modal-content hidden w-full max-w-6xl rounded-xl p-8 text-cocoa bg-[linear-gradient(to_bottom,_#FFF9F0_0%,_#E6DCC3_20%,_#AFB090_40%,_#A07F65_65%,_#D27D60_100%)] shadow-2xl border border-white/20">
-            <h2 class="brand-font text-5xl md:text-7xl text-center text-white mb-16 drop-shadow-md">Tarifas</h2>
+            class="modal-content hidden w-full max-w-[95vw] md:max-w-4xl lg:max-w-6xl h-auto max-h-[85vh] overflow-y-auto hide-scrollbar rounded-xl p-4 md:p-8 text-cocoa bg-[linear-gradient(to_bottom,_#FFF9F0_0%,_#E6DCC3_20%,_#AFB090_40%,_#A07F65_65%,_#D27D60_100%)] shadow-2xl">
+            <h2 class="brand-font text-3xl md:text-5xl lg:text-7xl text-center text-white mb-8 md:mb-16 drop-shadow-md">
+                Tarifas</h2>
             <!-- Rate cards content... kept simple for now as focus is on main page -->
             <div class="grid md:grid-cols-3 gap-8 px-4">
                 <!-- ... (Rate cards logic would go here, simplified for this specific edit to focus on landing) ... -->
@@ -399,8 +401,9 @@
         </div>
 
         <div id="modal-profesores"
-            class="modal-content hidden w-full max-w-6xl h-[85vh] overflow-y-auto hide-scrollbar rounded-xl p-8 text-cocoa bg-[linear-gradient(to_bottom,_#FFF9F0_0%,_#E6DCC3_20%,_#AFB090_40%,_#A07F65_65%,_#D27D60_100%)] shadow-2xl border border-white/20">
-            <h2 class="text-5xl md:text-7xl text-white brand-font mb-16 text-center drop-shadow-md">Nuestros
+            class="modal-content hidden w-full max-w-[95vw] md:max-w-4xl lg:max-w-6xl h-auto max-h-[85vh] overflow-y-auto hide-scrollbar rounded-xl p-4 md:p-8 text-cocoa bg-[linear-gradient(to_bottom,_#FFF9F0_0%,_#E6DCC3_20%,_#AFB090_40%,_#A07F65_65%,_#D27D60_100%)] shadow-2xl">
+            <h2 class="text-3xl md:text-5xl lg:text-7xl text-white brand-font mb-8 md:mb-16 text-center drop-shadow-md">
+                Nuestros
                 Maestros
             </h2>
             <div id="landing-profesores-container"
