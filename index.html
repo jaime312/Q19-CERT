@@ -212,6 +212,65 @@
 
             /* Force grid display if we are not in safe mode */
         }
+
+        /* Animation for rotating symbols in the center */
+        @keyframes symbolCycle {
+
+            0%,
+            15% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            20%,
+            95% {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+        }
+
+        .symbol-stack {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .symbol-stack img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            opacity: 0;
+            animation: symbolCycle 15s infinite;
+        }
+
+        /* Stagger delays for 5 items over 15s (3s each) */
+        .symbol-stack img:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .symbol-stack img:nth-child(2) {
+            animation-delay: 3s;
+        }
+
+        .symbol-stack img:nth-child(3) {
+            animation-delay: 6s;
+        }
+
+        .symbol-stack img:nth-child(4) {
+            animation-delay: 9s;
+        }
+
+        .symbol-stack img:nth-child(5) {
+            animation-delay: 12s;
+        }
     </style>
 </head>
 
@@ -246,13 +305,14 @@
             <h2 class="font-sans text-[clamp(2.5rem,8vh,8rem)] text-white font-medium tracking-wide drop-shadow-md">Yo
                 soy</h2>
 
-            <div class="w-auto h-[clamp(2rem,6vh,6rem)] my-[0.5vh]">
-                <svg viewBox="0 0 200 100" fill="none" xmlns="http://www.w3.org/2000/svg"
-                    class="w-full h-full drop-shadow-lg scale-125">
-                    <path d="M40 80 C 40 80, 80 80, 80 50 C 80 20, 120 20, 120 50 C 120 80, 160 80, 160 80"
-                        stroke="white" stroke-width="15" stroke-linecap="round" />
-                    <circle cx="170" cy="70" r="10" fill="white" />
-                </svg>
+            <div class="w-auto h-[clamp(4rem,10vh,10rem)] my-[0.5vh] aspect-square">
+                <div class="symbol-stack">
+                    <img src="img/Diseño sin título (11).png" alt="Símbolo 1">
+                    <img src="img/Diseño sin título (12).png" alt="Símbolo 2">
+                    <img src="img/Diseño sin título (13).png" alt="Símbolo 3">
+                    <img src="img/Diseño sin título (14).png" alt="Símbolo 4">
+                    <img src="img/Diseño sin título (15).png" alt="Símbolo 5">
+                </div>
             </div>
 
             <p
@@ -276,20 +336,20 @@
         -->
 
         <!-- LEFT SIDE NAVIGATION -->
-        <div class="hidden lg:flex flex-col items-center gap-4 absolute left-12 top-1/2 -translate-y-1/2 z-30">
+        <div class="hidden lg:flex flex-col items-start gap-4 absolute left-12 top-1/2 -translate-y-1/2 z-30">
             <button onclick="openModal('clases')" onmouseenter="showHoverImage('left', 'clases')"
                 onmouseleave="hideHoverImage('left')"
                 class="group transition-transform duration-300 hover:scale-105 text-left w-full">
                 <span
-                    class="text-[clamp(1.2rem,4vh,3rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80">CLASES</span>
+                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80">CLASES</span>
             </button>
 
             <!-- Hover Image Spacer: Responsive height -->
             <div id="hover-image-left"
-                class="flex items-center justify-center w-64 h-[clamp(6rem,18vh,16rem)] pointer-events-none transition-opacity duration-500 opacity-0 z-0 relative">
-                <img id="img-clases" src="img/logo_clases.png"
+                class="flex items-center justify-center w-64 h-[clamp(6rem,18vh,16rem)] pointer-events-none transition-opacity duration-500 opacity-0 z-0 relative pr-20">
+                <img id="img-clases" src="img/Clases.png"
                     class="absolute w-full h-full object-contain drop-shadow-2xl hidden" alt="">
-                <img id="img-tarifas" src="img/logo_tarifas.png"
+                <img id="img-tarifas" src="img/Tarifas.png"
                     class="absolute w-full h-full object-contain drop-shadow-2xl hidden" alt="">
             </div>
 
@@ -297,59 +357,60 @@
                 onmouseleave="hideHoverImage('left')"
                 class="group transition-transform duration-300 hover:scale-105 text-left w-full">
                 <span
-                    class="text-[clamp(1rem,4vh,3rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80">TARIFAS</span>
+                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80">TARIFAS</span>
             </button>
         </div>
 
         <!-- RIGHT SIDE NAVIGATION -->
-        <div class="hidden lg:flex flex-col items-center gap-4 absolute right-12 top-1/2 -translate-y-1/2 z-30">
+        <div class="hidden lg:flex flex-col items-end gap-4 absolute right-12 top-1/2 -translate-y-1/2 z-30">
             <button onclick="openModal('profesores')" onmouseenter="showHoverImage('right', 'maestros')"
                 onmouseleave="hideHoverImage('right')"
                 class="group transition-transform duration-300 hover:scale-105 text-right w-full">
                 <span
-                    class="text-[clamp(1rem,4vh,3rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80">MAESTROS</span>
+                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80">MAESTROS</span>
             </button>
 
             <!-- Hover Image Spacer: Responsive height -->
             <div id="hover-image-right"
-                class="flex items-center justify-center w-64 h-[clamp(6rem,18vh,16rem)] pointer-events-none transition-opacity duration-500 opacity-0 z-0 relative">
-                <img id="img-maestros" src="img/logo_maestros.png"
+                class="flex items-center justify-center w-64 h-[clamp(6rem,18vh,16rem)] pointer-events-none transition-opacity duration-500 opacity-0 z-0 relative pl-20">
+                <img id="img-maestros" src="img/Maestros.png"
                     class="absolute w-full h-full object-contain drop-shadow-2xl hidden" alt="">
-                <img id="img-perfil" src="img/logo_perfil.png"
+                <img id="img-perfil" src="img/Mi_perfil.png"
                     class="absolute w-full h-full object-contain drop-shadow-2xl hidden" alt="">
             </div>
 
-            <a href="profile.html"
+            <a href="profile.html" onmouseenter="showHoverImage('right', 'perfil')"
+                onmouseleave="hideHoverImage('right')"
                 class="group transition-transform duration-300 hover:scale-105 block text-right w-full">
                 <span
-                    class="text-[clamp(1rem,4vh,3rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80">MI
+                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80">MI
                     PERFIL</span>
+            </a>
         </div>
         <!-- FOOTER -->
-        <footer class="w-full flex flex-col items-center gap-2 mt-0 pb-2 z-20 text-white flex-shrink-0">
+        <footer class="w-full flex flex-col items-center gap-2 mt-0 z-10 text-white flex-shrink-0">
             <!-- Instagram Icon -->
             <a href="https://instagram.com" target="_blank"
-                class="hover:text-white/80 transition-colors duration-300 transform hover:scale-110">
+                class="hover:text-white transition-colors duration-300 transform hover:scale-110">
                 <i data-lucide="instagram" class="w-12 h-12 md:w-14 md:h-14"></i>
             </a>
 
             <!-- Info Bar -->
             <div
-                class="w-full border-t border-white/30 pt-4 flex flex-col md:flex-row items-center justify-between gap-2 text-xs md:text-sm font-bold tracking-[0.2em] uppercase text-center md:text-left">
+                class="w-full border-t border-white/30 pt-0 flex flex-col md:flex-row items-center justify-between gap-0 text-xs md:text-sm font-bold tracking-[0.2em] uppercase text-center md:text-left">
 
-                <!-- Left: Address & Email -->
-                <div class="flex flex-col md:flex-row gap-4 md:gap-8 items-center">
+                <div class="flex flex-col md:flex-row gap-0 md:gap-0 items-center relative top-3">
                     <span>Calle Joaquin Quijada, 11, Albacete</span>
                     <span class="hidden md:inline text-white/40">|</span>
                     <a href="mailto:hola@genyoga.com"
                         class="hover:text-white/80 transition underline decoration-transparent hover:decoration-white">hola@genyoga.com</a>
                 </div>
 
-                <!-- Right: Legal & Version -->
-                <div class="flex flex-col md:flex-row gap-4 md:gap-8 items-center text-center md:text-right">
+                <div
+                    class="flex flex-col md:flex-row gap-0 md:gap-0 items-center text-center md:text-right relative top-3">
                     <a href="#" class="hover:text-white transition">Terms & Conditions</a>
                     <span>© 2026 GEN YOGA</span>
-                    <span class="text-white">V2.5.6</span>
+                    <span class="text-white">V2.6.1</span>
                 </div>
             </div>
         </footer>
