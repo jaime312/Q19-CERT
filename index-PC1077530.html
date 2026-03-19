@@ -9,7 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Ubuntu:wght@300;400;500;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:wght@400;600;700&display=swap"
         rel="stylesheet">
 
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -22,16 +22,12 @@
             theme: {
                 extend: {
                     colors: {
-                        cocoa: '#26160C',
-                        golden: '#9B7B37',
-                        terracotta: '#E1654E',
-                        mutedbrown: '#7F5040',
-                        mutedgold: '#A69C6A',
-                        beige: '#D3CAB4',
-                        ivory: '#F8F6F2',
-                        slate: '#708090',
-                        sand: '#D3CAB4', /* Alias for beige */
-                        olive: '#9B7B37'  /* Alias for golden */
+                        cocoa: '#5D4037',
+                        lilac: '#D8BFD8',
+                        sand: '#E1C699',
+                        olive: '#A4A05D',
+                        ivory: '#F2E8DF',
+                        slate: '#708090'
                     },
                     spacing: {
                         '100': '25rem',
@@ -42,8 +38,8 @@
                         '200': '50rem',
                     },
                     fontFamily: {
-                        serif: ['Ubuntu', 'sans-serif'],
-                        sans: ['Montserrat', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                        sans: ['Ubuntu', 'sans-serif'],
                         ubuntu: ['Ubuntu', 'sans-serif']
                     }
                 }
@@ -126,8 +122,8 @@
         .ambient-shape {
             position: absolute;
             filter: blur(90px);
-            opacity: 0.1;
-            /* Suavizado para dejar respirar el fondo ivory */
+            opacity: 0.2;
+            /* Mucho más visibles como pidió el usuario */
             border-radius: 50%;
             mix-blend-mode: multiply;
             will-change: transform;
@@ -139,8 +135,8 @@
             width: 70vw;
             /* El doble de grandes */
             height: 70vw;
-            background: #9B7B37;
-            /* Golden */
+            background: #D4A574;
+            /* Sand 1 */
             animation: wander1 35s infinite ease-in-out alternate;
         }
 
@@ -149,8 +145,8 @@
             right: 10%;
             width: 65vw;
             height: 65vw;
-            background: #26160C;
-            /* Dark Brown */
+            background: #8B5A2B;
+            /* Bronze 1 */
             animation: wander2 41s infinite ease-in-out alternate;
         }
 
@@ -159,8 +155,8 @@
             right: 30%;
             width: 45vw;
             height: 45vw;
-            background: #A69C6A;
-            /* Muted Gold */
+            background: #D4A574;
+            /* Sand 2 */
             animation: wander3 37s infinite ease-in-out alternate;
             animation-delay: -10s;
         }
@@ -170,8 +166,8 @@
             left: 10%;
             width: 50vw;
             height: 50vw;
-            background: #7F5040;
-            /* Muted Brown */
+            background: #8B5A2B;
+            /* Bronze 2 */
             animation: wander4 43s infinite ease-in-out alternate;
             animation-delay: -5s;
         }
@@ -283,7 +279,7 @@
 
     <!-- Background Gradient: Adjusted for better contrast with white text -->
     <div
-        class="fixed inset-0 z-0 bg-[linear-gradient(to_bottom,_#F8F6F2_0%,_#D3CAB4_20%,_#A69C6A_40%,_#7F5040_65%,_#26160C_100%)]">
+        class="fixed inset-0 z-0 bg-[linear-gradient(to_bottom,_#FFF9F0_0%,_#E6DCC3_20%,_#AFB090_40%,_#A07F65_65%,_#D27D60_100%)]">
     </div>
 
     <!-- Inner Glow/Highlight to mimic the center spotlight effect -->
@@ -296,17 +292,21 @@
         class="relative z-10 w-full min-h-screen flex flex-col items-center justify-between p-4 md:p-8 overflow-y-auto lg:h-screen lg:overflow-hidden">
 
         <!-- HEADER / LOGO -->
-        <div
-            class="flex flex-col items-center mt-[1vh] z-20 transition-all duration-300 relative flex-shrink-0 select-none">
-            <img src="img/logo_white.png" alt="GEN YOGA Logo"
-                class="h-[clamp(120px,20vh,250px)] w-auto object-contain drop-shadow-2xl hover:scale-[1.02] transition duration-500">
+        <div class="flex flex-col items-center mt-[1vh] z-20 transition-all duration-300 relative flex-shrink-0">
+            <h1
+                class="font-ubuntu text-[clamp(3rem,7vh,8rem)] text-white font-bold tracking-tighter leading-none drop-shadow-sm">
+                GEN</h1>
+            <p class="text-white text-[clamp(1rem,2vh,2rem)] tracking-[0.3em] font-medium mt-1">YOGA & WELL-BEING
+            </p>
         </div>
 
         <!-- CENTRAL CONTENT -->
         <div
-            class="flex-grow flex-shrink flex flex-col items-center justify-center text-center max-w-2xl min-h-0 space-y-[2vh] my-[2vh] z-10 px-4">
+            class="flex-grow flex-shrink flex flex-col items-center justify-center text-center max-w-2xl min-h-0 space-y-[1vh] my-[1vh] z-10 px-4">
+            <h2 class="font-sans text-[clamp(2.5rem,8vh,8rem)] text-white font-medium tracking-wide drop-shadow-md">Yo
+                soy</h2>
 
-            <div class="w-[clamp(8rem,20vh,20rem)] h-[clamp(8rem,20vh,20rem)] my-[1vh]">
+            <div class="w-auto h-[clamp(4rem,10vh,10rem)] my-[0.5vh] aspect-square">
                 <div class="symbol-stack">
                     <img src="img/simbolo1.png" alt="Símbolo 1">
                     <img src="img/simbolo2.png" alt="Símbolo 2">
@@ -411,7 +411,7 @@
         <!-- FOOTER -->
         <footer class="w-full flex flex-col items-center gap-2 mt-0 z-10 text-white flex-shrink-0">
             <!-- Instagram Icon -->
-            <a href="https://www.instagram.com/genyoga.studio" target="_blank"
+            <a href="https://instagram.com" target="_blank"
                 class="hover:text-white transition-colors duration-300 transform hover:scale-110">
                 <i data-lucide="instagram" class="w-12 h-12 md:w-14 md:h-14"></i>
             </a>
@@ -425,7 +425,7 @@
                     <span class="hidden md:inline text-white/50">|</span>
                     <a href="mailto:hola@genyoga.studio"
                         class="hover:text-white/80 transition underline decoration-transparent hover:decoration-white">
-                        Contacto: hola@genyoga.studio</a>
+                        hola@genyoga.studio</a>
                 </div>
 
                 <div class="flex flex-col md:flex-row gap-2 md:gap-3 items-center text-center md:text-right">
@@ -433,7 +433,7 @@
                     <span class="hidden md:inline text-white/50">|</span>
                     <span>© 2026 GEN YOGA</span>
                     <span class="hidden md:inline text-white/50">·</span>
-                    <span class="text-white/80">V2.6.7</span>
+                    <span class="text-white/80">V2.6.6</span>
                 </div>
             </div>
         </footer>

@@ -1,5 +1,3 @@
-/* style.css */
-
 @font-face {
     font-family: 'Ubuntu';
     src: url('fonts/Ubuntu/Ubuntu-Regular.ttf') format('truetype');
@@ -29,25 +27,42 @@
 }
 
 @font-face {
-    font-family: 'GeometricaSans';
-    src: url('fonts/GeometricaSans-Regular.ttf') format('truetype');
-    font-weight: normal;
+    font-family: 'Montserrat Arabic';
+    src: url('fonts/montserrat arabic/Montserrat-Arabic Regular 400.otf') format('opentype');
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Montserrat Arabic';
+    src: url('fonts/montserrat arabic/Montserrat-Arabic Bold 700.otf') format('opentype');
+    font-weight: 700;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Montserrat Arabic';
+    src: url('fonts/montserrat arabic/Montserrat-Arabic Light 300.otf') format('opentype');
+    font-weight: 300;
     font-style: normal;
 }
 
 /* Reglas Base */
 body {
-    background-color: #F2E8DF;
-    /* Ivory */
-    color: #5D4037;
-    /* Cocoa */
-    background-image: radial-gradient(#A4A05D 0.5px, transparent 0.5px);
+    background-color: #f8f6f2; /* Off-white */
+    color: #26160c; /* Dark Brown */
+    background-image: radial-gradient(#9b7b37 0.5px, transparent 0.5px);
     background-size: 20px 20px;
     background-attachment: fixed;
+    font-family: 'Montserrat Arabic', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6, .brand-font {
+    font-family: 'Ubuntu', sans-serif;
 }
 
 .brand-font {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Ubuntu', sans-serif;
 }
 
 .text-shadow-sm {

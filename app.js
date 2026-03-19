@@ -139,12 +139,17 @@ async function fetchClasesLanding() {
 
     console.log("Fetching classes (no date filter on DB)...");
 
-    // Traemos más clases para filtrar en cliente y evitar problemas de zona horaria en DB
+    // Traemos solo clases desde hoy - 2 horas para optimizar
+    const now = new Date();
+    now.setHours(now.getHours() - 2);
+    const nowIso = now.toISOString();
+
     const { data: clases, error } = await client
         .from('clases')
         .select('*, profesores(*)')
+        .gte('fecha_inicio', nowIso)
         .order('fecha_inicio', { ascending: true })
-        .limit(50);
+        .limit(20);
 
     if (error) {
         console.error('Error fetching classes:', error);
@@ -168,9 +173,7 @@ async function fetchClasesLanding() {
     }
 
     // Filtrar en cliente: Solo futuras (o de hoy)
-    const now = new Date();
-    // Restamos unas horas para permitir ver clases que acaban de empezar o del día
-    now.setHours(now.getHours() - 2);
+    // Usamos el 'now' ya declarado arriba
 
     const clasesFuturas = clases.filter(c => {
         const fecha = new Date(c.fecha_inicio);
@@ -215,7 +218,7 @@ function renderClassesLanding(clases) {
             </div>
             <div class="mt-4 md:mt-0 flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
                 <span class="text-lg font-serif italic text-cocoa/60 text-right md:text-left">con ${profName}</span>
-                <a href="profile.html" class="px-6 py-2 bg-cocoa text-ivory text-xs uppercase tracking-widest hover:bg-olive hover:text-white transition rounded-full text-center">Reservar</a>
+                <a href="profile.html" class="px-6 py-2 bg-terracotta text-ivory text-xs uppercase tracking-widest hover:bg-cocoa hover:text-white transition rounded-full text-center">Reservar</a>
             </div>
         `;
         container.appendChild(card);

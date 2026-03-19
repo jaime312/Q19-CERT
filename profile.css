@@ -1,11 +1,39 @@
+@font-face {
+    font-family: 'Ubuntu';
+    src: url('fonts/Ubuntu/Ubuntu-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Ubuntu';
+    src: url('fonts/Ubuntu/Ubuntu-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Montserrat Arabic';
+    src: url('fonts/montserrat arabic/Montserrat-Arabic Regular 400.otf') format('opentype');
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Montserrat Arabic';
+    src: url('fonts/montserrat arabic/Montserrat-Arabic Bold 700.otf') format('opentype');
+    font-weight: 700;
+    font-style: normal;
+}
+
 /* ======================================================= */
 /* 1. ESTILOS BASE Y CONFIGURACIÓN GENERAL                 */
 /* ======================================================= */
 body {
-    font-family: 'Lato', sans-serif;
-    /* Ivory White Theme */
-    background-color: #FAF0E6;
-    color: #5D4037;
+    font-family: 'Montserrat Arabic', sans-serif;
+    /* Brandbook theme */
+    background-color: #f8f6f2;
+    color: #26160c;
 
     /* Configuración por defecto (WEB) */
     cursor: none;
@@ -22,8 +50,11 @@ body {
 h1,
 h2,
 h3,
+h4,
+h5,
+h6,
 .brand-font {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Ubuntu', sans-serif;
 }
 
 /* ======================================================= */
@@ -70,13 +101,13 @@ h3,
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #A4A05D;
+    background: #9B7B37; /* Golden */
     border-radius: 10px;
-    border: 2px solid #A4A05D;
+    border: 2px solid #9B7B37;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #5D4037;
+    background: #26160C; /* Dark Brown */
 }
 
 /* Efecto Cristal */

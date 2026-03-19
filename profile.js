@@ -411,14 +411,19 @@ async function cargarHorarios() {
       <span class="text-xs uppercase tracking-widest font-bold text-gray-500">Cargando clases...</span>
     </div>`;
 
+    // Solo traer clases futuras (desde hoy - 2 horas para permitir ver la actual)
+    const now = new Date();
+    now.setHours(now.getHours() - 2);
+    const nowIso = now.toISOString();
+
     const { data: clases, error: errClases } =
-        await client.from('clases').select('*, profesores(*)').order('fecha_inicio');
+        await client.from('clases')
+            .select('*, profesores(*)')
+            .gte('fecha_inicio', nowIso)
+            .order('fecha_inicio');
 
-    const { data: reservas, error: errReservas } =
-        await client.from('reservas').select('*');
-
-    if (errClases || errReservas) {
-        console.error('Error cargando datos', { errClases, errReservas });
+    if (errClases) {
+        console.error('Error cargando clases', errClases);
         container.innerHTML = '';
         document.getElementById('empty-state').classList.remove('hidden');
         allClasesCache = [];
@@ -430,6 +435,18 @@ async function cargarHorarios() {
         document.getElementById('empty-state').classList.remove('hidden');
         allClasesCache = [];
         return;
+    }
+
+    // Traer solo reservas de estas clases para optimizar consumo
+    const claseIds = clases.map(c => c.id);
+    const { data: reservas, error: errReservas } =
+        await client.from('reservas')
+            .select('*')
+            .in('clase_id', claseIds);
+
+    if (errReservas) {
+        console.error('Error cargando reservas', errReservas);
+        // Continuamos con 0 reservas si falla pero hay clases
     }
     document.getElementById('empty-state').classList.add('hidden');
 
@@ -546,14 +563,14 @@ function renderizarClases() {
                 const btnText = (userBonos < 1 && !isAdmin) ? '0 Bonos' : 'RESERVAR';
 
                 btnAction = `
-                            <button onclick="reservar(${c.id})" class="bg-gradient-to-r from-cocoa to-olive text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform ${disabledClass}">
+                            <button onclick="reservar(${c.id})" class="bg-gradient-to-r from-terracotta to-golden text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform ${disabledClass}">
                                 ${btnText}
                             </button>`;
             }
 
             const adminTrash = `<button onclick="borrarClase(${c.id})" class="admin-only hidden text-cocoa/20 hover:text-red-500 transition ml-2 p-1" title="Eliminar Clase"><i class="ph-bold ph-trash"></i></button>`;
 
-            const profesorName = c.profesores ? c.profesores.nombre : 'Staff Q19';
+            const profesorName = c.profesores ? c.profesores.nombre : 'Staff GEN Yoga';
             const profesorFoto = c.profesores && c.profesores.foto_url ? c.profesores.foto_url : null;
             const profesorAvatar = profesorFoto ? `<img src="${profesorFoto}" class="w-full h-full object-cover">` : `<div class="w-full h-full bg-olive/5 flex items-center justify-center text-olive text-[10px] font-bold">${profesorName.charAt(0)}</div>`;
 
@@ -2048,34 +2065,34 @@ function switchPublicView(viewName) {
     if (vProfesores) vProfesores.classList.add('hidden');
     if (vAsistencias) vAsistencias.classList.add('hidden');
 
-    btnHorarios.classList.remove('border-white', 'text-white');
-    btnHorarios.classList.add('border-transparent', 'text-white/60');
-    btnProfesores.classList.remove('border-white', 'text-white');
-    btnProfesores.classList.add('border-transparent', 'text-white/60');
+    btnHorarios.classList.remove('border-cocoa', 'text-cocoa');
+    btnHorarios.classList.add('border-transparent', 'text-cocoa/60');
+    btnProfesores.classList.remove('border-cocoa', 'text-cocoa');
+    btnProfesores.classList.add('border-transparent', 'text-cocoa/60');
     if (btnMisClases) {
-        btnMisClases.classList.remove('border-white', 'text-white');
-        btnMisClases.classList.add('border-transparent', 'text-white/60');
+        btnMisClases.classList.remove('border-cocoa', 'text-cocoa');
+        btnMisClases.classList.add('border-transparent', 'text-cocoa/60');
     }
 
     if (viewName === 'horarios') {
         vHorarios.classList.remove('hidden');
-        btnHorarios.classList.add('border-white', 'text-white');
-        btnHorarios.classList.remove('border-transparent', 'text-white/60');
+        btnHorarios.classList.add('border-cocoa', 'text-cocoa');
+        btnHorarios.classList.remove('border-transparent', 'text-cocoa/60');
     } else if (viewName === 'profesores') {
         if (vProfesores) {
             vProfesores.classList.remove('hidden');
             renderProfesoresPublic();
         }
-        btnProfesores.classList.add('border-white', 'text-white');
-        btnProfesores.classList.remove('border-transparent', 'text-white/60');
+        btnProfesores.classList.add('border-cocoa', 'text-cocoa');
+        btnProfesores.classList.remove('border-transparent', 'text-cocoa/60');
     } else if (viewName === 'mis-clases') {
         if (vAsistencias) {
             vAsistencias.classList.remove('hidden');
             cargarAsistenciasPorClase();
         }
         if (btnMisClases) {
-            btnMisClases.classList.add('border-white', 'text-white');
-            btnMisClases.classList.remove('border-transparent', 'text-white/60');
+            btnMisClases.classList.add('border-cocoa', 'text-cocoa');
+            btnMisClases.classList.remove('border-transparent', 'text-cocoa/60');
         }
     }
 }
