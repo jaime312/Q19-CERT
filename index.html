@@ -137,10 +137,9 @@
             top: 10%;
             left: 10%;
             width: 70vw;
-            /* El doble de grandes */
             height: 70vw;
-            background: #9B7B37;
-            /* Golden */
+            background: #D27D60;
+            /* Terracotta */
             animation: wander1 35s infinite ease-in-out alternate;
         }
 
@@ -149,8 +148,8 @@
             right: 10%;
             width: 65vw;
             height: 65vw;
-            background: #26160C;
-            /* Dark Brown */
+            background: #B48A47;
+            /* Golden Ochre */
             animation: wander2 41s infinite ease-in-out alternate;
         }
 
@@ -159,8 +158,8 @@
             right: 30%;
             width: 45vw;
             height: 45vw;
-            background: #A69C6A;
-            /* Muted Gold */
+            background: #8C8658;
+            /* Olive Green */
             animation: wander3 37s infinite ease-in-out alternate;
             animation-delay: -10s;
         }
@@ -170,8 +169,8 @@
             left: 10%;
             width: 50vw;
             height: 50vw;
-            background: #7F5040;
-            /* Muted Brown */
+            background: #E6DCC3;
+            /* Soft Beige */
             animation: wander4 43s infinite ease-in-out alternate;
             animation-delay: -5s;
         }
@@ -281,9 +280,8 @@
 <body
     class="min-h-screen w-screen overflow-x-hidden relative selection:bg-sand selection:text-cocoa font-sans lg:h-screen lg:overflow-hidden">
 
-    <!-- Background Gradient: Adjusted for better contrast with white text -->
-    <div
-        class="fixed inset-0 z-0 bg-[linear-gradient(to_bottom,_#F8F6F2_0%,_#D3CAB4_20%,_#A69C6A_40%,_#7F5040_65%,_#26160C_100%)]">
+    <!-- Background Gradient: Inspired by user image (Terracotta, Gold, Olive) -->
+    <div class="fixed inset-0 z-0 bg-[linear-gradient(to_bottom,_#E6DCC3_0%,_#D27D60_40%,_#B48A47_70%,_#8C8658_100%)]">
     </div>
 
     <!-- Inner Glow/Highlight to mimic the center spotlight effect -->
@@ -291,15 +289,41 @@
         class="fixed inset-0 z-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.15)_0%,transparent_50%)] pointer-events-none">
     </div>
 
+    <!-- Ambient background shapes (ZEN & FRESH) -->
+    <div class="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div class="ambient-shape shape-1"></div>
+        <div class="ambient-shape shape-2"></div>
+        <div class="ambient-shape shape-3"></div>
+        <div class="ambient-shape shape-4"></div>
+    </div>
+
     <!-- Main Content Container: Flex Column for safe stacking -->
     <div
-        class="relative z-10 w-full min-h-screen flex flex-col items-center justify-between p-4 md:p-8 overflow-y-auto lg:h-screen lg:overflow-hidden">
+        class="relative z-10 w-full min-h-screen flex flex-col items-center justify-between pt-4 pb-2 md:pt-8 md:pb-4 overflow-y-auto lg:h-screen lg:overflow-hidden">
 
         <!-- HEADER / LOGO -->
-        <div
-            class="flex flex-col items-center mt-[1vh] z-20 transition-all duration-300 relative flex-shrink-0 select-none">
-            <img src="img/logo_white.png" alt="GEN YOGA Logo"
-                class="h-[clamp(120px,20vh,250px)] w-auto object-contain drop-shadow-2xl hover:scale-[1.02] transition duration-500">
+        <div id="logo-container" onclick="triggerLogoFantasy()"
+            class="flex flex-col items-center mt-[1vh] z-20 transition-all duration-300 relative flex-shrink-0 select-none cursor-pointer group">
+
+            <!-- Static Image Logo -->
+            <img id="main-logo-img" src="img/logo1.png" alt="GEN YOGA Logo"
+                class="h-[clamp(180px,30vh,450px)] w-auto object-contain drop-shadow-2xl hover:scale-[1.02] transition duration-500">
+
+            <!-- Fantasy Snake SVG (Hidden by default) -->
+            <div id="snake-fantasy-overlay"
+                class="absolute inset-0 opacity-0 pointer-events-none transition-opacity duration-300 flex items-center justify-center">
+                <svg viewBox="0 0 500 200" class="w-full h-full max-h-[clamp(180px,30vh,450px)]">
+                    <!-- Snake G Path -->
+                    <path id="snake-path"
+                        d="M120,100 C120,60 160,40 200,40 C240,40 280,60 280,100 C280,140 240,160 200,160 C180,160 160,155 145,145"
+                        fill="none" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"
+                        class="snake-morph" />
+                    <!-- EN YOGA Text -->
+                    <text x="210" y="115" class="fantasy-text" fill="white"
+                        style="font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 70px; letter-spacing: 12px; opacity: 0;">EN
+                        YOGA</text>
+                </svg>
+            </div>
         </div>
 
         <!-- CENTRAL CONTENT -->
@@ -317,12 +341,12 @@
             </div>
 
             <p
-                class="text-white/90 text-[clamp(1.1rem,2.2vh,2rem)] font-light leading-relaxed max-w-4xl mx-auto drop-shadow-sm">
+                class="text-white/90 text-[clamp(1.3rem,2.8vh,2.5rem)] font-light leading-relaxed max-w-5xl mx-auto drop-shadow-sm">
                 En GEN Yoga fusionamos movimiento, respiración y consciencia para crear un espacio donde tu cuerpo y tu
                 mente encuentren su equilibrio natural
             </p>
 
-            <p class="text-white font-medium text-[clamp(1.2rem,2.5vh,3rem)] tracking-wide drop-shadow-md mt-[0.5vh]">
+            <p class="text-white font-medium text-[clamp(1.5rem,3.2vh,3.5rem)] tracking-wide drop-shadow-md mt-[0.5vh]">
                 Tu refugio, tu energía, tu momento
             </p>
         </div>
@@ -357,7 +381,7 @@
         -->
 
         <!-- LEFT SIDE NAVIGATION -->
-        <div class="hidden lg:flex flex-col items-start gap-4 absolute left-12 top-1/2 -translate-y-1/2 z-30">
+        <div class="hidden lg:flex flex-col items-center gap-4 absolute left-12 top-1/2 -translate-y-1/2 z-30">
             <button onclick="openModal('clases')" onmouseenter="showHoverImage('left', 'clases')"
                 onmouseleave="hideHoverImage('left')"
                 class="group transition-transform duration-300 hover:scale-105 text-left w-full">
@@ -367,7 +391,7 @@
 
             <!-- Hover Image Spacer: Responsive height -->
             <div id="hover-image-left"
-                class="flex items-center justify-center w-64 h-[clamp(6rem,18vh,16rem)] pointer-events-none transition-opacity duration-500 opacity-0 z-0 relative pr-20">
+                class="flex items-center justify-center w-64 h-[clamp(6rem,18vh,16rem)] pointer-events-none transition-opacity duration-500 opacity-0 z-0 relative">
                 <img id="img-clases" src="img/clases.png"
                     class="absolute w-full h-full object-contain drop-shadow-2xl hidden" alt="">
                 <img id="img-tarifas" src="img/tarifas.png"
@@ -383,7 +407,7 @@
         </div>
 
         <!-- RIGHT SIDE NAVIGATION -->
-        <div class="hidden lg:flex flex-col items-end gap-4 absolute right-12 top-1/2 -translate-y-1/2 z-30">
+        <div class="hidden lg:flex flex-col items-center gap-4 absolute right-12 top-1/2 -translate-y-1/2 z-30">
             <button onclick="openModal('profesores')" onmouseenter="showHoverImage('right', 'maestros')"
                 onmouseleave="hideHoverImage('right')"
                 class="group transition-transform duration-300 hover:scale-105 text-right w-full">
@@ -393,7 +417,7 @@
 
             <!-- Hover Image Spacer: Responsive height -->
             <div id="hover-image-right"
-                class="flex items-center justify-center w-64 h-[clamp(6rem,18vh,16rem)] pointer-events-none transition-opacity duration-500 opacity-0 z-0 relative pl-20">
+                class="flex items-center justify-center w-64 h-[clamp(6rem,18vh,16rem)] pointer-events-none transition-opacity duration-500 opacity-0 z-0 relative">
                 <img id="img-maestros" src="img/maestros.png"
                     class="absolute w-full h-full object-contain drop-shadow-2xl hidden" alt="">
                 <img id="img-perfil" src="img/miperfil.png"
@@ -418,14 +442,17 @@
 
             <!-- Info Bar -->
             <div
-                class="w-full border-t border-white/30 pt-3 pb-4 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-6 text-xs md:text-sm font-bold tracking-[0.2em] uppercase text-center md:text-left">
+                class="w-full border-t border-white/30 pt-3 pb-1 px-6 md:px-12 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-6 text-xs md:text-sm font-bold tracking-[0.2em] uppercase text-center md:text-left">
 
                 <div class="flex flex-col md:flex-row gap-2 md:gap-3 items-center">
                     <span>Calle San Carlos, 2, Albacete</span>
                     <span class="hidden md:inline text-white/50">|</span>
-                    <a href="mailto:hola@genyoga.studio"
-                        class="hover:text-white/80 transition underline decoration-transparent hover:decoration-white">
-                        Contacto: hola@genyoga.studio</a>
+                    <div class="flex items-center gap-1">
+                        <span class="text-white">CONTACTO:</span>
+                        <a href="mailto:hola@genyoga.studio"
+                            class="hover:text-white transition underline decoration-transparent hover:decoration-white">
+                            hola@genyoga.studio</a>
+                    </div>
                 </div>
 
                 <div class="flex flex-col md:flex-row gap-2 md:gap-3 items-center text-center md:text-right">
@@ -433,7 +460,7 @@
                     <span class="hidden md:inline text-white/50">|</span>
                     <span>© 2026 GEN YOGA</span>
                     <span class="hidden md:inline text-white/50">·</span>
-                    <span class="text-white/80">V2.6.7</span>
+                    <span class="text-white/80">V2.6.9</span>
                 </div>
             </div>
         </footer>
@@ -452,7 +479,7 @@
 
         <!-- Content for Modals (Same IDs as before for JS compatibility) -->
         <div id="modal-clases"
-            class="modal-content hidden w-full max-w-[95vw] md:max-w-4xl lg:max-w-5xl h-auto max-h-[85vh] overflow-y-auto hide-scrollbar rounded-xl p-4 md:p-8 text-cocoa bg-[linear-gradient(to_bottom,_#FFF9F0_0%,_#E6DCC3_20%,_#AFB090_40%,_#A07F65_65%,_#D27D60_100%)] shadow-2xl">
+            class="modal-content hidden w-full max-w-[95vw] md:max-w-4xl lg:max-w-5xl h-auto max-h-[85vh] overflow-y-auto hide-scrollbar rounded-xl p-4 md:p-8 text-cocoa bg-[linear-gradient(to_bottom,_#E6DCC3_0%,_#D27D60_40%,_#B48A47_70%,_#8C8658_100%)] shadow-2xl">
             <h2 class="brand-font text-3xl md:text-5xl lg:text-7xl text-center text-white mb-8 md:mb-16 drop-shadow-md">
                 Horario Semanal
             </h2>
@@ -463,7 +490,7 @@
         </div>
 
         <div id="modal-precios"
-            class="modal-content hidden w-full max-w-[95vw] md:max-w-4xl lg:max-w-6xl h-auto max-h-[85vh] overflow-y-auto hide-scrollbar rounded-xl p-4 md:p-8 text-cocoa bg-[linear-gradient(to_bottom,_#FFF9F0_0%,_#E6DCC3_20%,_#AFB090_40%,_#A07F65_65%,_#D27D60_100%)] shadow-2xl">
+            class="modal-content hidden w-full max-w-[95vw] md:max-w-4xl lg:max-w-6xl h-auto max-h-[85vh] overflow-y-auto hide-scrollbar rounded-xl p-4 md:p-8 text-cocoa bg-[linear-gradient(to_bottom,_#E6DCC3_0%,_#D27D60_40%,_#B48A47_70%,_#8C8658_100%)] shadow-2xl">
             <h2 class="brand-font text-3xl md:text-5xl lg:text-7xl text-center text-white mb-8 md:mb-16 drop-shadow-md">
                 Tarifas</h2>
             <!-- Rate cards content... kept simple for now as focus is on main page -->
@@ -485,7 +512,7 @@
         </div>
 
         <div id="modal-profesores"
-            class="modal-content hidden w-full max-w-[95vw] md:max-w-4xl lg:max-w-6xl h-auto max-h-[85vh] overflow-y-auto hide-scrollbar rounded-xl p-4 md:p-8 text-cocoa bg-[linear-gradient(to_bottom,_#FFF9F0_0%,_#E6DCC3_20%,_#AFB090_40%,_#A07F65_65%,_#D27D60_100%)] shadow-2xl">
+            class="modal-content hidden w-full max-w-[95vw] md:max-w-4xl lg:max-w-6xl h-auto max-h-[85vh] overflow-y-auto hide-scrollbar rounded-xl p-4 md:p-8 text-cocoa bg-[linear-gradient(to_bottom,_#E6DCC3_0%,_#D27D60_40%,_#B48A47_70%,_#8C8658_100%)] shadow-2xl">
             <h2 class="text-3xl md:text-5xl lg:text-7xl text-white brand-font mb-8 md:mb-16 text-center drop-shadow-md">
                 Nuestros
                 Maestros

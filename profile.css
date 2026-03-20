@@ -101,9 +101,9 @@ h6,
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #9B7B37; /* Golden */
+    background: #B48A47; /* Golden Ochre */
     border-radius: 10px;
-    border: 2px solid #9B7B37;
+    border: 2px solid #B48A47;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -133,15 +133,15 @@ h6,
 
 .calendar-day:hover:not(.disabled):not(.other-month) {
     transform: scale(1.05);
-    background: linear-gradient(135deg, #A4A05D, #5D4037);
+    background: linear-gradient(135deg, #D27D60, #8C8658);
     color: white;
 }
 
 .calendar-day.selected {
-    background: linear-gradient(135deg, #A4A05D, #5D4037) !important;
+    background: linear-gradient(135deg, #D27D60, #8C8658) !important;
     color: white !important;
     font-weight: bold;
-    box-shadow: 0 4px 12px rgba(164, 160, 93, 0.3);
+    box-shadow: 0 4px 12px rgba(210, 125, 96, 0.3);
 }
 
 .calendar-day.has-classes::after {
@@ -150,7 +150,7 @@ h6,
     bottom: 4px;
     width: 4px;
     height: 4px;
-    background: #5D4037;
+    background: #8C8658;
     border-radius: 50%;
 }
 
@@ -159,7 +159,7 @@ h6,
 }
 
 .calendar-day.disabled {
-    color: #E1C699;
+    color: #E6DCC3;
     /* Sand */
     filter: grayscale(1);
     cursor: not-allowed;
@@ -167,13 +167,13 @@ h6,
 }
 
 .calendar-day.other-month {
-    color: #E1C699;
+    color: #E6DCC3;
     /* Sand */
     opacity: 0.3;
 }
 
 .calendar-day.today {
-    border: 2px solid #A4A05D;
+    border: 2px solid #D27D60;
     font-weight: bold;
 }
 

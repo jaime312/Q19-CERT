@@ -301,3 +301,17 @@ async function setupProfileLink() {
         });
     }
 }
+
+// 7. FANTASY SNAKE ANIMATION
+window.triggerLogoFantasy = function() {
+    const container = document.getElementById('logo-container');
+    if (!container || container.classList.contains('fantasy-active')) return;
+
+    container.classList.add('fantasy-active');
+    console.log("🐍 G-Snake fantasy initiated!");
+
+    // Clean up after animation (6s duration defined in CSS + buffer)
+    setTimeout(() => {
+        container.classList.remove('fantasy-active');
+    }, 7000);
+}

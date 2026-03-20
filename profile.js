@@ -92,7 +92,7 @@ document.getElementById('form-login').addEventListener('submit', async (e) => {
         icon: 'error',
         title: 'Ups...',
         text: 'Credenciales incorrectas.',
-        confirmButtonColor: '#A4A05D'
+        confirmButtonColor: '#D27D60'
     });
     else Swal.close();
 });
@@ -129,7 +129,7 @@ document.getElementById('form-register').addEventListener('submit', async (e) =>
             icon: 'success',
             title: '¡Bienvenido a gen Yoga!',
             text: '¡Tu cuenta ha sido creada con éxito!.',
-            confirmButtonColor: '#A4A05D'
+            confirmButtonColor: '#D27D60'
         });
     }
 });
@@ -652,7 +652,7 @@ async function reservar(claseId) {
         title: 'Sin bonos',
         text: 'Necesitas adquirir un bono para reservar.',
         confirmButtonText: 'Entendido',
-        confirmButtonColor: '#A4A05D'
+        confirmButtonColor: '#D27D60'
     });
 
     try {
@@ -699,9 +699,9 @@ async function cancelar(reservaId) {
         title: '¿Cancelar reserva?',
         text: "Se te devolverá el bono a tu cuenta.",
         icon: 'warning',
-        iconColor: '#A4A05D',
+        iconColor: '#D27D60',
         showCancelButton: true,
-        confirmButtonColor: '#5D4037',
+        confirmButtonColor: '#8C8658',
         cancelButtonColor: '#9ca3af',
         confirmButtonText: 'Sí, cancelar'
     });

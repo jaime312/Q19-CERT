@@ -24,15 +24,15 @@
                 extend: {
                     colors: {
                         cocoa: '#26160C',
-                        golden: '#9B7B37',
-                        terracotta: '#E1654E',
+                        golden: '#B48A47',
+                        terracotta: '#D27D60',
                         mutedbrown: '#7F5040',
                         mutedgold: '#A69C6A',
-                        beige: '#D3CAB4',
+                        beige: '#E6DCC3',
                         ivory: '#F8F6F2',
                         slate: '#708090',
-                        sand: '#D3CAB4', /* Alias for beige */
-                        olive: '#9B7B37'  /* Alias for golden */
+                        sand: '#E6DCC3', /* Alias for beige */
+                        olive: '#8C8658'  /* Alias for golden */
                     },
                     fontFamily: {
                         serif: ['Ubuntu', 'serif'],
@@ -50,14 +50,14 @@
 </head>
 
 <body
-    class="antialiased min-h-screen w-screen overflow-x-hidden relative selection:bg-mutedgold selection:text-cocoa font-sans bg-[linear-gradient(to_bottom,_#F8F6F2_0%,_#D3CAB4_20%,_#A69C6A_40%,_#7F5040_65%,_#26160C_100%)]">
+    class="antialiased min-h-screen w-screen overflow-x-hidden relative selection:bg-mutedgold selection:text-cocoa font-sans bg-[linear-gradient(to_bottom,_#E6DCC3_0%,_#D27D60_40%,_#B48A47_70%,_#8C8658_100%)]">
 
-    <!-- Ambient Background Shapes (Replicated from Index) -->
+    <!-- Ambient Background Shapes (Sync with Index) -->
     <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
         <div
-            class="absolute top-[10%] left-[10%] w-[60vw] h-[60vw] bg-[#9B7B37] rounded-full blur-[90px] opacity-10 animate-pulse mix-blend-multiply">
+            class="absolute top-[10%] left-[10%] w-[60vw] h-[60vw] bg-[#D27D60] rounded-full blur-[90px] opacity-10 animate-pulse mix-blend-multiply">
         </div>
-        <div class="absolute bottom-[10%] right-[10%] w-[50vw] h-[50vw] bg-[#26160C] rounded-full blur-[90px] opacity-10 animate-pulse mix-blend-multiply"
+        <div class="absolute bottom-[10%] right-[10%] w-[50vw] h-[50vw] bg-[#B48A47] rounded-full blur-[90px] opacity-10 animate-pulse mix-blend-multiply"
             style="animation-delay: 2s;"></div>
     </div>
 
@@ -65,7 +65,7 @@
         <!-- Overlay removed for ivory theme -->
 
         <a href="index.html"
-            class="absolute top-6 left-6 z-20 bg-cocoa text-ivory px-6 py-3 rounded-xl font-bold text-[10px] md:text-xs uppercase tracking-widest hover:bg-olive transition shadow-lg hover:scale-105 active:scale-95 flex items-center gap-2 group">
+            class="absolute top-6 left-6 z-20 bg-white/20 backdrop-blur-md border border-white/30 text-white px-6 py-3 rounded-xl font-bold text-[10px] md:text-xs uppercase tracking-widest hover:bg-white/30 transition shadow-lg hover:scale-105 active:scale-95 flex items-center gap-2 group">
             <i class="ph-bold ph-arrow-left group-hover:-translate-x-1 transition"></i> Volver a inicio
         </a>
 
@@ -76,7 +76,7 @@
                     <i class="ph-fill ph-sparkle text-white"></i> Studio & Wellness
                 </div>
                 <!-- Hero Logo replaces text -->
-                <img src="img/logo_white.png" alt="GEN Yoga Logo" class="h-24 md:h-32 lg:h-40 w-auto object-contain drop-shadow-lg mb-6 mx-auto lg:mx-0">
+                <img src="img/logo1.png" alt="GEN Yoga Logo" class="h-24 md:h-32 lg:h-40 w-auto object-contain drop-shadow-lg mb-6 mx-auto lg:mx-0">
                 <p
                     class="text-white/90 text-lg md:text-2xl font-light leading-relaxed max-w-lg mx-auto lg:mx-0 mb-10 drop-shadow-sm">
                     Descubre tu mejor versión a través del movimiento consciente.
@@ -199,9 +199,9 @@
             class="w-full max-w-[1400px] bg-white/80 backdrop-blur-2xl md:rounded-[2.5rem] shadow-2xl flex flex-col min-h-screen md:min-h-[90vh] overflow-hidden border border-cocoa/10 relative">
             <header class="bg-white/70 backdrop-blur-md sticky top-0 z-50 border-b border-cocoa/10 shadow-sm">
                 <div class="max-w-7xl mx-auto px-4 h-20 flex justify-between items-center">
-                    <div class="flex items-center gap-3 group cursor-default">
-                        <img src="img/logo_black.png" alt="GEN Yoga Logo" class="h-12 w-auto object-contain drop-shadow-md group-hover:scale-105 transition duration-300">
-                    </div>
+                    <a href="index.html" class="flex items-center gap-3 group">
+                        <img src="img/logo1.png" alt="GEN Yoga Logo" class="h-12 w-auto object-contain drop-shadow-md group-hover:scale-105 transition duration-300 brightness-0">
+                    </a>
 
                     <div class="flex items-center gap-4 sm:gap-8">
                         <div class="flex flex-col items-end">
@@ -532,7 +532,7 @@
                 <div class="max-w-6xl mx-auto px-4 text-center">
                     <div
                         class="w-14 h-14 bg-white rounded-full flex items-center justify-center mx-auto mb-5 border border-cocoa/10 shadow-sm overflow-hidden p-3">
-                        <img src="img/logo_black.png" alt="GEN Yoga" class="w-full h-full object-contain opacity-40">
+                        <img src="img/logo1.png" alt="GEN Yoga" class="w-full h-full object-contain opacity-40">
                     </div>
                     <p class="brand-font font-bold text-cocoa text-xl mb-1">GEN Yoga</p>
                     <p class="text-cocoa/60 text-sm mb-8 max-w-md mx-auto leading-relaxed">
