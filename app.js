@@ -5,7 +5,6 @@ const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
 const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
 const client = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-// 1. INICIALIZAR E INTERACCIONES BÁSICAS
 document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
     fetchClasesLanding();
@@ -302,16 +301,28 @@ async function setupProfileLink() {
     }
 }
 
-// 7. FANTASY SNAKE ANIMATION
+// 7. FANTASY VIDEO LOGO
 window.triggerLogoFantasy = function() {
+    const video = document.getElementById('logo-video');
     const container = document.getElementById('logo-container');
-    if (!container || container.classList.contains('fantasy-active')) return;
+    if (!video) return;
 
-    container.classList.add('fantasy-active');
-    console.log("🐍 G-Snake fantasy initiated!");
-
-    // Clean up after animation (6s duration defined in CSS + buffer)
-    setTimeout(() => {
+    if (!video.paused) {
+        // Stop animation and reset to first frame
+        video.pause();
+        video.currentTime = 0;
         container.classList.remove('fantasy-active');
-    }, 7000);
+    } else {
+        // Start animation
+        video.play().then(() => {
+            container.classList.add('fantasy-active');
+        }).catch(err => {
+            console.error("Video play failed:", err);
+        });
+    }
+
+    video.onended = () => {
+        container.classList.remove('fantasy-active');
+        video.currentTime = 0;
+    };
 }
