@@ -3,6 +3,7 @@
     src: url('fonts/Ubuntu/Ubuntu-Regular.ttf') format('truetype');
     font-weight: 400;
     font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
@@ -10,6 +11,7 @@
     src: url('fonts/Ubuntu/Ubuntu-Bold.ttf') format('truetype');
     font-weight: 700;
     font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
@@ -17,6 +19,7 @@
     src: url('fonts/Ubuntu/Ubuntu-Light.ttf') format('truetype');
     font-weight: 300;
     font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
@@ -24,27 +27,31 @@
     src: url('fonts/Ubuntu/Ubuntu-Medium.ttf') format('truetype');
     font-weight: 500;
     font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
     font-family: 'Montserrat Arabic';
-    src: url("fonts/montserrat arabic/Montserrat-Arabic Regular 400.otf") format('opentype');
+    src: url("fonts/montserrat%20arabic/Montserrat-Arabic%20Regular%20400.otf") format('opentype');
     font-weight: 400;
     font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
     font-family: 'Montserrat Arabic';
-    src: url("fonts/montserrat arabic/Montserrat-Arabic Bold 700.otf") format('opentype');
+    src: url("fonts/montserrat%20arabic/Montserrat-Arabic%20Bold%20700.otf") format('opentype');
     font-weight: 700;
     font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
     font-family: 'Montserrat Arabic';
-    src: url("fonts/montserrat arabic/Montserrat-Arabic Light 300.otf") format('opentype');
+    src: url("fonts/montserrat%20arabic/Montserrat-Arabic%20Light%20300.otf") format('opentype');
     font-weight: 300;
     font-style: normal;
+    font-display: swap;
 }
 
 /* Reglas Base */
