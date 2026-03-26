@@ -354,26 +354,37 @@
             <p class="text-white font-medium text-[clamp(1.5rem,3.2vh,3.5rem)] tracking-wide drop-shadow-lg mt-[0.5vh]">
                 Tu refugio, tu energía, tu momento
             </p>
+
+            <!-- Instagram Button (below tagline) -->
+            <a href="https://www.instagram.com/genyoga.studio" target="_blank"
+                class="inline-flex items-center gap-2 mt-[1.5vh] text-white/80 hover:text-white transition-colors duration-300 transform hover:scale-110">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 md:w-12 md:h-12" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line>
+                </svg>
+            </a>
         </div>
 
         <!-- MOBILE NAVIGATION (Visible only on mobile) -->
         <div class="lg:hidden w-full flex items-center justify-center px-4 mt-8 z-30 mb-8 flex-shrink-0">
             <div class="flex flex-col gap-2 w-full max-w-[280px]">
-                <button onclick="openModal('mod-clases')"
+                <button onclick="openModal('clases')"
                     class="btn-nav-mobile group relative overflow-hidden rounded-xl bg-white/20 border border-white/30 p-4 transition-all active:scale-95">
                     <span
                         class="relative z-10 flex items-center justify-between !text-white font-bold tracking-widest text-lg">
                         CLASES <i data-lucide="chevron-right" class="w-5 h-5 opacity-70"></i>
                     </span>
                 </button>
-                <button onclick="openModal('mod-tarifas')"
+                <button onclick="openModal('precios')"
                     class="btn-nav-mobile group relative overflow-hidden rounded-xl bg-white/20 border border-white/30 p-4 transition-all active:scale-95">
                     <span
                         class="relative z-10 flex items-center justify-between !text-white font-bold tracking-widest text-lg">
                         TARIFAS <i data-lucide="chevron-right" class="w-5 h-5 opacity-70"></i>
                     </span>
                 </button>
-                <button onclick="openModal('mod-profesores')"
+                <button onclick="openModal('profesores')"
                     class="btn-nav-mobile group relative overflow-hidden rounded-xl bg-white/20 border border-white/30 p-4 transition-all active:scale-95">
                     <span
                         class="relative z-10 flex items-center justify-between !text-white font-bold tracking-widest text-lg">
@@ -403,9 +414,9 @@
         <div class="hidden lg:flex flex-col items-center gap-4 absolute left-12 top-1/2 -translate-y-1/2 z-30">
             <button onclick="openModal('clases')" onmouseenter="showHoverImage('left', 'clases')"
                 onmouseleave="hideHoverImage('left')"
-                class="group transition-transform duration-300 hover:scale-105 text-left w-full">
+                class="group transition-all duration-500 ease-out hover:scale-105 text-left w-full">
                 <span
-                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80">CLASES</span>
+                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80 transition-all duration-500">CLASES</span>
             </button>
 
             <!-- Hover Image Spacer: Responsive height -->
@@ -419,9 +430,9 @@
 
             <button onclick="openModal('precios')" onmouseenter="showHoverImage('left', 'tarifas')"
                 onmouseleave="hideHoverImage('left')"
-                class="group transition-transform duration-300 hover:scale-105 text-left w-full">
+                class="group transition-all duration-500 ease-out hover:scale-105 text-left w-full">
                 <span
-                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80">TARIFAS</span>
+                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80 transition-all duration-500">TARIFAS</span>
             </button>
         </div>
 
@@ -429,9 +440,9 @@
         <div class="hidden lg:flex flex-col items-center gap-4 absolute right-12 top-1/2 -translate-y-1/2 z-30">
             <button onclick="openModal('profesores')" onmouseenter="showHoverImage('right', 'maestros')"
                 onmouseleave="hideHoverImage('right')"
-                class="group transition-transform duration-300 hover:scale-105 text-right w-full">
+                class="group transition-all duration-500 ease-out hover:scale-105 text-right w-full">
                 <span
-                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80">MAESTROS</span>
+                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80 transition-all duration-500">MAESTROS</span>
             </button>
 
             <!-- Hover Image Spacer: Responsive height -->
@@ -445,9 +456,9 @@
 
             <a href="profile.html" onmouseenter="showHoverImage('right', 'perfil')"
                 onmouseleave="hideHoverImage('right')"
-                class="group transition-transform duration-300 hover:scale-105 block text-right w-full">
+                class="group transition-all duration-500 ease-out hover:scale-105 block text-right w-full">
                 <span
-                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80">MI
+                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80 transition-all duration-500">MI
                     PERFIL</span>
             </a>
         </div>
@@ -479,7 +490,7 @@
                     <span class="hidden md:inline text-white/70">|</span>
                     <span>© 2026 GEN YOGA</span>
                     <span class="hidden md:inline text-white/70">·</span>
-                    <span class="text-white">V2.7.1</span>
+                    <span class="text-white">V2.8.0</span>
                 </div>
             </div>
         </footer>
@@ -488,12 +499,13 @@
 
     <!-- Modals (Preserved functioning logic, hidden by default) -->
     <div id="modal-overlay"
-        class="fixed inset-0 bg-black/40 backdrop-blur-md z-50 hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4">
+        class="fixed inset-0 bg-black/40 backdrop-blur-md z-50 hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4 pt-16 md:p-8 md:pt-8">
 
         <button onclick="closeModal()"
-            class="absolute top-8 right-8 text-white hover:text-sand transition z-50 flex items-center gap-2 group">
-            <span class="text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition">Cerrar</span>
-            <i data-lucide="x" class="w-10 h-10"></i>
+            class="absolute top-3 right-3 md:top-8 md:right-8 z-[60] text-white hover:text-sand transition-all flex items-center justify-center gap-2 group bg-black/40 md:bg-transparent backdrop-blur-md md:backdrop-blur-none border border-white/40 md:border-transparent rounded-lg md:rounded-none p-2 md:p-0 shadow-lg md:shadow-none">
+            <span
+                class="hidden md:block text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition">Cerrar</span>
+            <i data-lucide="x" class="w-6 h-6 md:w-10 md:h-10"></i>
         </button>
 
         <!-- Content for Modals (Same IDs as before for JS compatibility) -->
@@ -513,19 +525,25 @@
             <h2 class="brand-font text-3xl md:text-5xl lg:text-7xl text-center text-white mb-8 md:mb-16 drop-shadow-md">
                 Tarifas</h2>
             <!-- Rate cards content... kept simple for now as focus is on main page -->
-            <div class="grid md:grid-cols-3 gap-8 px-4">
-                <!-- ... (Rate cards logic would go here, simplified for this specific edit to focus on landing) ... -->
-                <div class="p-10 border border-cocoa/10 bg-white/40 text-center">
-                    <h3 class="text-2xl font-serif text-cocoa mb-2">Clase individual</h3>
-                    <div class="text-5xl font-serif text-olive mb-8">30€</div>
+            <div class="grid md:grid-cols-3 gap-8 px-4 items-center">
+                <!-- Side card -->
+                <div class="p-10 border border-white/20 bg-white/30 backdrop-blur-sm text-center rounded-2xl">
+                    <h3 class="text-2xl font-serif text-white/90 mb-2">Clase individual</h3>
+                    <div class="text-5xl font-serif text-white/80 mb-8">XX€</div>
                 </div>
-                <div class="p-10 border border-olive bg-olive/10 text-center shadow-2xl scale-105">
-                    <h3 class="text-2xl font-serif text-cocoa mb-2">Pack 10</h3>
-                    <div class="text-5xl font-serif text-olive mb-8">250€</div>
+                <!-- CENTRAL CARD — Most prominent -->
+                <div
+                    class="relative p-12 border-2 border-white bg-white/50 backdrop-blur-md text-center rounded-2xl shadow-[0_0_40px_rgba(255,255,255,0.3)] scale-110 z-10">
+                    <div
+                        class="absolute -top-4 left-1/2 -translate-x-1/2 bg-white text-cocoa text-[10px] font-bold uppercase tracking-[0.3em] px-4 py-1.5 rounded-full shadow-md">
+                        ★ Más Popular</div>
+                    <h3 class="text-3xl font-serif text-cocoa mb-3 mt-2">Pack 10</h3>
+                    <div class="text-6xl font-bold font-serif text-cocoa mb-8">XX€</div>
                 </div>
-                <div class="p-10 border border-cocoa/10 bg-white/40 text-center">
-                    <h3 class="text-2xl font-serif text-cocoa mb-2">Ilimitado mensual</h3>
-                    <div class="text-5xl font-serif text-olive mb-8">150€</div>
+                <!-- Side card -->
+                <div class="p-10 border border-white/20 bg-white/30 backdrop-blur-sm text-center rounded-2xl">
+                    <h3 class="text-2xl font-serif text-white/90 mb-2">Ilimitado mensual</h3>
+                    <div class="text-5xl font-serif text-white/80 mb-8">XX€</div>
                 </div>
             </div>
         </div>
@@ -533,7 +551,6 @@
         <div id="modal-profesores"
             class="modal-content hidden w-full max-w-[95vw] md:max-w-4xl lg:max-w-6xl h-auto max-h-[85vh] overflow-y-auto hide-scrollbar rounded-xl p-4 md:p-8 text-cocoa bg-[linear-gradient(to_bottom,_#E6DCC3_0%,_#D27D60_40%,_#B48A47_70%,_#8C8658_100%)] shadow-2xl">
             <h2 class="text-3xl md:text-5xl lg:text-7xl text-white brand-font mb-8 md:mb-16 text-center drop-shadow-md">
-                Nuestros
                 Maestros
             </h2>
             <div id="landing-profesores-container"

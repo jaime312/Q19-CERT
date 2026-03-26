@@ -2114,25 +2114,25 @@ function renderProfesoresPublic() {
         const baseColor = p.color || '#d4af37';
 
         return `
-                <div class="group relative bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-700 transform hover:-translate-y-2 border border-gray-100">
+                <div class="relative bg-white rounded-[2rem] overflow-hidden shadow-sm border border-gray-100">
                     <div class="h-[28rem] w-full relative overflow-hidden bg-gray-50 flex items-center justify-center">
-                        <div class="absolute inset-0 opacity-20 group-hover:opacity-30 transition duration-700"
+                        <div class="absolute inset-0 opacity-20"
                              style="background: radial-gradient(circle at 70% 20%, ${baseColor}, transparent 60%), radial-gradient(circle at 0% 100%, ${baseColor}, transparent 50%);">
                         </div>
-                         <span class="brand-font text-[12rem] leading-none font-bold opacity-10 select-none transform transition duration-1000 group-hover:scale-110 group-hover:rotate-6 group-hover:opacity-20"
+                         <span class="brand-font text-[12rem] leading-none font-bold opacity-10 select-none"
                                style="color: ${baseColor}; text-shadow: 0 10px 30px rgba(0,0,0,0.05);">
                             ${iniciales}
                         </span>
                         <div class="absolute inset-0 bg-white/10 backdrop-blur-[1px]"></div>
                         <div class="absolute bottom-0 left-0 w-full p-8 bg-gradient-to-t from-white via-white/90 to-transparent pt-24">
-                             <div class="relative transform translate-y-2 group-hover:translate-y-0 transition duration-500">
+                             <div class="relative">
                                 <span class="inline-block px-3 py-1 mb-3 text-[10px] font-bold tracking-[0.2em] uppercase text-gray-500 bg-gray-100 rounded-full border border-gray-200">
                                     ${p.especialidad || 'Instructor'}
                                 </span>
                                 <h3 class="text-4xl brand-font font-bold text-gray-900 mb-2 leading-tight" style="color: ${baseColor}">
                                     ${p.nombre}
                                 </h3>
-                                <div class="h-0 group-hover:h-auto overflow-hidden transition-all duration-500 opacity-0 group-hover:opacity-100">
+                                <div>
                                     <p class="text-gray-500 text-sm font-light leading-relaxed mt-4 pt-4 border-t border-gray-100">
                                          ${p.descripcion || 'Instructor certificado apasionado por el bienestar y la enseñanza de técnicas avanzadas.'}
                                     </p>

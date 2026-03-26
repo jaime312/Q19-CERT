@@ -153,9 +153,7 @@ async function fetchClasesLanding() {
     if (error) {
         console.error('Error fetching classes:', error);
         container.innerHTML = `<div class="p-4 bg-red-50 border border-red-100 rounded-lg text-red-800 text-center">
-            <p class="font-bold">Error cargando clases</p>
-            <p class="text-xs mt-1">${error.message}</p>
-            <p class="text-[10px] mt-2 opacity-75">Posible bloqueo de permisos (RLS) para usuarios públicos.</p>
+            <p class="font-bold">No se pudieron cargar las clases</p>
         </div>`;
         return;
     }
@@ -163,9 +161,8 @@ async function fetchClasesLanding() {
     if (!clases || clases.length === 0) {
         // Si llega aquí sin error, es que la tabla está vacía O RLS está bloqueando la lectura pública
         container.innerHTML = `<div class="flex flex-col items-center justify-center py-10 gap-2 opacity-60">
-            <i data-lucide="lock" class="w-8 h-8 text-cocoa"></i>
-            <p class="text-center text-cocoa text-sm">No se encontraron clases públicas.</p>
-            <p class="text-[10px] text-cocoa/50">Si eres admin, revisa las políticas RLS de Supabase tabla 'clases'.</p>
+            <i data-lucide="calendar-x" class="w-8 h-8 text-cocoa"></i>
+            <p class="text-center text-cocoa text-sm">No hay clases programadas en este momento.</p>
         </div>`;
         lucide.createIcons();
         return;
@@ -236,18 +233,15 @@ async function fetchProfesoresLanding() {
     if (error) {
         console.error('Error fetching teachers:', error);
         container.innerHTML = `<div class="col-span-full p-4 bg-red-50 border border-red-100 rounded-lg text-red-800 text-center">
-            <p class="font-bold">Error cargando maestros</p>
-            <p class="text-xs mt-1">${error.message}</p>
-             <p class="text-[10px] mt-2 opacity-75">Posible bloqueo de permisos (RLS) para usuarios públicos.</p>
+            <p class="font-bold">No se pudieron cargar los maestros</p>
         </div>`;
         return;
     }
 
     if (!profesores || profesores.length === 0) {
         container.innerHTML = `<div class="col-span-full flex flex-col items-center justify-center py-10 gap-2 opacity-60">
-            <i data-lucide="lock" class="w-8 h-8 text-cocoa"></i>
-             <p class="text-center text-cocoa text-sm">No hay maestros visible.</p>
-            <p class="text-[10px] text-cocoa/50">Si eres admin, revisa las políticas RLS de Supabase tabla 'profesores'.</p>
+            <i data-lucide="users" class="w-8 h-8 text-cocoa"></i>
+             <p class="text-center text-cocoa text-sm">No hay maestros registrados en este momento.</p>
         </div>`;
         lucide.createIcons();
         return;
@@ -263,18 +257,18 @@ function renderProfesoresLanding(profesores) {
     profesores.forEach(prof => {
         const fotoUrl = prof.foto_url || null;
         const avatarHtml = fotoUrl
-            ? `<img src="${fotoUrl}" alt="${prof.nombre}" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition duration-500">`
+            ? `<img src="${fotoUrl}" alt="${prof.nombre}" class="w-full h-full object-cover">`
             : `<div class="w-full h-full bg-cocoa/5 flex items-center justify-center text-cocoa text-4xl font-serif">${prof.nombre.charAt(0)}</div>`;
 
         const card = document.createElement('div');
-        card.className = "group text-center";
+        card.className = "text-center";
         card.innerHTML = `
-            <div class="w-48 h-64 mx-auto mb-6 relative overflow-hidden rounded-full border border-cocoa/10 shadow-sm group-hover:shadow-md transition">
+            <div class="w-48 h-64 mx-auto mb-6 relative overflow-hidden rounded-full border border-cocoa/10 shadow-sm transition">
                 ${avatarHtml}
             </div>
             <h3 class="text-2xl font-serif text-cocoa mb-1">${prof.nombre}</h3>
             <p class="text-xs uppercase tracking-widest text-olive">${prof.especialidad || 'Yoga Instructor'}</p>
-            <p class="text-sm text-cocoa/60 mt-4 px-4 font-light leading-relaxed hidden group-hover:block transition-all fade-in">
+            <p class="text-sm text-cocoa/60 mt-4 px-4 font-light leading-relaxed">
                 ${prof.bio || 'Instructor certificado de GEN Yoga.'}
             </p>
         `;
