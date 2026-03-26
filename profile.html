@@ -36,7 +36,7 @@
                     },
                     fontFamily: {
                         serif: ['Ubuntu', 'serif'],
-                        sans: ['Montserrat', 'sans-serif'],
+                        sans: ['"Montserrat Arabic"', 'Montserrat', 'sans-serif'],
                     },
                     backgroundImage: {
                         'hero-pattern': "url('https://images.unsplash.com/photo-1552196563-55cd4e45efb3?q=80&w=1926&auto=format&fit=crop')",
@@ -50,7 +50,7 @@
 </head>
 
 <body
-    class="antialiased min-h-screen w-screen overflow-x-hidden relative selection:bg-mutedgold selection:text-cocoa font-sans bg-[linear-gradient(to_bottom,_#E6DCC3_0%,_#D27D60_40%,_#B48A47_70%,_#8C8658_100%)]">
+    class="subpixel-antialiased min-h-screen w-screen overflow-x-hidden relative selection:bg-mutedgold selection:text-cocoa font-sans bg-[linear-gradient(to_bottom,_#E6DCC3_0%,_#D27D60_40%,_#B48A47_70%,_#8C8658_100%)]">
 
     <!-- Ambient Background Shapes (Sync with Index) -->
     <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
@@ -98,14 +98,14 @@
                 <div id="login-card"
                     class="bg-white/20 backdrop-blur-xl p-8 md:p-10 rounded-3xl shadow-2xl border border-white/30 relative overflow-hidden text-white">
                     <div class="text-center mb-8 relative z-10">
-                        <h2 class="text-3xl font-extrabold text-white brand-font drop-shadow-sm">Bienvenido</h2>
+                        <h2 class="text-3xl font-bold text-white brand-font drop-shadow-sm">Bienvenido</h2>
                         <p class="text-white mt-2 text-xs font-bold uppercase tracking-[0.2em] drop-shadow-sm">Accede a tu cuenta
                         </p>
                     </div>
                     <form id="form-login" class="space-y-5 relative z-10">
                         <div class="group">
                             <label
-                                class="text-xs font-extrabold text-white uppercase tracking-wide ml-1 mb-1.5 block drop-shadow-sm">Email</label>
+                                class="text-xs font-bold text-white uppercase tracking-wide ml-1 mb-1.5 block drop-shadow-sm">Email</label>
                             <div class="relative">
                                 <i
                                     class="ph-bold ph-envelope-simple absolute left-4 top-3.5 text-white/80 group-focus-within:text-white transition"></i>
@@ -116,7 +116,7 @@
                         </div>
                         <div class="group">
                             <label
-                                class="text-xs font-extrabold text-white uppercase tracking-wide ml-1 mb-1.5 block drop-shadow-sm">Contraseña</label>
+                                class="text-xs font-bold text-white uppercase tracking-wide ml-1 mb-1.5 block drop-shadow-sm">Contraseña</label>
                             <div class="relative">
                                 <i
                                     class="ph-bold ph-lock-key absolute left-4 top-3.5 text-white/80 group-focus-within:text-white transition"></i>
@@ -134,7 +134,7 @@
                     <div class="mt-8 text-center relative z-10">
                         <p class="text-white text-base font-bold drop-shadow-sm">¿Aún no tienes cuenta?</p>
                         <button onclick="toggleAuth('register')"
-                            class="text-white font-extrabold text-xl hover:underline mt-1 drop-shadow-md">Regístrate gratis aquí</button>
+                            class="text-white font-bold text-xl hover:underline mt-1 drop-shadow-md">Regístrate gratis aquí</button>
                     </div>
                     <div
                         class="absolute -top-10 -right-10 w-32 h-32 bg-olive/20 rounded-full blur-3xl opacity-50 pointer-events-none">
