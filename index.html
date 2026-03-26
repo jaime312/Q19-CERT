@@ -305,10 +305,14 @@
         <div id="logo-container" onclick="triggerLogoFantasy()"
             class="flex flex-col items-center mt-[1vh] z-20 transition-all duration-300 relative flex-shrink-0 select-none cursor-pointer group">
 
-            <!-- Video-Only Logo (Impeccable & Centered) -->
+            <!-- Video-Only Logo (Impeccable & Centered, hidden on mobile) -->
             <video id="logo-video" src="img/video1.mp4" muted playsinline preload="auto"
-                class="h-[clamp(180px,30vh,450px)] w-auto aspect-[5/2] object-contain drop-shadow-2xl hover:scale-[1.02] transition duration-500"
+                class="hidden md:block h-[clamp(180px,30vh,450px)] w-auto aspect-[5/2] object-contain drop-shadow-2xl hover:scale-[1.02] transition duration-500"
                 style="filter: url(#perfectKey) contrast(1.6) brightness(1.3) saturate(1.2); clip-path: inset(0 15% 15% 15%);"></video>
+
+            <!-- Image Fallback Logo (for mobile only) -->
+            <img id="logo-img-mobile" src="img/logo1.png" alt="GEN Yoga Logo"
+                class="block md:hidden h-[clamp(120px,20vh,250px)] mt-[2vh] w-auto object-contain drop-shadow-2xl brightness-0 invert">
 
             <!-- Advanced SVG Filter (Corrected for high-contrast visibility) -->
             <svg width="0" height="0" class="absolute">
@@ -346,12 +350,13 @@
             </div>
 
             <p
-                class="text-white text-[clamp(1.3rem,2.8vh,2.5rem)] font-light leading-relaxed max-w-5xl mx-auto drop-shadow-md">
+                class="text-white text-[clamp(1.3rem,2.8vh,2.5rem)] font-semibold md:font-light leading-relaxed max-w-5xl mx-auto drop-shadow-md">
                 En GEN Yoga fusionamos movimiento, respiración y consciencia para crear un espacio donde tu cuerpo y tu
                 mente encuentren su equilibrio natural
             </p>
 
-            <p class="text-white font-medium text-[clamp(1.5rem,3.2vh,3.5rem)] tracking-wide drop-shadow-lg mt-[0.5vh]">
+            <p
+                class="text-white font-extrabold md:font-medium text-[clamp(1.5rem,3.2vh,3.5rem)] tracking-wide drop-shadow-lg mt-[0.5vh]">
                 Tu refugio, tu energía, tu momento
             </p>
 
@@ -369,33 +374,33 @@
 
         <!-- MOBILE NAVIGATION (Visible only on mobile) -->
         <div class="lg:hidden w-full flex items-center justify-center px-4 mt-8 z-30 mb-8 flex-shrink-0">
-            <div class="flex flex-col gap-2 w-full max-w-[280px]">
+            <div class="flex flex-col gap-3 w-full max-w-[320px]">
                 <button onclick="openModal('clases')"
-                    class="btn-nav-mobile group relative overflow-hidden rounded-xl bg-white/20 border border-white/30 p-4 transition-all active:scale-95">
+                    class="btn-nav-mobile group relative overflow-hidden rounded-xl bg-white/20 border border-white/40 p-5 shadow-lg shadow-black/10 transition-all active:scale-95">
                     <span
-                        class="relative z-10 flex items-center justify-between !text-white font-bold tracking-widest text-lg">
-                        CLASES <i data-lucide="chevron-right" class="w-5 h-5 opacity-70"></i>
+                        class="relative z-10 flex items-center justify-between !text-white font-extrabold tracking-widest text-xl drop-shadow-md">
+                        CLASES <i data-lucide="chevron-right" class="w-6 h-6 text-white opacity-100 font-bold"></i>
                     </span>
                 </button>
                 <button onclick="openModal('precios')"
-                    class="btn-nav-mobile group relative overflow-hidden rounded-xl bg-white/20 border border-white/30 p-4 transition-all active:scale-95">
+                    class="btn-nav-mobile group relative overflow-hidden rounded-xl bg-white/20 border border-white/40 p-5 shadow-lg shadow-black/10 transition-all active:scale-95">
                     <span
-                        class="relative z-10 flex items-center justify-between !text-white font-bold tracking-widest text-lg">
-                        TARIFAS <i data-lucide="chevron-right" class="w-5 h-5 opacity-70"></i>
+                        class="relative z-10 flex items-center justify-between !text-white font-extrabold tracking-widest text-xl drop-shadow-md">
+                        TARIFAS <i data-lucide="chevron-right" class="w-6 h-6 text-white opacity-100 font-bold"></i>
                     </span>
                 </button>
                 <button onclick="openModal('profesores')"
-                    class="btn-nav-mobile group relative overflow-hidden rounded-xl bg-white/20 border border-white/30 p-4 transition-all active:scale-95">
+                    class="btn-nav-mobile group relative overflow-hidden rounded-xl bg-white/20 border border-white/40 p-5 shadow-lg shadow-black/10 transition-all active:scale-95">
                     <span
-                        class="relative z-10 flex items-center justify-between !text-white font-bold tracking-widest text-lg">
-                        MAESTROS <i data-lucide="chevron-right" class="w-5 h-5 opacity-70"></i>
+                        class="relative z-10 flex items-center justify-between !text-white font-extrabold tracking-widest text-xl drop-shadow-md">
+                        MAESTROS <i data-lucide="chevron-right" class="w-6 h-6 text-white opacity-100 font-bold"></i>
                     </span>
                 </button>
                 <button onclick="location.href='profile.html'"
-                    class="btn-nav-mobile group relative overflow-hidden rounded-xl bg-white/20 border border-white/30 p-4 transition-all active:scale-95">
+                    class="btn-nav-mobile group relative overflow-hidden rounded-xl bg-white/20 border border-white/40 p-5 shadow-lg shadow-black/10 transition-all active:scale-95">
                     <span
-                        class="relative z-10 flex items-center justify-between !text-white font-bold tracking-widest text-lg">
-                        MI PERFIL <i data-lucide="chevron-right" class="w-5 h-5 opacity-70"></i>
+                        class="relative z-10 flex items-center justify-between !text-white font-extrabold tracking-widest text-xl drop-shadow-md">
+                        MI PERFIL <i data-lucide="chevron-right" class="w-6 h-6 text-white opacity-100 font-bold"></i>
                     </span>
                 </button>
             </div>
@@ -463,34 +468,35 @@
             </a>
         </div>
         <!-- FOOTER -->
-        <footer class="w-full flex flex-col items-center gap-2 mt-0 z-10 text-white flex-shrink-0">
+        <footer
+            class="w-full flex flex-col items-center gap-2 mt-0 z-10 text-white font-bold flex-shrink-0 drop-shadow-md">
             <!-- Instagram Icon -->
             <a href="https://www.instagram.com/genyoga.studio" target="_blank"
-                class="hover:text-white transition-colors duration-300 transform hover:scale-110">
+                class="text-white hover:text-white transition-colors duration-300 transform hover:scale-110">
                 <i data-lucide="instagram" class="w-12 h-12 md:w-14 md:h-14"></i>
             </a>
 
             <!-- Info Bar -->
             <div
-                class="w-full border-t border-white/30 pt-3 pb-1 px-6 md:px-12 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-6 text-xs md:text-sm font-bold tracking-[0.2em] uppercase text-center md:text-left">
+                class="w-full border-t border-white/30 pt-3 pb-1 px-6 md:px-12 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-6 text-sm font-extrabold tracking-[0.2em] uppercase text-center md:text-left drop-shadow-md">
 
-                <div class="flex flex-col md:flex-row gap-2 md:gap-3 items-center">
+                <div class="flex flex-col md:flex-row gap-2 md:gap-3 items-center text-white">
                     <span>Calle San Carlos, 2, Albacete</span>
-                    <span class="hidden md:inline text-white/70">|</span>
+                    <span class="hidden md:inline text-white">|</span>
                     <div class="flex items-center gap-1">
                         <span class="text-white">CONTACTO:</span>
                         <a href="mailto:hola@genyoga.studio"
-                            class="hover:text-white transition underline decoration-transparent hover:decoration-white">
+                            class="text-white hover:text-white transition underline decoration-transparent hover:decoration-white">
                             hola@genyoga.studio</a>
                     </div>
                 </div>
 
-                <div class="flex flex-col md:flex-row gap-2 md:gap-3 items-center text-center md:text-right">
-                    <a href="#" class="hover:text-white transition">Terms & Conditions</a>
-                    <span class="hidden md:inline text-white/70">|</span>
-                    <span>© 2026 GEN YOGA</span>
-                    <span class="hidden md:inline text-white/70">·</span>
-                    <span class="text-white">V2.8.0</span>
+                <div class="flex flex-col md:flex-row gap-2 md:gap-3 items-center text-center text-white md:text-right">
+                    <a href="#" class="text-white hover:text-white transition">Terms & Conditions</a>
+                    <span class="hidden md:inline text-white">|</span>
+                    <span class="text-white">© 2026 GEN YOGA</span>
+                    <span class="hidden md:inline text-white">·</span>
+                    <span class="text-white">V2.8.1</span>
                 </div>
             </div>
         </footer>
