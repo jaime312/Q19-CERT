@@ -185,7 +185,6 @@ h6,
 /* 4. LOGICA DEL CURSOR PERSONALIZADO (WEB)                */
 /* ======================================================= */
 
-/* El elemento visual del cursor */
 .wink-cursor {
     position: fixed;
     top: 0;
@@ -197,14 +196,12 @@ h6,
     z-index: 9999;
     transition: transform 0.1s ease-out;
     user-select: none;
-    /* Solo visible por defecto en Web. En móviles se oculta abajo */
 }
 
 .wink-cursor.clicking {
     transform: translate(-50%, -50%) scale(0.8) rotate(-10deg);
 }
 
-/* Forzar ocultación del cursor nativo SOLO en Web */
 body.platform-web a,
 body.platform-web button,
 body.platform-web input,
@@ -213,6 +210,7 @@ body.platform-web textarea,
 body.platform-web .cursor-pointer {
     cursor: none !important;
 }
+
 
 /* ======================================================= */
 /* 5. ADAPTACIONES MÓVILES (iOS + ANDROID)                 */

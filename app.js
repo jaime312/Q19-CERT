@@ -6,10 +6,29 @@ const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
 const client = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
 document.addEventListener('DOMContentLoaded', () => {
-    lucide.createIcons();
+    // Platform detection (simplificado)
+    const ua = navigator.userAgent.toLowerCase();
+    const isIOS = /ipad|iphone|ipod/.test(ua) && !window.MSStream;
+    const isAndroid = /android/.test(ua);
+    document.body.classList.add(isIOS ? 'platform-ios' : (isAndroid ? 'platform-android' : 'platform-web'));
+
+    if (!isIOS && !isAndroid) {
+        const cursor = document.createElement('div');
+        cursor.classList.add('wink-cursor');
+        cursor.innerText = '🧘🏼';
+        document.body.appendChild(cursor);
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+        document.addEventListener('mousedown', () => cursor.classList.add('clicking'));
+        document.addEventListener('mouseup', () => cursor.classList.remove('clicking'));
+        document.addEventListener('mouseout', (e) => { if (!e.relatedTarget) cursor.style.display = 'none'; });
+        document.addEventListener('mouseover', () => cursor.style.display = 'block');
+    }
+
     fetchClasesLanding();
     fetchProfesoresLanding();
-    setupProfileLink();
 });
 
 // 2. SISTEMA DE MODALES
@@ -56,34 +75,7 @@ if (modalOverlay) {
     });
 }
 
-// 3. DETECCIÓN DE PLATAFORMA Y CURSOR
-document.addEventListener('DOMContentLoaded', () => {
-    const ua = navigator.userAgent.toLowerCase();
-    const body = document.body;
-    window.isIOS = /ipad|iphone|ipod/.test(ua) && !window.MSStream;
-    window.isAndroid = /android/.test(ua);
-    window.isWeb = !window.isIOS && !window.isAndroid;
 
-    body.classList.remove('platform-ios', 'platform-android', 'platform-web');
-    if (window.isIOS) body.classList.add('platform-ios');
-    else if (window.isAndroid) body.classList.add('platform-android');
-    else body.classList.add('platform-web');
-
-    if (window.isWeb) {
-        const cursor = document.createElement('div');
-        cursor.classList.add('wink-cursor');
-        cursor.innerText = '🧘🏼';
-        document.body.appendChild(cursor);
-        document.addEventListener('mousemove', (e) => {
-            cursor.style.left = e.clientX + 'px';
-            cursor.style.top = e.clientY + 'px';
-        });
-        document.addEventListener('mousedown', () => cursor.classList.add('clicking'));
-        document.addEventListener('mouseup', () => cursor.classList.remove('clicking'));
-        document.addEventListener('mouseout', (e) => { if (!e.relatedTarget) cursor.style.display = 'none'; });
-        document.addEventListener('mouseover', () => cursor.style.display = 'block');
-    }
-});
 
 // 4. HOVER IMAGES (solo escritorio)
 window.showHoverImage = function (side, imgName) {
@@ -256,26 +248,7 @@ function renderProfesoresLanding(profesores) {
     });
 }
 
-async function setupProfileLink() {
-    const { data: { session } } = await client.auth.getSession();
 
-    // Links de Mi Perfil
-    const profileLinks = document.querySelectorAll('a[href="profile.html"]');
-
-    // Si queremos redirigir dinámicamente, por ahora los dejamos apuntar a profile.html
-    // que ya maneja la autenticación internamente (si no hay sesión muestra login).
-    // Pero podríamos cambiar el texto si hay sesión.
-
-    if (session) {
-        profileLinks.forEach(link => {
-            if (link.innerText.includes('PERFIL')) {
-                // Opcional: Cambiar texto o estilo si ya está logueado
-            }
-        });
-    }
-}
-
-// 6. FANTASY VIDEO LOGO
 window.triggerLogoFantasy = function() {
     const video = document.getElementById('logo-video');
     const container = document.getElementById('logo-container');

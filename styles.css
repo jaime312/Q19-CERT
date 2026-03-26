@@ -90,70 +90,6 @@ h1, h2, h3, h4, h5, h6, .brand-font {
     scrollbar-width: none;
 }
 
-
-/* --- BOTONES LATERALES VERTICALES --- */
-
-.side-btn {
-    padding: 20px 0;
-    position: relative;
-    transition: transform 0.4s ease;
-}
-
-/* Al hacer hover en el botón lateral, escala ligeramente */
-.side-btn:hover {
-    transform: scale(1.05);
-}
-
-/* Texto vertical lado izquierdo (lectura abajo->arriba) */
-.vertical-text {
-    white-space: nowrap;
-    cursor: pointer;
-    /* Color base visible */
-}
-
-/* Texto vertical lado derecho (lectura arriba->abajo) */
-.vertical-text-rl {
-    white-space: nowrap;
-    cursor: pointer;
-    /* Color base visible */
-}
-
-/* Efecto de brillo al hacer hover en el texto */
-.group:hover .vertical-text,
-.group:hover .vertical-text-rl {
-    text-shadow: 0 0 20px rgba(216, 191, 216, 0.6);
-    /* Brillo Lilac */
-}
-
-
-/* --- ANIMACIÓN CENTRAL --- */
-
-/* Animación de parpadeo suave para el cambio de palabra */
-@keyframes textFadeInOut {
-    0% {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    10% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    90% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    100% {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-}
-
-/* Clase para aplicar si quisiéramos animación CSS pura, 
-   pero usaremos JS para control total */
-
 /* ======================================================= */
 /* LOGICA DEL CURSOR PERSONALIZADO (WEB)                   */
 /* ======================================================= */
@@ -170,7 +106,6 @@ h1, h2, h3, h4, h5, h6, .brand-font {
     z-index: 9999;
     transition: transform 0.1s ease-out;
     user-select: none;
-    /* Solo visible por defecto en Web. En móviles se oculta abajo */
 }
 
 .wink-cursor.clicking {
@@ -195,7 +130,6 @@ body.platform-web .cursor-pointer {
 /* REGLAS COMUNES APP (iOS y Android) */
 body.platform-ios,
 body.platform-android {
-    /* Restaurar cursor nativo (invisible en táctil) */
     cursor: auto !important;
 }
 
@@ -218,76 +152,9 @@ body.platform-android select {
 }
 
 /* ======================================================= */
-/* 8. FANTASY SNAKE ANIMATION                              */
+/* FANTASY VIDEO LOGO                                      */
 /* ======================================================= */
 
 #logo-container {
     perspective: 1000px;
-}
-
-.fantasy-active #main-logo-img {
-    opacity: 0;
-    pointer-events: none;
-    transform: scale(0.8);
-}
-
-.fantasy-active #snake-fantasy-overlay {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-#snake-path {
-    stroke-dasharray: 1200;
-    stroke-dashoffset: 1200;
-    transition: all 0.5s ease;
-}
-
-.fantasy-active #snake-path {
-    animation: snake-draw-and-coil 6s forwards cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.fantasy-active .fantasy-text {
-    animation: text-reveal 1.5s forwards 1.2s;
-}
-
-@keyframes snake-draw-and-coil {
-    0% {
-        stroke-dashoffset: 1200;
-        transform: scale(0.9) rotate(0deg);
-    }
-    15% {
-        stroke-dashoffset: 0;
-        transform: scale(1.1) rotate(5deg);
-    }
-    35% {
-        /* Coil around */
-        d: path("M120,100 C120,60 160,40 200,40 C350,40 450,80 450,120 C450,160 350,180 200,180 C100,180 50,140 50,100 C50,60 100,20 200,20 C300,20 400,60 480,100");
-        transform: scale(1.2) rotate(-10deg);
-        filter: drop-shadow(0 0 15px rgba(210, 125, 96, 0.8));
-    }
-    55% {
-        transform: scale(1.15) rotate(10deg);
-    }
-    75% {
-        transform: scale(1.2) rotate(-5deg);
-    }
-    100% {
-        stroke-dashoffset: 0;
-        d: path("M120,100 C120,60 160,40 200,40 C350,40 450,80 450,120 C450,160 350,180 200,180 C100,180 50,140 50,100 C50,60 100,20 200,20 C300,20 400,60 480,100");
-        filter: drop-shadow(0 0 10px rgba(210, 125, 96, 0.5));
-        transform: scale(1.1) rotate(0deg);
-    }
-}
-
-@keyframes text-reveal {
-    0% {
-        opacity: 0;
-        filter: blur(8px);
-        transform: scale(0.8) translate(-10px);
-    }
-    100% {
-        opacity: 0.95;
-        filter: blur(0);
-        transform: scale(1) translate(0);
-    }
 }

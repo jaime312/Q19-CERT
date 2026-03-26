@@ -10,7 +10,7 @@
 
 
 
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@latest" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <link rel="stylesheet" href="styles.css?v=3">
@@ -123,12 +123,10 @@
 
         .ambient-shape {
             position: absolute;
-            filter: blur(90px);
+            filter: blur(50px);
             opacity: 0.1;
-            /* Suavizado para dejar respirar el fondo ivory */
             border-radius: 50%;
             mix-blend-mode: multiply;
-            will-change: transform;
         }
 
         .shape-1 {
@@ -264,8 +262,8 @@
 
             <!-- MOVIL: Logo imagen estática (hidden md:block lo oculta en escritorio) -->
             <!-- ESCRITORIO: Logo video (hidden en MOVIL con "hidden md:block") -->
-            <video id="logo-video" src="img/video1.mp4" muted playsinline preload="auto"
-                class="hidden md:block h-[clamp(180px,30vh,450px)] w-auto aspect-[5/2] object-contain drop-shadow-2xl hover:scale-[1.02] transition duration-500"
+            <video id="logo-video" src="img/video1.mp4" muted playsinline preload="none"
+                class="hidden md:block h-[clamp(180px,30vh,450px)] w-auto aspect-[5/2] object-contain drop-shadow-2xl hover:scale-[1.02] transition duration-300"
                 style="filter: url(#perfectKey) contrast(1.6) brightness(1.3) saturate(1.2); clip-path: inset(0 15% 15% 15%);"></video>
 
             <!-- MOVIL: Logo imagen PNG blanco (block md:hidden lo muestra solo en MOVIL) -->
@@ -322,7 +320,7 @@
 
             <!-- Instagram Button (below tagline) -->
             <a href="https://www.instagram.com/genyoga.studio" target="_blank"
-                class="inline-flex items-center gap-2 mt-[1.5vh] text-white/80 hover:text-white transition-colors duration-300 transform hover:scale-110">
+                class="inline-flex items-center gap-2 mt-[1.5vh] text-white transition-colors duration-300 transform hover:scale-110">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 md:w-12 md:h-12" viewBox="0 0 24 24"
                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect>
@@ -376,9 +374,9 @@
         <div class="hidden lg:flex flex-col items-center gap-4 absolute left-12 top-1/2 -translate-y-1/2 z-30">
             <button onclick="openModal('clases')" onmouseenter="showHoverImage('left', 'clases')"
                 onmouseleave="hideHoverImage('left')"
-                class="group transition-all duration-500 ease-out hover:scale-105 text-left w-full">
+                class="group transition-all duration-200 ease-out hover:scale-105 text-left w-full">
                 <span
-                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80 transition-all duration-500">CLASES</span>
+                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80 transition-all duration-200">CLASES</span>
             </button>
 
             <!-- Hover Image Spacer: Responsive height -->
@@ -392,9 +390,9 @@
 
             <button onclick="openModal('precios')" onmouseenter="showHoverImage('left', 'tarifas')"
                 onmouseleave="hideHoverImage('left')"
-                class="group transition-all duration-500 ease-out hover:scale-105 text-left w-full">
+                class="group transition-all duration-200 ease-out hover:scale-105 text-left w-full">
                 <span
-                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80 transition-all duration-500">TARIFAS</span>
+                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80 transition-all duration-200">TARIFAS</span>
             </button>
         </div>
 
@@ -402,9 +400,9 @@
         <div class="hidden lg:flex flex-col items-center gap-4 absolute right-12 top-1/2 -translate-y-1/2 z-30">
             <button onclick="openModal('profesores')" onmouseenter="showHoverImage('right', 'maestros')"
                 onmouseleave="hideHoverImage('right')"
-                class="group transition-all duration-500 ease-out hover:scale-105 text-right w-full">
+                class="group transition-all duration-200 ease-out hover:scale-105 text-right w-full">
                 <span
-                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80 transition-all duration-500">MAESTROS</span>
+                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80 transition-all duration-200">MAESTROS</span>
             </button>
 
             <!-- Hover Image Spacer: Responsive height -->
@@ -418,9 +416,9 @@
 
             <a href="profile.html" onmouseenter="showHoverImage('right', 'perfil')"
                 onmouseleave="hideHoverImage('right')"
-                class="group transition-all duration-500 ease-out hover:scale-105 block text-right w-full">
+                class="group transition-all duration-200 ease-out hover:scale-105 block text-right w-full">
                 <span
-                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80 transition-all duration-500">MI
+                    class="text-[clamp(2rem,4vh,4rem)] xl:text-6xl font-bold tracking-widest text-white drop-shadow-lg group-hover:text-white/80 transition-all duration-200">MI
                     PERFIL</span>
             </a>
         </div>
@@ -453,7 +451,7 @@
                     <span class="hidden md:inline text-white">|</span>
                     <span class="text-white">© 2026 GEN YOGA</span>
                     <span class="hidden md:inline text-white">·</span>
-                    <span class="text-white">V2.8.3</span>
+                    <span class="text-white">V2.8.4</span>
                 </div>
             </div>
         </footer>
@@ -527,10 +525,15 @@
     </div>
 
     <!-- Scripts -->
-    <script src="app.js"></script>
+    <script src="app.js" defer></script>
     <script>
-        // Re-initialize Lucide icons
-        lucide.createIcons();
+        // Precargar video solo en escritorio
+        if (window.innerWidth >= 768) {
+            const v = document.getElementById('logo-video');
+            if (v) v.preload = 'auto';
+        }
+        // Re-initialize Lucide icons cuando cargue
+        document.addEventListener('DOMContentLoaded', () => lucide.createIcons());
     </script>
 </body>
 

@@ -2146,20 +2146,24 @@ function renderProfesoresPublic() {
 }
 
 // --- UTILIDADES EXTRA (CURSOR & SONIDO) ---
-document.addEventListener('DOMContentLoaded', () => {
-    const cursor = document.createElement('div');
-    cursor.classList.add('wink-cursor');
-    cursor.innerText = '🧘🏼';
-    document.body.appendChild(cursor);
 
-    document.addEventListener('mousemove', (e) => {
-        cursor.style.left = e.clientX + 'px';
-        cursor.style.top = e.clientY + 'px';
-    });
-    document.addEventListener('mousedown', () => cursor.classList.add('clicking'));
-    document.addEventListener('mouseup', () => cursor.classList.remove('clicking'));
-    document.addEventListener('mouseout', (e) => { if (!e.relatedTarget) cursor.style.display = 'none'; });
-    document.addEventListener('mouseover', () => cursor.style.display = 'block');
+document.addEventListener('DOMContentLoaded', () => {
+    // Platform checking here is done at the top of file via IIFE adding platform-web class
+    if (document.body.classList.contains('platform-web')) {
+        const cursor = document.createElement('div');
+        cursor.classList.add('wink-cursor');
+        cursor.innerText = '🧘🏼';
+        document.body.appendChild(cursor);
+
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+        document.addEventListener('mousedown', () => cursor.classList.add('clicking'));
+        document.addEventListener('mouseup', () => cursor.classList.remove('clicking'));
+        document.addEventListener('mouseout', (e) => { if (!e.relatedTarget) cursor.style.display = 'none'; });
+        document.addEventListener('mouseover', () => cursor.style.display = 'block');
+    }
 });
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
