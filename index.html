@@ -8,9 +8,7 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Ubuntu:wght@300;400;500;700&display=swap"
-        rel="stylesheet">
+
 
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -175,47 +173,6 @@
             animation-delay: -5s;
         }
 
-        /* Custom Safe Layout Logic */
-        /* Only apply absolute positioning if we have enough Width AND Height */
-        @media (min-width: 1024px) and (min-height: 800px) {
-            .safe-absolute-top-left {
-                position: absolute;
-                top: 4rem;
-                left: 4rem;
-                transform: translateY(-50%);
-            }
-
-            .safe-absolute-bottom-left {
-                position: absolute;
-                bottom: 4rem;
-                left: 4rem;
-                transform: translateY(50%);
-            }
-
-            .safe-absolute-top-right {
-                position: absolute;
-                top: 4rem;
-                right: 4rem;
-                transform: translateY(-50%);
-            }
-
-            .safe-absolute-bottom-right {
-                position: absolute;
-                bottom: 4rem;
-                right: 4rem;
-                transform: translateY(50%);
-            }
-
-            /* safe-absolute-header rules removed as we switched to flexbox flow for safety */
-
-            /* Ensure navigation buttons are visible in the flow */
-            .safe-hidden-on-desktop {
-                display: grid;
-            }
-
-            /* Force grid display if we are not in safe mode */
-        }
-
         /* Animation for rotating symbols in the center */
         @keyframes symbolCycle {
 
@@ -305,12 +262,13 @@
         <div id="logo-container" onclick="triggerLogoFantasy()"
             class="flex flex-col items-center mt-[1vh] z-20 transition-all duration-300 relative flex-shrink-0 select-none cursor-pointer group">
 
-            <!-- Video-Only Logo (Impeccable & Centered, hidden on mobile) -->
+            <!-- MOVIL: Logo imagen estática (hidden md:block lo oculta en escritorio) -->
+            <!-- ESCRITORIO: Logo video (hidden en MOVIL con "hidden md:block") -->
             <video id="logo-video" src="img/video1.mp4" muted playsinline preload="auto"
                 class="hidden md:block h-[clamp(180px,30vh,450px)] w-auto aspect-[5/2] object-contain drop-shadow-2xl hover:scale-[1.02] transition duration-500"
                 style="filter: url(#perfectKey) contrast(1.6) brightness(1.3) saturate(1.2); clip-path: inset(0 15% 15% 15%);"></video>
 
-            <!-- Image Fallback Logo (for mobile only) -->
+            <!-- MOVIL: Logo imagen PNG blanco (block md:hidden lo muestra solo en MOVIL) -->
             <img id="logo-img-mobile" src="img/logo1.png" alt="GEN Yoga Logo"
                 class="block md:hidden h-[clamp(120px,20vh,250px)] mt-[2vh] w-auto object-contain drop-shadow-2xl brightness-0 invert">
 
@@ -349,12 +307,14 @@
                 </div>
             </div>
 
+            <!-- MOVIL: font-normal / ESCRITORIO: font-light (md:font-light) -->
             <p
                 class="text-white text-[clamp(1.3rem,2.8vh,2.5rem)] font-normal md:font-light leading-relaxed max-w-5xl mx-auto drop-shadow-md">
                 En GEN Yoga fusionamos movimiento, respiración y consciencia para crear un espacio donde tu cuerpo y tu
                 mente encuentren su equilibrio natural
             </p>
 
+            <!-- MOVIL: font-medium / ESCRITORIO: font-normal (md:font-normal) -->
             <p
                 class="text-white font-medium md:font-normal text-[clamp(1.5rem,3.2vh,3.5rem)] tracking-wide drop-shadow-lg mt-[0.5vh]">
                 Tu refugio, tu energía, tu momento
@@ -372,7 +332,10 @@
             </a>
         </div>
 
-        <!-- MOBILE NAVIGATION (Visible only on mobile) -->
+        <!-- ============================================ -->
+        <!-- MOVIL: NAVEGACIÓN (solo visible en < lg)     -->
+        <!-- Usa clase "lg:hidden" = se oculta en escritorio -->
+        <!-- ============================================ -->
         <div class="lg:hidden w-full flex items-center justify-center px-4 mt-8 z-30 mb-8 flex-shrink-0">
             <div class="flex flex-col gap-3 w-full max-w-[320px]">
                 <button onclick="openModal('clases')"
@@ -406,16 +369,10 @@
             </div>
         </div>
 
-        <!-- NAVIGATION LINKS (Responsive Wrapper) -->
-
-        <!-- CORNER BUTTONS (Visible only in Safe Mode via CSS) -->
-        <!-- 
-             PARA RECOLOCAR LOS BOTONES:
-             Ahora están posicionados verticalmente con porcentajes ("top-1/4", "bottom-1/4").
-             Horizontalmente están separados del borde ("left-8", "right-8").
-        -->
-
-        <!-- LEFT SIDE NAVIGATION -->
+        <!-- ============================================ -->
+        <!-- ESCRITORIO: NAVEGACIÓN (solo visible en >= lg) -->
+        <!-- Usa clase "hidden lg:flex" = se oculta en MOVIL -->
+        <!-- ============================================ -->
         <div class="hidden lg:flex flex-col items-center gap-4 absolute left-12 top-1/2 -translate-y-1/2 z-30">
             <button onclick="openModal('clases')" onmouseenter="showHoverImage('left', 'clases')"
                 onmouseleave="hideHoverImage('left')"
@@ -441,7 +398,7 @@
             </button>
         </div>
 
-        <!-- RIGHT SIDE NAVIGATION -->
+        <!-- ESCRITORIO: Navegación lateral derecha -->
         <div class="hidden lg:flex flex-col items-center gap-4 absolute right-12 top-1/2 -translate-y-1/2 z-30">
             <button onclick="openModal('profesores')" onmouseenter="showHoverImage('right', 'maestros')"
                 onmouseleave="hideHoverImage('right')"
@@ -496,17 +453,18 @@
                     <span class="hidden md:inline text-white">|</span>
                     <span class="text-white">© 2026 GEN YOGA</span>
                     <span class="hidden md:inline text-white">·</span>
-                    <span class="text-white">V2.8.2</span>
+                    <span class="text-white">V2.8.3</span>
                 </div>
             </div>
         </footer>
 
     </div>
 
-    <!-- Modals (Preserved functioning logic, hidden by default) -->
+    <!-- MOVIL: Modal con padding extra arriba (pt-16) / ESCRITORIO: padding normal (md:pt-8) -->
     <div id="modal-overlay"
         class="fixed inset-0 bg-black/40 backdrop-blur-md z-50 hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4 pt-16 md:p-8 md:pt-8">
 
+        <!-- MOVIL: Botón cerrar con fondo oscuro / ESCRITORIO: transparente -->
         <button onclick="closeModal()"
             class="absolute top-3 right-3 md:top-8 md:right-8 z-[60] text-white hover:text-sand transition-all flex items-center justify-center gap-2 group bg-black/40 md:bg-transparent backdrop-blur-md md:backdrop-blur-none border border-white/40 md:border-transparent rounded-lg md:rounded-none p-2 md:p-0 shadow-lg md:shadow-none">
             <span
@@ -565,12 +523,7 @@
             </div>
         </div>
 
-        <div id="modal-socials" class="modal-content hidden text-center bg-ivory rounded-xl p-8">
-            <h2 class="text-5xl text-olive brand-font">Síguenos</h2>
-            <div class="flex justify-center gap-4 mt-8">
-                <i data-lucide="instagram" class="w-12 h-12 text-cocoa"></i>
-            </div>
-        </div>
+
     </div>
 
     <!-- Scripts -->

@@ -12,26 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupProfileLink();
 });
 
-// 2. TEXTO ROTATIVO
-const words = ["🔥", "🤸", "🏃🏼", "🧘🏼", "🧎🏽‍♀️‍➡️"];
-let wordIndex = 0;
-const textElement = document.getElementById("dynamic-text");
-
-function changeWord() {
-    if (!textElement) return;
-    textElement.style.opacity = "0";
-    textElement.style.transform = "translateY(10px)";
-    setTimeout(() => {
-        wordIndex = (wordIndex + 1) % words.length;
-        textElement.innerText = words[wordIndex];
-        textElement.style.opacity = "1";
-        textElement.style.transform = "translateY(0)";
-    }, 500);
-}
-
-if (textElement) setInterval(changeWord, 3000);
-
-// 3. SISTEMA DE MODALES
+// 2. SISTEMA DE MODALES
 const modalOverlay = document.getElementById('modal-overlay');
 const modalContents = document.querySelectorAll('.modal-content');
 
@@ -75,7 +56,7 @@ if (modalOverlay) {
     });
 }
 
-// 4. DETECCIÓN DE PLATAFORMA Y CURSOR
+// 3. DETECCIÓN DE PLATAFORMA Y CURSOR
 document.addEventListener('DOMContentLoaded', () => {
     const ua = navigator.userAgent.toLowerCase();
     const body = document.body;
@@ -104,8 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// 5. HOVER IMAGES
-// 5. HOVER IMAGES
+// 4. HOVER IMAGES (solo escritorio)
 window.showHoverImage = function (side, imgName) {
     const container = document.getElementById(`hover-image-${side}`);
     // Hide all images in this container first
@@ -130,7 +110,7 @@ window.hideHoverImage = function (side) {
     }
 }
 
-// 6. DATOS DINÁMICOS (LOGICA NUEVA)
+// 5. DATOS DINÁMICOS (Supabase)
 
 async function fetchClasesLanding() {
     const container = document.getElementById('landing-clases-container');
@@ -295,7 +275,7 @@ async function setupProfileLink() {
     }
 }
 
-// 7. FANTASY VIDEO LOGO
+// 6. FANTASY VIDEO LOGO
 window.triggerLogoFantasy = function() {
     const video = document.getElementById('logo-video');
     const container = document.getElementById('logo-container');
