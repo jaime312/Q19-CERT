@@ -44,7 +44,34 @@
             }
         }
     </script>
-    
+
+    <style>
+        @media (max-height: 740px) {
+            .hide-on-short {
+                display: none !important;
+            }
+        }
+
+        @media (max-height: 580px) {
+            /* Gently scale down only on extremely short viewports to prevent collisions */
+            #logo-img {
+                height: 120px !important;
+            }
+
+            #symbols-container {
+                width: 6.5rem !important;
+                height: 6.5rem !important;
+            }
+
+            #central-text-content> :not([hidden])~ :not([hidden]) {
+                margin-top: 1vh !important;
+            }
+
+            footer {
+                gap: 0.25rem !important;
+            }
+        }
+    </style>
 </head>
 
 <body
@@ -119,59 +146,69 @@
         </div>
 
         <!-- CENTRAL CONTENT -->
-        <div class="flex-grow flex-shrink flex flex-col items-center justify-center text-center w-full max-w-[90vw] lg:max-w-[50vw] xl:max-w-[45vw] 2xl:max-w-4xl min-h-0 z-10 px-4 lg:px-8 relative">
+        <div
+            class="flex-grow flex-shrink flex flex-col items-center justify-center text-center w-full max-w-[90vw] lg:max-w-[50vw] xl:max-w-[45vw] 2xl:max-w-4xl min-h-0 z-10 px-4 lg:px-8 relative">
 
-<div id="central-text-content" class="transition-all duration-700 ease-in-out flex flex-col items-center justify-center space-y-[2vh] my-[2vh] animate-fade-in-up w-full">
+            <div id="central-text-content"
+                class="transition-all duration-700 ease-in-out flex flex-col items-center justify-center space-y-[2vh] my-[2vh] animate-fade-in-up w-full">
 
-            <div class="w-[clamp(8rem,20vh,20rem)] h-[clamp(8rem,20vh,20rem)] my-[1vh] animate-float relative">
-                <div id="central-symbols" class="symbol-stack transition-all duration-500 ease-in-out">
-                    <img src="img/simbolo1.png" alt="Símbolo 1">
-                    <img src="img/simbolo2.png" alt="Símbolo 2">
-                    <img src="img/simbolo3.png" alt="Símbolo 3">
-                    <img src="img/simbolo4.png" alt="Símbolo 4">
-                    <img src="img/simbolo5.png" alt="Símbolo 5">
+                <div id="symbols-container"
+                    class="w-[clamp(8rem,20vh,20rem)] h-[clamp(8rem,20vh,20rem)] my-[1vh] animate-float relative">
+                    <div id="central-symbols" class="symbol-stack transition-all duration-500 ease-in-out">
+                        <img src="img/simbolo1.png" alt="Símbolo 1">
+                        <img src="img/simbolo2.png" alt="Símbolo 2">
+                        <img src="img/simbolo3.png" alt="Símbolo 3">
+                        <img src="img/simbolo4.png" alt="Símbolo 4">
+                        <img src="img/simbolo5.png" alt="Símbolo 5">
+                    </div>
+
+                    <!-- New center hover image container exactly overlapping symbols -->
+                    <div id="center-hover-image-container"
+                        class="hover-image-container absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                        <img id="img-clases" src="img/clases.png"
+                            class="absolute w-full h-full object-contain drop-shadow-2xl hidden" alt="">
+                        <img id="img-tarifas" src="img/tarifas.png"
+                            class="absolute w-full h-full object-contain drop-shadow-2xl hidden" alt="">
+                        <img id="img-maestros" src="img/maestros.png"
+                            class="absolute w-full h-full object-contain drop-shadow-2xl hidden" alt="">
+                        <img id="img-perfil" src="img/miperfil.png"
+                            class="absolute w-full h-full object-contain drop-shadow-2xl hidden" alt="">
+                    </div>
                 </div>
-                
-                <!-- New center hover image container exactly overlapping symbols -->
-                <div id="center-hover-image-container" class="hover-image-container absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                    <img id="img-clases" src="img/clases.png" class="absolute w-full h-full object-contain drop-shadow-2xl hidden" alt="">
-                    <img id="img-tarifas" src="img/tarifas.png" class="absolute w-full h-full object-contain drop-shadow-2xl hidden" alt="">
-                    <img id="img-maestros" src="img/maestros.png" class="absolute w-full h-full object-contain drop-shadow-2xl hidden" alt="">
-                    <img id="img-perfil" src="img/miperfil.png" class="absolute w-full h-full object-contain drop-shadow-2xl hidden" alt="">
-                </div>
+
+                <!-- MOVIL: font-normal / ESCRITORIO: font-light (md:font-light) -->
+                <p
+                    class="font-ubuntu text-white text-[clamp(1.3rem,2.8vh,2.5rem)] font-normal md:font-light leading-relaxed max-w-5xl mx-auto drop-shadow-md animate-breath hide-on-short">
+                    En GEN Yoga fusionamos movimiento, respiración y consciencia para crear un espacio donde tu cuerpo y
+                    tu
+                    mente encuentren su equilibrio natural... <button onclick="openModal('historia')"
+                        class="inline-block text-inherit font-inherit underline decoration-white/50 hover:decoration-white transition-all opacity-80 hover:opacity-100 translate-y-[-0.05em] ml-1">leer
+                        más</button>
+                </p>
+
+                <!-- MOVIL: font-medium / ESCRITORIO: font-normal (md:font-normal) -->
+                <p
+                    class="font-ubuntu text-white font-medium md:font-normal text-[clamp(1.5rem,3.2vh,3.5rem)] tracking-wide drop-shadow-lg mt-[0.5vh]">
+                    Tu refugio, tu energía, tu momento
+                </p>
+
+                <!-- Instagram Button (below tagline) -->
+                <a href="https://www.instagram.com/genyoga.studio" target="_blank"
+                    class="inline-flex items-center gap-2 mt-[1.5vh] text-white transition-colors duration-300 transform hover:scale-110">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 md:w-12 md:h-12" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect>
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                        <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line>
+                    </svg>
+                </a>
             </div>
 
-            <!-- MOVIL: font-normal / ESCRITORIO: font-light (md:font-light) -->
-            <p
-                class="font-ubuntu text-white text-[clamp(1.3rem,2.8vh,2.5rem)] font-normal md:font-light leading-relaxed max-w-5xl mx-auto drop-shadow-md animate-breath">
-                En GEN Yoga fusionamos movimiento, respiración y consciencia para crear un espacio donde tu cuerpo y tu
-                mente encuentren su equilibrio natural... <button onclick="openModal('historia')"
-                    class="inline-block text-inherit font-inherit underline decoration-white/50 hover:decoration-white transition-all opacity-80 hover:opacity-100 translate-y-[-0.05em] ml-1">leer
-                    más</button>
-            </p>
 
-            <!-- MOVIL: font-medium / ESCRITORIO: font-normal (md:font-normal) -->
-            <p
-                class="font-ubuntu text-white font-medium md:font-normal text-[clamp(1.5rem,3.2vh,3.5rem)] tracking-wide drop-shadow-lg mt-[0.5vh]">
-                Tu refugio, tu energía, tu momento
-            </p>
+        </div> <!-- close central-text-content -->
 
-            <!-- Instagram Button (below tagline) -->
-            <a href="https://www.instagram.com/genyoga.studio" target="_blank"
-                class="inline-flex items-center gap-2 mt-[1.5vh] text-white transition-colors duration-300 transform hover:scale-110">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 md:w-12 md:h-12" viewBox="0 0 24 24"
-                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect>
-                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line>
-                </svg>
-            </a>
-        </div>
-
-        
-    </div> <!-- close central-text-content -->
-
-    <!-- ============================================ -->
+        <!-- ============================================ -->
         <!-- MOVIL: NAVEGACIÓN (solo visible en < lg)     -->
         <!-- Usa clase "lg:hidden" = se oculta en escritorio -->
         <!-- ============================================ -->
@@ -270,7 +307,7 @@
                     <span class="hidden md:inline text-white">|</span>
                     <span class="text-white">© 2026 GEN YOGA</span>
                     <span class="hidden md:inline text-white">·</span>
-                    <span class="text-white">V2.10.1</span>
+                    <span class="text-white">V2.10.2</span>
                 </div>
             </div>
         </footer>
