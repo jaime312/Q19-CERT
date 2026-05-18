@@ -105,9 +105,10 @@ if (modalOverlay) {
 
 // 4. HOVER IMAGES (solo escritorio)
 window.showHoverImage = function (side, imgName) {
-    const container = document.getElementById(`hover-image-${side}`);
-    // Hide all images in this container first
-    if (container) {
+    const container = document.getElementById('center-hover-image-container');
+    const symbolsContent = document.getElementById('central-symbols');
+    
+    if (container && symbolsContent) {
         const images = container.querySelectorAll('img');
         images.forEach(img => img.classList.add('hidden'));
 
@@ -117,15 +118,59 @@ window.showHoverImage = function (side, imgName) {
             targetImg.classList.remove('hidden');
         }
 
+        // Add active class to image container to trigger animation
         container.classList.add('active');
+        
+        // Fade out symbols
+        symbolsContent.classList.remove('opacity-100', 'scale-100');
+        symbolsContent.classList.add('opacity-0', 'scale-95');
     }
 }
 
 window.hideHoverImage = function (side) {
-    const container = document.getElementById(`hover-image-${side}`);
-    if (container) {
+    const container = document.getElementById('center-hover-image-container');
+    const symbolsContent = document.getElementById('central-symbols');
+    
+    if (container && symbolsContent) {
         container.classList.remove('active');
+        
+        symbolsContent.classList.remove('opacity-0', 'scale-95');
+        symbolsContent.classList.add('opacity-100', 'scale-100');
     }
+}
+
+// 4.5. FEEDBACK DE NAVEGACIÓN
+window.handleNavClick = function (btn, url) {
+    // Añadir feedback visual
+    if (btn.classList.contains('btn-nav-mobile')) {
+        // En móvil, forzamos que se quede pulsado y cambiamos fondo
+        btn.classList.add('scale-95', 'bg-white/40', 'border-white/60');
+        // Cambiar icono a spinner
+        const icon = btn.querySelector('i');
+        if (icon) {
+            icon.setAttribute('data-lucide', 'loader-2');
+            icon.classList.add('animate-spin');
+            if (window.lucide) window.lucide.createIcons();
+        }
+    } else {
+        // En escritorio, bajamos opacidad y escalamos el texto
+        const span = btn.querySelector('.nav-link-strike');
+        if (span) {
+            span.style.transition = 'all 0.3s ease';
+            span.style.opacity = '0.5';
+            span.style.transform = 'scale(0.95)';
+        } else {
+            // Feedback genérico para otros botones (como Reservar)
+            btn.style.transition = 'all 0.2s ease';
+            btn.style.opacity = '0.6';
+            btn.style.transform = 'scale(0.95)';
+        }
+    }
+    
+    // Retardo pequeño para asegurar que se percibe el feedback antes de navegar
+    setTimeout(() => {
+        location.href = url;
+    }, 150);
 }
 
 // 5. DATOS DINÁMICOS (Supabase)
@@ -212,7 +257,7 @@ function renderClassesLanding(clases) {
             </div>
             <div class="mt-4 md:mt-0 flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
                 <span class="text-lg font-serif italic text-cocoa/60 text-right md:text-left">con ${profName}</span>
-                <a href="profile.html" class="px-6 py-2 bg-terracotta text-ivory text-xs uppercase tracking-widest hover:bg-cocoa hover:text-white transition rounded-full text-center">Reservar</a>
+                <button onclick="handleNavClick(this, 'profile.html')" class="px-6 py-2 bg-terracotta text-ivory text-xs uppercase tracking-widest hover:bg-cocoa hover:text-white transition rounded-full text-center cursor-pointer inline-block">Reservar</button>
             </div>
         `;
         container.appendChild(card);
@@ -274,28 +319,3 @@ function renderProfesoresLanding(profesores) {
     });
 }
 
-
-window.triggerLogoFantasy = function() {
-    const video = document.getElementById('logo-video');
-    const container = document.getElementById('logo-container');
-    if (!video) return;
-
-    if (!video.paused) {
-        // Stop animation and reset to first frame
-        video.pause();
-        video.currentTime = 0;
-        container.classList.remove('fantasy-active');
-    } else {
-        // Start animation
-        video.play().then(() => {
-            container.classList.add('fantasy-active');
-        }).catch(err => {
-            console.error("Video play failed:", err);
-        });
-    }
-
-    video.onended = () => {
-        container.classList.remove('fantasy-active');
-        video.currentTime = 0;
-    };
-}
