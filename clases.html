@@ -37,10 +37,31 @@
             <i class="ph-bold ph-arrow-left group-hover:-translate-x-1 transition"></i> Volver a inicio
         </a>
 
-        <div class="w-full bg-white/10 backdrop-blur-xl rounded-3xl p-6 md:p-12 border border-white/20 shadow-2xl mt-12 md:mt-8">
-            <h2 class="brand-font text-3xl md:text-5xl lg:text-7xl text-center text-white mb-8 md:mb-16 drop-shadow-md">
-                Horario Semanal
+        <div class="w-full bg-white/10 backdrop-blur-xl rounded-3xl p-6 md:p-12 border border-white/20 shadow-2xl mt-12 md:mt-8 text-cocoa">
+            <h2 class="brand-font text-3xl md:text-5xl lg:text-7xl text-center text-white mb-8 md:mb-12 drop-shadow-md">
+                Clases del Centro
             </h2>
+            
+            <!-- Sub-pestañas de filtrado de sesiones -->
+            <div class="flex justify-center gap-2 mb-12 flex-wrap">
+                <button id="btn-filtro-clases-todos" onclick="filtrarClasesLanding('todos')"
+                    class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-white text-cocoa transition border border-white/20 shadow-sm hover:scale-105 active:scale-95">
+                    Todas
+                </button>
+                <button id="btn-filtro-clases-yoga" onclick="filtrarClasesLanding('yoga')"
+                    class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-white/20 text-white hover:bg-white/30 transition border border-white/10 hover:scale-105 active:scale-95">
+                    Clases
+                </button>
+                <button id="btn-filtro-clases-psicologia" onclick="filtrarClasesLanding('psicologia')"
+                    class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-white/20 text-white hover:bg-white/30 transition border border-white/10 hover:scale-105 active:scale-95">
+                    Consultas
+                </button>
+                <button id="btn-filtro-clases-nutricion" onclick="filtrarClasesLanding('nutricion')"
+                    class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-white/20 text-white hover:bg-white/30 transition border border-white/10 hover:scale-105 active:scale-95">
+                    Talleres
+                </button>
+            </div>
+
             <div id="landing-clases-container"
                 class="space-y-6 [&>*]:bg-white/80 [&>*]:backdrop-blur-sm [&>*]:rounded-xl [&>*]:border-white/10">
                 <!-- Clases dinámicas aquí -->

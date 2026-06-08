@@ -5,14 +5,86 @@ const client = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
 let currentUser = null;
 let isAdmin = false;
+let currentUserRole = '';
 let userBonos = 0;
+let userSaldoPsicologia = 0;
+let userSaldoNutricion = 0;
 let allUsersCache = [];
 let allClasesCache = [];
-let selectedDate = null;
-let currentCalendarMonth = new Date();
+let allPsicologiaCache = [];
+let allNutricionCache = [];
+
+let activePublicView = 'inicio';
+let selectedDate = null; // Clases selected date
+let selectedDateInicio = null;
+let selectedDatePsicologia = null;
+let selectedDateNutricion = null;
+let selectedDateProfesor = null;
+let selectedAsistenciaClaseId = 'todas';
+
+let currentCalendarMonth = new Date(); // Clases calendar month
+let currentCalendarMonthInicio = new Date();
+let currentCalendarMonthPsicologia = new Date();
+let currentCalendarMonthNutricion = new Date();
+let currentCalendarMonthProfesor = new Date();
+
 let allConfigCache = [];
-let allProfesoresCache = [];
+let allProfesionalesCache = [];
+let allProfesorAgendaCache = [];
+let allAsistenciasClaseCache = [];
+let allAsistenciasReservasMap = {};
+let allAsistenciasPerfilesMap = {};
 let datePickerInstance = null;
+let datePickerConsultaInstance = null;
+let datePickerTallerInstance = null;
+
+const STAFF_ROLES = ['profesor', 'trabajador', 'profesional'];
+const SALDOS_CONFIG = {
+    yoga: { field: 'bonos', label: 'Clases', icon: 'ph-ticket', color: 'text-olive', badge: 'bg-olive/10 text-olive border-olive/20' },
+    psicologia: { field: 'saldo_psicologia', label: 'Psicología', icon: 'ph-brain', color: 'text-[#3B82F6]', badge: 'bg-blue-50 text-[#3B82F6] border-blue-100' },
+    nutricion: { field: 'saldo_nutricion', label: 'Nutrición', icon: 'ph-apple', color: 'text-[#8B5CF6]', badge: 'bg-purple-50 text-[#8B5CF6] border-purple-100' }
+};
+const CONSULTA_CONFIG = {
+    psicologia: { table: 'reservas_psicologia', saldoField: 'saldo_psicologia', label: 'Psicología', color: '#3B82F6' },
+    nutricion: { table: 'reservas_nutricion', saldoField: 'saldo_nutricion', label: 'Nutrición', color: '#8B5CF6' }
+};
+
+function toSafeNumber(value) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : 0;
+}
+
+function esTrabajador() {
+    return STAFF_ROLES.includes(currentUserRole);
+}
+
+function tieneAccesoConsultasAdmin() {
+    return isAdmin || esTrabajador();
+}
+
+function getConsultaConfig(tipo) {
+    return CONSULTA_CONFIG[tipo] || CONSULTA_CONFIG.psicologia;
+}
+
+function getSaldoConsultaActual(tipo) {
+    return tipo === 'psicologia' ? userSaldoPsicologia : userSaldoNutricion;
+}
+
+function animateBalance(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    animateValue(id, parseInt(el.innerText, 10) || 0, toSafeNumber(value), 500);
+}
+
+function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    }[char]));
+}
 
 // --- 2. AUTHENTICATION ---
 
@@ -187,7 +259,7 @@ async function initApp() {
     document.getElementById('auth-container').classList.add('hidden');
     document.getElementById('app-view').classList.remove('hidden');
 
-    // Init Flatpickr
+    // Init Flatpickr for Classes
     datePickerInstance = flatpickr("#clase-fecha", {
         locale: "es",
         dateFormat: "Y-m-d",
@@ -195,35 +267,153 @@ async function initApp() {
         disableMobile: "true"
     });
 
-    await cargarProfesoresCache();
+    // Toggle opciones de repetición en el modal de clase
+    const repEnabled = document.getElementById('clase-repeat-enabled');
+    const repOptions = document.getElementById('clase-repeat-options');
+    if (repEnabled && repOptions) {
+        repEnabled.addEventListener('change', () => {
+            if (repEnabled.checked) repOptions.classList.remove('hidden');
+            else repOptions.classList.add('hidden');
+        });
+    }
+
+    // Toggle opciones de repetición en el modal de consulta
+    const repConsultaEnabled = document.getElementById('consulta-repeat-enabled');
+    const repConsultaOptions = document.getElementById('consulta-repeat-options');
+    if (repConsultaEnabled && repConsultaOptions) {
+        repConsultaEnabled.addEventListener('change', () => {
+            if (repConsultaEnabled.checked) repConsultaOptions.classList.remove('hidden');
+            else repConsultaOptions.classList.add('hidden');
+        });
+    }
+
+    // Toggle opciones de repetición en el modal de taller
+    const repTallerEnabled = document.getElementById('taller-repeat-enabled');
+    const repTallerOptions = document.getElementById('taller-repeat-options');
+    if (repTallerEnabled && repTallerOptions) {
+        repTallerEnabled.addEventListener('change', () => {
+            if (repTallerEnabled.checked) repTallerOptions.classList.remove('hidden');
+            else repTallerOptions.classList.add('hidden');
+        });
+    }
+
+    // Init Flatpickr for Consultations (Admin modal)
+    datePickerConsultaInstance = flatpickr("#consulta-fecha", {
+        locale: "es",
+        dateFormat: "Y-m-d",
+        firstDayOfWeek: 1,
+        disableMobile: "true"
+    });
+
+    // Init Flatpickr for Workshops (Admin modal)
+    datePickerTallerInstance = flatpickr("#taller-fecha", {
+        locale: "es",
+        dateFormat: "Y-m-d",
+        firstDayOfWeek: 1,
+        disableMobile: "true"
+    });
+
+    // Attach submit event listener to form-crear-consulta
+    const formConsulta = document.getElementById('form-crear-consulta');
+    if (formConsulta) {
+        formConsulta.addEventListener('submit', guardarConsultaAdmin);
+    }
+
+    // Attach submit event listener to form-crear-taller
+    const formTaller = document.getElementById('form-crear-taller');
+    if (formTaller) {
+        formTaller.addEventListener('submit', guardarTallerAdmin);
+    }
+
+    // Attach outside click listener for consulta modal
+    const modalConsulta = document.getElementById('modal-crear-consulta');
+    if (modalConsulta) {
+        modalConsulta.addEventListener('click', (e) => {
+            if (e.target.id === 'modal-crear-consulta') {
+                cerrarModalCrearConsulta();
+            }
+        });
+    }
+
+    // Attach outside click listener for taller modal
+    const modalTaller = document.getElementById('modal-crear-taller');
+    if (modalTaller) {
+        modalTaller.addEventListener('click', (e) => {
+            if (e.target.id === 'modal-crear-taller') {
+                cerrarModalCrearTaller();
+            }
+        });
+    }
+
+    // Listener para cambiar los profesionales según el tipo de consulta seleccionada
+    const consultaTipoSelect = document.getElementById('consulta-tipo');
+    if (consultaTipoSelect) {
+        consultaTipoSelect.addEventListener('change', (e) => {
+            actualizarProfesoresSelectConsulta(e.target.value);
+        });
+    }
+
+    await cargarProfesionalesCache();
     await checkProfile();
-    await cargarHorarios();
-    renderizarCalendario();
+
+    // Load data from Supabase
+    await Promise.all([
+        cargarHorarios(),
+        cargarPsicologia(),
+        cargarNutricion()
+    ]);
+
+    // Initial render of calendars and content
+    if (isAdmin) {
+        switchTab('crear');
+    } else if (esTrabajador()) {
+        switchPublicView('profesor-calendario');
+    } else {
+        switchPublicView('inicio');
+    }
 }
 
-async function cargarProfesoresCache() {
-    const { data, error } = await client.from('profesores').select('*').order('nombre');
+async function cargarProfesionalesCache() {
+    const { data, error } = await client.from('profesionales').select('*').order('nombre');
     if (!error && data) {
-        allProfesoresCache = data;
+        allProfesionalesCache = data;
     }
 }
 
 async function checkProfile() {
-    const { data, error } = await client.from('profiles').select('rol, bonos').eq('id', currentUser.id).single();
+    let { data, error } = await client.from('profiles')
+        .select('rol, bonos, saldo_psicologia, saldo_nutricion')
+        .eq('id', currentUser.id)
+        .single();
+
+    if (error && /saldo_psicologia|saldo_nutricion|schema cache|column/i.test(error.message || '')) {
+        console.warn('Faltan columnas de saldo de consultas en profiles. Usando solo bonos.', error);
+        ({ data, error } = await client.from('profiles').select('rol, bonos').eq('id', currentUser.id).single());
+    }
 
     if (error) {
         console.error("Error perfil:", error);
         isAdmin = false;
+        currentUserRole = '';
         document.body.classList.remove('is-admin');
+        document.body.classList.remove('is-profesor');
         return;
     }
 
     if (data) {
-        userBonos = data.bonos || 0;
-        animateValue("bonos-count", parseInt(document.getElementById('bonos-count').innerText), userBonos, 500);
+        userBonos = toSafeNumber(data.bonos);
+        userSaldoPsicologia = toSafeNumber(data.saldo_psicologia);
+        userSaldoNutricion = toSafeNumber(data.saldo_nutricion);
+        animateBalance("bonos-count", userBonos);
+        animateBalance("saldo-psicologia-count", userSaldoPsicologia);
+        animateBalance("saldo-nutricion-count", userSaldoNutricion);
+        animateBalance("profile-bonos-count", userBonos);
+        animateBalance("profile-saldo-psicologia-count", userSaldoPsicologia);
+        animateBalance("profile-saldo-nutricion-count", userSaldoNutricion);
 
         // Normalizar rol
         const rol = (data.rol || '').toLowerCase().trim();
+        currentUserRole = rol;
 
         if (rol === 'admin') {
             isAdmin = true;
@@ -233,15 +423,14 @@ async function checkProfile() {
             const pubNav = document.getElementById('public-nav');
             if (pubNav) pubNav.classList.add('hidden');
 
+            const bonosHeader = document.getElementById('header-bonos-container');
+            if (bonosHeader) bonosHeader.classList.add('hidden');
+
             // Mostrar todos los tabs
-            ['tab-horarios', 'tab-admin-profesores', 'tab-asistencias', 'tab-usuarios', 'tab-configuracion'].forEach(id => {
+            ['tab-crear', 'tab-gestion-alumnos', 'tab-admin-profesores', 'tab-usuarios', 'tab-configuracion'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.classList.remove('hidden');
             });
-
-            // Resetear nombre tab asistencias
-            const tAsist = document.getElementById('tab-asistencias');
-            if (tAsist) tAsist.innerHTML = '<i class="ph-bold ph-list-checks text-olive"></i> Alumnos por clase';
 
             const btnMisClases = document.getElementById('nav-public-mis-clases');
             if (btnMisClases) btnMisClases.classList.add('hidden');
@@ -249,7 +438,7 @@ async function checkProfile() {
             const adminBar = document.querySelector('.admin-only');
             if (adminBar) adminBar.style.removeProperty('display');
 
-        } else if (rol === 'profesor') {
+        } else if (STAFF_ROLES.includes(rol)) {
             isAdmin = false;
             document.body.classList.remove('is-admin');
             document.body.classList.add('is-profesor');
@@ -257,17 +446,22 @@ async function checkProfile() {
             const pubNav = document.getElementById('public-nav');
             if (pubNav) pubNav.classList.remove('hidden');
 
-            const btnMisClases = document.getElementById('nav-public-mis-clases');
-            if (btnMisClases) btnMisClases.classList.remove('hidden');
+            const bonosHeader = document.getElementById('header-bonos-container');
+            if (bonosHeader) bonosHeader.classList.add('hidden');
 
-            ['tab-horarios', 'tab-admin-profesores', 'tab-usuarios', 'tab-configuracion'].forEach(id => {
+            ['nav-public-inicio', 'nav-public-horarios', 'nav-public-psicologia', 'nav-public-nutricion', 'nav-public-profesores'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.classList.add('hidden');
+            });
+            ['nav-public-profesor-calendario', 'nav-public-mis-clases'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.remove('hidden');
             });
 
             const adminBar = document.querySelector('.admin-only');
             if (adminBar) {
-                adminBar.style.removeProperty('display');
+                adminBar.style.display = '';
+                adminBar.classList.add('hidden');
             }
 
         } else {
@@ -278,11 +472,26 @@ async function checkProfile() {
             const pubNav = document.getElementById('public-nav');
             if (pubNav) pubNav.classList.remove('hidden');
 
+            const bonosHeader = document.getElementById('header-bonos-container');
+            if (bonosHeader) bonosHeader.classList.remove('hidden');
+
             const btnMisClases = document.getElementById('nav-public-mis-clases');
             if (btnMisClases) btnMisClases.classList.add('hidden');
+            const btnProfesorCalendario = document.getElementById('nav-public-profesor-calendario');
+            if (btnProfesorCalendario) btnProfesorCalendario.classList.add('hidden');
+            ['nav-public-inicio', 'nav-public-horarios', 'nav-public-psicologia', 'nav-public-profesores'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.remove('hidden');
+            });
+            const btnNutri = document.getElementById('nav-public-nutricion');
+            if (btnNutri) btnNutri.classList.add('hidden');
 
-            const vUsuarios = document.getElementById('view-usuarios');
-            if (!vUsuarios.classList.contains('hidden')) switchTab('horarios');
+            const vistasGestion = ['view-usuarios', 'view-admin-psicologia', 'view-admin-nutricion', 'view-admin-profesores', 'view-configuracion', 'view-asistencias', 'view-profesor-calendario'];
+            const hayVistaGestionActiva = vistasGestion.some(id => {
+                const view = document.getElementById(id);
+                return view && !view.classList.contains('hidden');
+            });
+            if (hayVistaGestionActiva) switchPublicView('inicio');
 
             const adminBar = document.querySelector('.admin-only');
             if (adminBar) {
@@ -292,8 +501,10 @@ async function checkProfile() {
         }
 
         const alertBox = document.getElementById('no-bonos-alert');
-        if (userBonos < 1 && !isAdmin) alertBox.classList.remove('hidden');
-        else alertBox.classList.add('hidden');
+        if (alertBox) {
+            if (userBonos < 1 && !isAdmin && !esTrabajador()) alertBox.classList.remove('hidden');
+            else alertBox.classList.add('hidden');
+        }
     }
 }
 
@@ -418,7 +629,8 @@ async function cargarHorarios() {
 
     const { data: clases, error: errClases } =
         await client.from('clases')
-            .select('*, profesores(*)')
+            .select('*, profesionales(*)')
+            .eq('tipo_clase', 'yoga')
             .gte('fecha_inicio', nowIso)
             .order('fecha_inicio');
 
@@ -440,7 +652,7 @@ async function cargarHorarios() {
     // Traer solo reservas de estas clases para optimizar consumo
     const claseIds = clases.map(c => c.id);
     const { data: reservas, error: errReservas } =
-        await client.from('reservas')
+        await client.from('reservas_yoga')
             .select('*')
             .in('clase_id', claseIds);
 
@@ -533,16 +745,12 @@ function renderizarClases() {
         grupos[dateKey].forEach(c => {
             const hora = new Date(c.fecha_inicio).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
 
-            const isPilates = c.nombre.toLowerCase().includes('pilates') || c.nombre.toLowerCase().includes('reformer');
             const isHot = c.nombre.toLowerCase().includes('hot') || c.nombre.toLowerCase().includes('bikram');
 
             let iconColorClass = 'bg-sand/30 text-cocoa border-sand';
             let tipoTexto = 'Yoga';
 
-            if (isPilates) {
-                iconColorClass = 'bg-lilac/30 text-cocoa border-lilac';
-                tipoTexto = 'Reformer';
-            } else if (isHot) {
+            if (isHot) {
                 iconColorClass = 'bg-cocoa/10 text-cocoa border-cocoa/20';
                 tipoTexto = 'Hot';
             }
@@ -568,10 +776,10 @@ function renderizarClases() {
                             </button>`;
             }
 
-            const adminTrash = `<button onclick="borrarClase(${c.id})" class="admin-only hidden text-cocoa/20 hover:text-red-500 transition ml-2 p-1" title="Eliminar Clase"><i class="ph-bold ph-trash"></i></button>`;
+            const adminTrash = `<button onclick="borrarClase(${c.id})" class="admin-only text-cocoa/20 hover:text-red-500 transition ml-2 p-1" title="Eliminar Clase"><i class="ph-bold ph-trash"></i></button>`;
 
-            const profesorName = c.profesores ? c.profesores.nombre : 'Staff GEN Yoga';
-            const profesorFoto = c.profesores && c.profesores.foto_url ? c.profesores.foto_url : null;
+            const profesorName = c.profesionales ? c.profesionales.nombre : 'Staff GEN Yoga';
+            const profesorFoto = c.profesionales && c.profesionales.foto_url ? c.profesionales.foto_url : null;
             const profesorAvatar = profesorFoto ? `<img src="${profesorFoto}" class="w-full h-full object-cover">` : `<div class="w-full h-full bg-olive/5 flex items-center justify-center text-olive text-[10px] font-bold">${profesorName.charAt(0)}</div>`;
 
             const row = document.createElement('div');
@@ -721,63 +929,166 @@ async function cancelar(reservaId) {
 
 // --- 7. GESTIÓN ADMIN ---
 async function switchTab(tabName) {
-    const tHorarios = document.getElementById('tab-horarios');
-    const tAsistencias = document.getElementById('tab-asistencias');
-    const tUsuarios = document.getElementById('tab-usuarios');
-    const tConfiguracion = document.getElementById('tab-configuracion');
-    const tAdminProfesores = document.getElementById('tab-admin-profesores');
+    if (!isAdmin) return;
+    window.scrollTo(0, 0);
 
-    const vHorarios = document.getElementById('view-horarios');
-    const vAsistencias = document.getElementById('view-asistencias');
-    const vUsuarios = document.getElementById('view-usuarios');
-    const vConfiguracion = document.getElementById('view-configuracion');
-    const vAdminProfesores = document.getElementById('view-admin-profesores');
+    const tabs = {
+        'crear': { tab: 'tab-crear', view: 'view-horarios' },
+        'gestion-alumnos': { tab: 'tab-gestion-alumnos', view: 'view-asistencias' },
+        'admin-profesores': { tab: 'tab-admin-profesores', view: 'view-admin-profesores' },
+        'usuarios': { tab: 'tab-usuarios', view: 'view-usuarios' },
+        'configuracion': { tab: 'tab-configuracion', view: 'view-configuracion' }
+    };
 
-    vHorarios.classList.add('hidden');
-    vAsistencias.classList.add('hidden');
-    vUsuarios.classList.add('hidden');
-    vConfiguracion.classList.add('hidden');
-    if (vAdminProfesores) vAdminProfesores.classList.add('hidden');
-
-    [tHorarios, tAsistencias, tUsuarios, tConfiguracion, tAdminProfesores].forEach(tab => {
-        if (tab) {
-            tab.classList.add('border-transparent', 'text-gray-400');
-            tab.classList.remove('border-olive', 'bg-gray-800', 'text-white');
+    // Hide all views and deactivate all tabs
+    Object.values(tabs).forEach(item => {
+        const tEl = document.getElementById(item.tab);
+        const vEl = document.getElementById(item.view);
+        if (vEl) vEl.classList.add('hidden');
+        if (tEl) {
+            tEl.classList.add('border-transparent', 'text-sand/70');
+            tEl.classList.remove('border-sand', 'bg-cocoa/80', 'text-white');
         }
     });
+    // Vistas legacy y nuevas que ahora se muestran dentro de "Crear"
+    ['view-admin-psicologia', 'view-admin-nutricion', 'view-admin-consultas', 'view-admin-talleres'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+    });
 
-    if (tabName === 'horarios') {
-        vHorarios.classList.remove('hidden');
-        tHorarios.classList.add('border-olive', 'bg-gray-800', 'text-white');
-        tHorarios.classList.remove('border-transparent', 'text-gray-400');
-    } else if (tabName === 'asistencias') {
-        vAsistencias.classList.remove('hidden');
-        tAsistencias.classList.add('border-olive', 'bg-gray-800', 'text-white');
-        tAsistencias.classList.remove('border-transparent', 'text-gray-400');
+    // Activate the selected tab/view
+    const active = tabs[tabName];
+    if (active) {
+        const tEl = document.getElementById(active.tab);
+        const vEl = document.getElementById(active.view);
+        if (vEl && tabName !== 'crear') vEl.classList.remove('hidden');
+        if (tEl) {
+            tEl.classList.remove('border-transparent', 'text-sand/70');
+            tEl.classList.add('border-sand', 'bg-cocoa/80', 'text-white');
+        }
+    }
+
+    const adminCrearTabsEl = document.getElementById('admin-crear-tabs');
+    if (tabName === 'crear') {
+        if (adminCrearTabsEl) adminCrearTabsEl.classList.remove('hidden');
+        await switchAdminCrearTab('clases');
+    } else {
+        if (adminCrearTabsEl) adminCrearTabsEl.classList.add('hidden');
+    }
+
+    // Load data based on active tab
+    if (tabName === 'gestion-alumnos') {
         await cargarAsistenciasPorClase();
     } else if (tabName === 'usuarios') {
-        vUsuarios.classList.remove('hidden');
-        tUsuarios.classList.add('border-olive', 'bg-gray-800', 'text-white');
-        tUsuarios.classList.remove('border-transparent', 'text-gray-400');
         await cargarUsuariosAdmin();
     } else if (tabName === 'configuracion') {
-        vConfiguracion.classList.remove('hidden');
-        tConfiguracion.classList.add('border-olive', 'bg-gray-800', 'text-white');
-        tConfiguracion.classList.remove('border-transparent', 'text-gray-400');
         await cargarConfiguracion();
     } else if (tabName === 'admin-profesores') {
-        if (vAdminProfesores) vAdminProfesores.classList.remove('hidden');
-        if (tAdminProfesores) {
-            tAdminProfesores.classList.add('border-olive', 'bg-gray-800', 'text-white');
-            tAdminProfesores.classList.remove('border-transparent', 'text-gray-400');
-        }
         await cargarProfesoresAdmin();
     }
+}
+
+async function switchAdminCrearTab(type) {
+    window.scrollTo(0, 0);
+    const subtabs = {
+        'clases': { btn: 'btn-admin-tab-clases', view: 'view-horarios' },
+        'consultas': { btn: 'btn-admin-tab-consultas', view: 'view-admin-consultas' },
+        'talleres': { btn: 'btn-admin-tab-talleres', view: 'view-admin-talleres' }
+    };
+
+    // Hide all sub-views and deactivate buttons
+    Object.keys(subtabs).forEach(key => {
+        const item = subtabs[key];
+        const btnEl = document.getElementById(item.btn);
+        const viewEl = document.getElementById(item.view);
+        if (viewEl) viewEl.classList.add('hidden');
+        if (btnEl) btnEl.classList.remove('active');
+    });
+
+    // Activate the current sub-tab
+    const active = subtabs[type];
+    if (active) {
+        const btnEl = document.getElementById(active.btn);
+        const viewEl = document.getElementById(active.view);
+        if (viewEl) viewEl.classList.remove('hidden');
+        if (btnEl) btnEl.classList.add('active');
+    }
+
+    // Load sub-tab specific data
+    if (type === 'clases') {
+        await cargarHorarios();
+    } else if (type === 'consultas') {
+        await cargarConsultasAdmin();
+    } else if (type === 'talleres') {
+        await cargarTalleresAdmin();
+    }
+}
+
+function normalizarTipoClase(tipo) {
+    return (tipo || 'yoga').toLowerCase();
+}
+
+function getTipoClaseMeta(tipo) {
+    const tipoNormalizado = normalizarTipoClase(tipo);
+    const meta = {
+        yoga: { label: 'Clases', colorClass: 'bg-emerald-50 text-emerald-700 border-emerald-100', dotClass: 'yoga', icon: 'ph-person-simple-tai-chi' },
+        psicologia: { label: 'Psicología', colorClass: 'bg-blue-50 text-[#3B82F6] border-blue-100', dotClass: 'psicologia', icon: 'ph-brain' },
+        nutricion: { label: 'Nutrición', colorClass: 'bg-purple-50 text-[#8B5CF6] border-purple-100', dotClass: 'nutricion', icon: 'ph-apple' },
+        taller: { label: 'Taller', colorClass: 'bg-orange-50 text-[#F97316] border-orange-100', dotClass: 'taller', icon: 'ph-chalkboard-teacher' }
+    };
+    return meta[tipoNormalizado] || meta.yoga;
+}
+
+function esClaseDelProfesionalActual(clase) {
+    if (!esTrabajador() || !currentUser?.email) return true;
+    return (clase?.profesionales?.email || '').toLowerCase() === currentUser.email.toLowerCase();
+}
+
+function claseEsFutura(clase) {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const fecha = new Date(clase.fecha_inicio);
+    fecha.setHours(0, 0, 0, 0);
+    return fecha >= hoy;
+}
+
+function crearMapaReservasPorClase(...reservasGrupos) {
+    const reservasPorClase = {};
+    reservasGrupos.flat().forEach(r => {
+        if (!r || r.estado !== 'confirmada') return;
+        if (!reservasPorClase[r.clase_id]) reservasPorClase[r.clase_id] = [];
+        reservasPorClase[r.clase_id].push(r);
+    });
+    return reservasPorClase;
+}
+
+async function cargarReservasTodasLasAreas(claseIds = []) {
+    if (!claseIds.length) {
+        return { reservasPorClase: {}, error: null };
+    }
+
+    const [
+        { data: reservasYoga, error: errYoga },
+        { data: reservasPsicologia, error: errPsicologia },
+        { data: reservasNutricion, error: errNutricion }
+    ] = await Promise.all([
+        client.from('reservas_yoga').select('*').in('clase_id', claseIds),
+        client.from('reservas_psicologia').select('*').in('clase_id', claseIds),
+        client.from('reservas_nutricion').select('*').in('clase_id', claseIds)
+    ]);
+
+    const error = errYoga || errPsicologia || errNutricion;
+    return {
+        reservasPorClase: crearMapaReservasPorClase(reservasYoga || [], reservasPsicologia || [], reservasNutricion || []),
+        error
+    };
 }
 
 async function cargarAsistenciasPorClase() {
     const cont = document.getElementById('asistencias-container');
     const empty = document.getElementById('asistencias-empty');
+    const filtro = document.getElementById('asistencias-filtro-clase');
+    if (!cont || !empty) return;
 
     cont.innerHTML = `
                 <div class="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
@@ -785,17 +1096,9 @@ async function cargarAsistenciasPorClase() {
                     <span class="text-xs uppercase tracking-widest font-bold text-gray-400">Cargando asistencias...</span>
                 </div>`;
 
-    const { data: clases, error: errClases } = await client.from('clases').select('*, profesores(*)').order('fecha_inicio');
+    const { data: clases, error: errClases } = await client.from('clases').select('*, profesionales(*)').order('fecha_inicio');
     if (errClases) {
         console.error(errClases);
-        cont.innerHTML = '';
-        empty.classList.remove('hidden');
-        return;
-    }
-
-    const { data: reservas, error: errRes } = await client.from('reservas').select('*');
-    if (errRes) {
-        console.error(errRes);
         cont.innerHTML = '';
         empty.classList.remove('hidden');
         return;
@@ -809,40 +1112,75 @@ async function cargarAsistenciasPorClase() {
         return;
     }
 
-    if (!clases || clases.length === 0) {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    let clasesFuturas = (clases || []).filter(c => claseEsFutura(c));
+
+    if (!isAdmin && esTrabajador()) {
+        clasesFuturas = clasesFuturas.filter(esClaseDelProfesionalActual);
+    }
+
+    if (!clasesFuturas || clasesFuturas.length === 0) {
+        cont.innerHTML = '';
+        empty.classList.remove('hidden');
+        if (filtro) {
+            filtro.innerHTML = '<option value="todas">Sin clases disponibles</option>';
+            filtro.disabled = true;
+        }
+        return;
+    }
+
+    const perfilesMap = {};
+    (perfiles || []).forEach(p => { perfilesMap[p.id] = p; });
+
+    const claseIds = clasesFuturas.map(c => c.id);
+    const { reservasPorClase, error: errRes } = await cargarReservasTodasLasAreas(claseIds);
+    if (errRes) {
+        console.error(errRes);
         cont.innerHTML = '';
         empty.classList.remove('hidden');
         return;
     }
 
-    empty.classList.add('hidden');
+    allAsistenciasClaseCache = clasesFuturas;
+    allAsistenciasReservasMap = reservasPorClase;
+    allAsistenciasPerfilesMap = perfilesMap;
 
-    const perfilesMap = {};
-    (perfiles || []).forEach(p => { perfilesMap[p.id] = p; });
-
-    const reservasPorClase = {};
-    (reservas || []).forEach(r => {
-        if (r.estado !== 'confirmada') return; // Filter only confirmed bookings
-        if (!reservasPorClase[r.clase_id]) reservasPorClase[r.clase_id] = [];
-        reservasPorClase[r.clase_id].push(r);
-    });
-
-    cont.innerHTML = '';
-
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-
-    let clasesFuturas = clases.filter(c => {
-        const d = new Date(c.fecha_inicio);
-        d.setHours(0, 0, 0, 0);
-        return d >= hoy;
-    });
-
-    const isProfesor = document.body.classList.contains('is-profesor');
-    if (!isAdmin && isProfesor && currentUser) {
-        clasesFuturas = clasesFuturas.filter(c => {
-            return c.profesores && c.profesores.email === currentUser.email;
+    if (filtro) {
+        filtro.disabled = false;
+        filtro.innerHTML = `<option value="todas">${isAdmin ? 'Todas' : 'Todas mis sesiones'}</option>`;
+        clasesFuturas.forEach(c => {
+            const option = document.createElement('option');
+            const fecha = new Date(c.fecha_inicio);
+            const tipoMeta = getTipoClaseMeta(c.tipo_clase);
+            option.value = String(c.id);
+            option.textContent = `${fecha.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })} · ${fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} · ${tipoMeta.label} · ${c.nombre || 'Clase'}`;
+            filtro.appendChild(option);
         });
+
+        if (selectedAsistenciaClaseId !== 'todas' && !clasesFuturas.some(c => String(c.id) === String(selectedAsistenciaClaseId))) {
+            selectedAsistenciaClaseId = 'todas';
+        }
+        filtro.value = selectedAsistenciaClaseId;
+    }
+
+    renderizarAsistenciasPorClase();
+}
+
+function filtrarAsistenciaClase(claseId) {
+    selectedAsistenciaClaseId = claseId || 'todas';
+    renderizarAsistenciasPorClase();
+}
+
+function renderizarAsistenciasPorClase() {
+    const cont = document.getElementById('asistencias-container');
+    const empty = document.getElementById('asistencias-empty');
+    if (!cont || !empty) return;
+
+    let clasesFuturas = allAsistenciasClaseCache || [];
+    if (selectedAsistenciaClaseId !== 'todas') {
+        clasesFuturas = clasesFuturas.filter(c => String(c.id) === String(selectedAsistenciaClaseId));
     }
 
     if (clasesFuturas.length === 0) {
@@ -850,6 +1188,9 @@ async function cargarAsistenciasPorClase() {
         empty.classList.remove('hidden');
         return;
     }
+
+    empty.classList.add('hidden');
+    cont.innerHTML = '';
 
     const grupos = {};
     clasesFuturas.forEach(c => {
@@ -868,7 +1209,7 @@ async function cargarAsistenciasPorClase() {
         card.className = 'bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden';
 
         card.innerHTML = `
-                    <div class="bg-gradient-to-r from-gray-400 to-gray-200 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <div class="bg-gradient-to-r from-gray-100 to-white px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                         <div class="flex items-baseline gap-2">
                             <span class="brand-font text-xl font-bold text-gray-800 capitalize">${diaNombre}</span>
                             <span class="text-xs font-semibold text-gold-600 bg-gold-50 px-2 py-0.5 rounded-md border border-gold-100">${diaNumero} ${mes}</span>
@@ -883,8 +1224,8 @@ async function cargarAsistenciasPorClase() {
 
         grupos[dateKey].forEach(c => {
             const hora = new Date(c.fecha_inicio).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-            const p = c.profesores;
-            const profesorName = p ? p.nombre : 'Staff Q19';
+            const p = c.profesionales;
+            const profesorName = p ? p.nombre : 'Staff GEN';
             const profesorFoto = p && p.foto_url ? p.foto_url : null;
             const profesorAvatar = profesorFoto
                 ? `<img src="${profesorFoto}" class="w-full h-full object-cover">`
@@ -900,8 +1241,11 @@ async function cargarAsistenciasPorClase() {
                             <span class="text-xs sm:text-sm font-bold text-gray-700 truncate max-w-[150px]">${profesorName}</span>
                         </div>`;
             }
-            const listadoReservas = reservasPorClase[c.id] || [];
+            const listadoReservas = allAsistenciasReservasMap[c.id] || [];
             const totalReservas = listadoReservas.length;
+            const tipoMeta = getTipoClaseMeta(c.tipo_clase);
+            const capacidadMax = toSafeNumber(c.capacidad_max) || 1;
+            const tipoNormalizado = normalizarTipoClase(c.tipo_clase);
 
             const fila = document.createElement('div');
             fila.className = 'p-5 flex flex-col gap-4';
@@ -918,36 +1262,47 @@ async function cargarAsistenciasPorClase() {
                 alumnosHTML = `
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
                                 ${listadoReservas.map(r => {
-                    const perfil = perfilesMap[r.user_id] || {};
+                    const perfil = allAsistenciasPerfilesMap[r.user_id] || {};
                     const nombre = perfil.nombre || '';
                     const apellidos = perfil.apellidos || '';
                     const email = perfil.email || 'Sin email';
                     const displayEmail = email.length > 20 ? email.substring(0, 18) + '...' : email;
                     const iniciales = (nombre ? nombre[0] : (email[0] || '?')).toUpperCase();
-                    const clasesAnt = perfil.clases_mes_anterior || 0;
-                    const nivel = getRankConfig(clasesAnt);
+                    const cancelBtn = (isAdmin || esTrabajador())
+                        ? `<button onclick="cancelar(${r.id})" class="text-gray-300 hover:text-red-500 transition ml-auto relative z-20 p-1 flex-shrink-0" title="Quitar Alumno"><i class="ph-bold ph-trash text-base"></i></button>`
+                        : '';
 
                     return `
                                     <div class="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md hover:border-gold-300 transition group relative overflow-hidden">
-                                        <div class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-50 text-gray-500 font-bold text-sm border border-gray-200 shadow-sm group-hover:scale-105 transition relative z-10">
+                                        <div class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-50 text-gray-500 font-bold text-sm border border-gray-200 shadow-sm group-hover:scale-105 transition relative z-10 flex-shrink-0">
                                             ${iniciales}
-                                            <div class="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-white ${nivel.color.replace('text-', 'bg-')}" title="${nivel.name}"></div>
                                         </div>
-                                        <div class="flex flex-col z-10 w-full overflow-hidden">
+                                        <div class="flex flex-col z-10 flex-grow min-w-0 overflow-hidden">
                                             <span class="text-sm font-bold text-gray-900 truncate" title="${nombre} ${apellidos}">${nombre} ${apellidos}</span>
                                             <span class="text-[10px] text-gray-400 truncate" title="${email}">${displayEmail}</span>
                                         </div>
+                                        ${cancelBtn}
                                     </div>`;
                 }).join('')}
                             </div>`;
             }
+
+            const asignarBtn = (isAdmin || esTrabajador()) && totalReservas < capacidadMax
+                ? `
+                    <div class="mt-3 flex justify-end">
+                        <button onclick="abrirModalAsignarPlazaAdmin('${tipoNormalizado}', ${c.id})"
+                            class="inline-flex items-center gap-2 bg-cocoa text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-black transition">
+                            <i class="ph-bold ph-user-plus"></i> Asignar usuario
+                        </button>
+                    </div>`
+                : '';
 
             fila.innerHTML = `
                         <div class="flex flex-col gap-4">
                             <div class="flex items-start sm:items-center gap-4">
                                 <div class="flex flex-col items-center justify-center bg-gray-900 text-white w-14 h-14 rounded-2xl shadow-md border border-gray-800 shrink-0 z-10 relative overflow-hidden group">
                                     <div class="absolute inset-0 bg-gold-500/10 opacity-0 group-hover:opacity-100 transition"></div>
-                                    <i class="ph-fill ph-clock text-gold-400 text-base"></i>
+                                    <i class="ph-bold ${tipoMeta.icon} text-gold-400 text-base"></i>
                                     <span class="text-xs font-bold font-mono mt-0.5 tracking-wide">${hora}</span>
                                 </div>
                                 
@@ -957,15 +1312,19 @@ async function cargarAsistenciasPorClase() {
                                         ${profHTML}
                                     </h4>
                                     <div class="flex flex-wrap items-center gap-2 mt-1.5">
-                                         <span class="flex items-center gap-1.5 text-xs font-semibold text-gray-600 bg-white border border-gray-200 px-2.5 py-1 rounded-lg shadow-sm">
-                                            <i class="ph-bold ph-users text-gray-400"></i> ${totalReservas} / ${c.capacidad_max}
+                                         <span class="flex items-center gap-1.5 text-xs font-semibold border px-2.5 py-1 rounded-lg shadow-sm ${tipoMeta.colorClass}">
+                                            ${tipoMeta.label}
                                          </span>
-                                         ${totalReservas >= c.capacidad_max ? '<span class="text-[10px] font-bold text-red-600 bg-red-50 border border-red-100 px-2 py-1 rounded-lg uppercase tracking-wide flex items-center gap-1"><i class="ph-bold ph-warning-circle"></i> Completa</span>' : ''}
+                                         <span class="flex items-center gap-1.5 text-xs font-semibold text-gray-600 bg-white border border-gray-200 px-2.5 py-1 rounded-lg shadow-sm">
+                                            <i class="ph-bold ph-users text-gray-400"></i> ${totalReservas} / ${capacidadMax}
+                                         </span>
+                                         ${totalReservas >= capacidadMax ? '<span class="text-[10px] font-bold text-red-600 bg-red-50 border border-red-100 px-2 py-1 rounded-lg uppercase tracking-wide flex items-center gap-1"><i class="ph-bold ph-warning-circle"></i> Completa</span>' : ''}
                                     </div>
                                 </div>
                             </div>
                             <div class="pl-0 sm:pl-[4.5rem]">
                                 ${alumnosHTML}
+                                ${asignarBtn}
                             </div>
                         </div>
                     `;
@@ -974,9 +1333,217 @@ async function cargarAsistenciasPorClase() {
     });
 }
 
+async function cargarAgendaProfesor() {
+    const container = document.getElementById('profesor-agenda-container');
+    const empty = document.getElementById('profesor-agenda-empty');
+    if (!container || !empty) return;
+
+    container.innerHTML = `
+        <div class="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
+            <i class="ph-duotone ph-spinner animate-spin text-4xl text-olive"></i>
+            <span class="text-xs uppercase tracking-widest font-bold text-gray-400">Cargando tu calendario...</span>
+        </div>`;
+
+    const { data: clases, error } = await client.from('clases')
+        .select('*, profesionales(*)')
+        .order('fecha_inicio');
+
+    if (error) {
+        console.error(error);
+        container.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+    }
+
+    let clasesProfesor = (clases || [])
+        .filter(claseEsFutura)
+        .filter(esClaseDelProfesionalActual);
+
+    const claseIds = clasesProfesor.map(c => c.id);
+    const { reservasPorClase, error: reservasError } = await cargarReservasTodasLasAreas(claseIds);
+    if (reservasError) console.error(reservasError);
+
+    clasesProfesor = clasesProfesor.map(c => ({
+        ...c,
+        reservasCount: (reservasPorClase[c.id] || []).length
+    }));
+
+    allProfesorAgendaCache = clasesProfesor;
+    renderizarCalendarioProfesor();
+    renderizarAgendaProfesor();
+}
+
+function renderizarCalendarioProfesor() {
+    const year = currentCalendarMonthProfesor.getFullYear();
+    const month = currentCalendarMonthProfesor.getMonth();
+    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+    const label = document.getElementById('profesor-calendar-month-year');
+    if (label) label.textContent = `${monthNames[month]} ${year}`;
+
+    const grid = document.getElementById('profesor-calendar-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+    const daysInMonth = lastDay.getDate();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const prevMonthDays = new Date(year, month, 0).getDate();
+    for (let i = startDayOfWeek - 1; i >= 0; i--) {
+        const day = prevMonthDays - i;
+        const div = document.createElement('div');
+        div.className = 'calendar-day rounded-lg text-sm font-medium text-cocoa bg-white/60 backdrop-blur-sm border border-white/20 other-month';
+        div.textContent = day;
+        grid.appendChild(div);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateObj = new Date(year, month, day);
+        const dateKey = formatDateLocal(dateObj);
+        const sesionesDia = allProfesorAgendaCache.filter(c => formatDateLocal(new Date(c.fecha_inicio)) === dateKey);
+        const isToday = dateObj.getTime() === today.getTime();
+        const isSelected = selectedDateProfesor === dateKey;
+
+        const div = document.createElement('div');
+        div.className = 'calendar-day rounded-lg text-sm font-medium text-cocoa bg-white/60 backdrop-blur-sm border border-white/20 relative';
+        div.textContent = day;
+        if (isToday) div.classList.add('today');
+        if (isSelected) div.classList.add('selected');
+
+        if (sesionesDia.length > 0) {
+            const dotsContainer = document.createElement('div');
+            dotsContainer.className = 'calendar-dots';
+            const tipos = [...new Set(sesionesDia.map(c => normalizarTipoClase(c.tipo_clase)))];
+            tipos.forEach(tipo => {
+                const dot = document.createElement('div');
+                dot.className = `calendar-dot ${getTipoClaseMeta(tipo).dotClass}`;
+                dotsContainer.appendChild(dot);
+            });
+            div.appendChild(dotsContainer);
+        }
+
+        div.onclick = () => {
+            selectedDateProfesor = dateKey;
+            renderizarCalendarioProfesor();
+            renderizarAgendaProfesor();
+        };
+        grid.appendChild(div);
+    }
+
+    const totalCells = grid.children.length;
+    const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+    for (let day = 1; day <= remainingCells; day++) {
+        const div = document.createElement('div');
+        div.className = 'calendar-day rounded-lg text-sm font-medium text-cocoa bg-white/60 backdrop-blur-sm border border-white/20 other-month';
+        div.textContent = day;
+        grid.appendChild(div);
+    }
+}
+
+function renderizarAgendaProfesor() {
+    const container = document.getElementById('profesor-agenda-container');
+    const empty = document.getElementById('profesor-agenda-empty');
+    if (!container || !empty) return;
+
+    let clases = allProfesorAgendaCache || [];
+    if (selectedDateProfesor) {
+        clases = clases.filter(c => formatDateLocal(new Date(c.fecha_inicio)) === selectedDateProfesor);
+    }
+
+    if (clases.length === 0) {
+        container.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+    }
+
+    empty.classList.add('hidden');
+    container.innerHTML = '';
+
+    const grupos = {};
+    clases.forEach(c => {
+        const dateKey = formatDateLocal(new Date(c.fecha_inicio));
+        if (!grupos[dateKey]) grupos[dateKey] = [];
+        grupos[dateKey].push(c);
+    });
+
+    Object.keys(grupos).sort().forEach(dateKey => {
+        const dateObj = new Date(dateKey);
+        const diaNombre = dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
+        const diaNumero = dateObj.getDate();
+        const mes = dateObj.toLocaleDateString('es-ES', { month: 'long' });
+        const section = document.createElement('div');
+        section.className = 'bg-white/90 backdrop-blur-md rounded-3xl border border-white/20 shadow-lg overflow-hidden';
+        section.innerHTML = `
+            <div class="bg-gradient-to-r from-olive/10 to-white px-6 py-4 border-b border-cocoa/5 flex items-center justify-between">
+                <div class="flex items-baseline gap-2">
+                    <span class="brand-font text-xl font-bold text-cocoa capitalize">${diaNombre}</span>
+                    <span class="text-xs font-semibold text-olive bg-olive/10 px-2 py-0.5 rounded-md border border-olive/20">${diaNumero} ${mes}</span>
+                </div>
+            </div>
+            <div id="profesor-agenda-grid-${dateKey}" class="divide-y divide-cocoa/5"></div>
+        `;
+        container.appendChild(section);
+
+        const grid = section.querySelector(`#profesor-agenda-grid-${dateKey}`);
+        grupos[dateKey].forEach(c => {
+            const inicio = new Date(c.fecha_inicio);
+            const fin = c.fecha_fin ? new Date(c.fecha_fin) : null;
+            const hora = inicio.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            const horaFin = fin ? fin.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : null;
+            const tipoMeta = getTipoClaseMeta(c.tipo_clase);
+            const ocupadas = toSafeNumber(c.reservasCount);
+
+            const row = document.createElement('div');
+            row.className = 'p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-sand/5 transition';
+            row.innerHTML = `
+                <div class="flex items-start gap-4">
+                    <div class="flex flex-col items-center justify-center w-16 h-16 rounded-xl bg-cocoa text-white border border-cocoa shadow-sm flex-shrink-0">
+                        <i class="ph-bold ${tipoMeta.icon} text-sand text-base"></i>
+                        <span class="text-xs font-bold font-mono mt-1">${hora}</span>
+                    </div>
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2 mb-2">
+                            <span class="text-xs font-bold border px-2.5 py-1 rounded-lg ${tipoMeta.colorClass}">${tipoMeta.label}</span>
+                            <span class="text-xs font-bold text-cocoa/50 bg-sand/20 px-2.5 py-1 rounded-lg">${ocupadas} / ${c.capacidad_max || 1} alumnos</span>
+                        </div>
+                        <h3 class="brand-font text-xl font-bold text-cocoa">${c.nombre || 'Clase'}</h3>
+                        <p class="text-sm text-cocoa/50 mt-1">${horaFin ? `${hora} - ${horaFin}` : hora}${c.descripcion ? ` · ${c.descripcion}` : ''}</p>
+                    </div>
+                </div>
+                <button onclick="abrirAlumnosClase(${c.id})"
+                    class="inline-flex items-center justify-center gap-2 bg-cocoa hover:bg-black text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition">
+                    <i class="ph-bold ph-users-three"></i> Ver alumnos
+                </button>
+            `;
+            grid.appendChild(row);
+        });
+    });
+}
+
+function cambiarMesProfesor(delta) {
+    currentCalendarMonthProfesor.setMonth(currentCalendarMonthProfesor.getMonth() + delta);
+    renderizarCalendarioProfesor();
+}
+
+function limpiarFiltroFechaProfesor() {
+    selectedDateProfesor = null;
+    renderizarCalendarioProfesor();
+    renderizarAgendaProfesor();
+}
+
+function abrirAlumnosClase(claseId) {
+    selectedAsistenciaClaseId = String(claseId);
+    switchPublicView('mis-clases');
+}
+
 async function cargarUsuariosAdmin() {
     const tbody = document.getElementById('users-table-body');
-    tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-400 italic"><i class="ph-duotone ph-spinner animate-spin"></i> Cargando...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-gray-400 italic"><i class="ph-duotone ph-spinner animate-spin"></i> Cargando...</td></tr>';
 
     const { data: users, error } = await client.from('profiles').select('*').order('email');
 
@@ -984,6 +1551,47 @@ async function cargarUsuariosAdmin() {
 
     allUsersCache = users;
     renderUsersTable(users);
+}
+
+function getSaldoConfig(tipo) {
+    return SALDOS_CONFIG[tipo] || SALDOS_CONFIG.yoga;
+}
+
+function getSaldoUsuario(user, tipo) {
+    const config = getSaldoConfig(tipo);
+    return toSafeNumber(user?.[config.field]);
+}
+
+function renderSaldoBadge(user, tipo) {
+    const config = getSaldoConfig(tipo);
+    const value = getSaldoUsuario(user, tipo);
+    const textClass = value > 0 ? config.color : 'text-gray-300';
+
+    return `
+        <div class="flex items-center justify-between gap-3 rounded-xl border ${config.badge} px-3 py-2 bg-opacity-80">
+            <span class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide">
+                <i class="ph-bold ${config.icon}"></i> ${config.label}
+            </span>
+            <span class="font-bold text-base ${textClass}">${value}</span>
+        </div>`;
+}
+
+function renderSaldoButtons(userId, tipo) {
+    const config = getSaldoConfig(tipo);
+
+    return `
+        <div class="flex flex-wrap justify-end items-center gap-1.5">
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide w-16 text-right">${config.label}</span>
+            <button onclick="sumarSaldo('${userId}', '${tipo}', -1)" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition" title="Restar ${config.label}">
+                <i class="ph-bold ph-minus"></i>
+            </button>
+            <button onclick="sumarSaldo('${userId}', '${tipo}', 1)" class="px-3 h-8 flex items-center gap-1 rounded-lg bg-gray-900 text-white text-xs font-bold hover:bg-black transition shadow-sm" title="Añadir 1 ${config.label}">
+                <i class="ph-bold ph-plus"></i> 1
+            </button>
+            <button onclick="sumarSaldo('${userId}', '${tipo}', 5)" class="px-3 h-8 flex items-center gap-1 rounded-lg bg-gold-500 text-white text-xs font-bold hover:bg-gold-600 transition shadow-sm" title="Añadir 5 ${config.label}">
+                <i class="ph-bold ph-ticket"></i> +5
+            </button>
+        </div>`;
 }
 
 function renderUsersTable(users) {
@@ -998,31 +1606,20 @@ function renderUsersTable(users) {
     }
     noRes.classList.add('hidden');
 
-    const headerRow = document.querySelector('#view-usuarios thead tr');
-    if (headerRow && headerRow.children.length === 4) {
-        const th = document.createElement('th');
-        th.className = "px-6 py-4 text-center";
-        th.innerText = "Nivel / Dto";
-        headerRow.insertBefore(th, headerRow.children[2]);
-    }
-
     users.forEach(u => {
-        const isAdminRow = u.rol === 'admin';
+        const rolUsuario = (u.rol || '').toLowerCase().trim();
+        const isAdminRow = rolUsuario === 'admin';
         const row = document.createElement('tr');
-        row.className = 'hover:bg-gray-50 transition border-b border-gray-50 last:border-0';
+        // Con border-separate + spacing en la tabla, esto hace que cada usuario se vea como "tarjeta"
+        row.className = 'bg-white/90 hover:bg-white transition shadow-sm border border-gray-100';
 
         let roleBadge = '<span class="bg-gray-100 text-gray-400 text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest border border-gray-200">Cliente</span>';
 
-        if (u.rol === 'admin') {
+        if (rolUsuario === 'admin') {
             roleBadge = '<span class="bg-gray-900 text-white text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest border border-gray-800">Admin</span>';
-        } else if (u.rol === 'profesor') {
-            roleBadge = '<span class="bg-slate-200 text-slate-600 text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest border border-slate-300">Profesor</span>';
+        } else if (STAFF_ROLES.includes(rolUsuario)) {
+            roleBadge = '<span class="bg-slate-200 text-slate-600 text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest border border-slate-300">Profesional</span>';
         }
-
-        const clasesAnt = u.clases_mes_anterior || 0;
-        const levelData = getRankConfig(clasesAnt);
-        const discountText = levelData.discount > 0 ? `-${levelData.discount}%` : '0%';
-        const discountClass = levelData.discount > 0 ? 'text-emerald-600 bg-emerald-50 border-emerald-100' : 'text-gray-400 bg-gray-100 border-gray-200';
 
         row.innerHTML = `
                     <td class="px-6 py-4">
@@ -1037,28 +1634,18 @@ function renderUsersTable(users) {
                         </div>
                     </td>
                     <td class="px-6 py-4 text-center">${roleBadge}</td>
-                    <td class="px-6 py-4 text-center">
-                        <div class="flex flex-col items-center">
-                            <span class="text-[10px] font-bold uppercase tracking-wide ${levelData.color}">${levelData.name}</span>
-                            <span class="text-[9px] font-bold px-2 py-0.5 rounded-full border ${discountClass} mt-0.5">${discountText}</span>
+                    <td class="px-6 py-4">
+                        <div class="grid gap-2 min-w-[180px]">
+                            ${renderSaldoBadge(u, 'yoga')}
+                            ${renderSaldoBadge(u, 'psicologia')}
+                            ${renderSaldoBadge(u, 'nutricion')}
                         </div>
                     </td>
-                    <td class="px-6 py-4 text-center">
-                        <span class="font-bold text-lg ${u.bonos > 0 ? 'text-q19-600' : 'text-gray-300'}">${u.bonos || 0}</span>
-                    </td>
                     <td class="px-6 py-4 text-right">
-                        <div class="flex justify-end items-center gap-2">
-                            <button onclick="sumarBono('${u.id}', -1)" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition" title="Restar"><i class="ph-bold ph-minus"></i></button>
-                            
-                            <button onclick="sumarBono('${u.id}', 1)" class="px-3 h-8 flex items-center gap-1 rounded-lg bg-gray-900 text-white text-xs font-bold hover:bg-black transition shadow-sm">
-                                <i class="ph-bold ph-plus"></i> 1
-                            </button>
-                            
-                            <button onclick="sumarBono('${u.id}', 5)" class="px-3 h-8 flex items-center gap-1 rounded-lg bg-gold-500 text-white text-xs font-bold hover:bg-gold-600 transition shadow-sm" title="Pack 5">
-                                <i class="ph-bold ph-ticket"></i> +5
-                            </button>
-
-                            <div class="w-px h-6 bg-gray-200 mx-1"></div>
+                        <div class="flex flex-col items-end gap-2">
+                            ${renderSaldoButtons(u.id, 'yoga')}
+                            ${renderSaldoButtons(u.id, 'psicologia')}
+                            ${renderSaldoButtons(u.id, 'nutricion')}
 
                             <button onclick="borrarUsuario('${u.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg border border-red-200 text-red-500 hover:bg-red-50 hover:text-red-700 transition" title="Eliminar Usuario Completo">
                                 <i class="ph-bold ph-trash"></i>
@@ -1071,88 +1658,244 @@ function renderUsersTable(users) {
 }
 
 // --- LOGICA PROFESORES ADMIN ---
+let activeProfesoresAdminFilter = 'todos';
+
+function normalizarEspecialidad(especialidad) {
+    return String(especialidad || '').toLowerCase();
+}
+
+function filtrarProfesionalesPorArea(profesionales = [], filtro = 'todos') {
+    const f = (filtro || 'todos').toLowerCase();
+    if (f === 'todos') return profesionales;
+
+    return profesionales.filter(p => {
+        const esp = normalizarEspecialidad(p.especialidad);
+        if (f === 'clases') return esp.includes('yoga') || esp.includes('clase') || esp.includes('instructor');
+        if (f === 'psicologia') return esp.includes('consulta') || esp.includes('psico') || esp.includes('terapia') || esp.includes('nutri') || esp.includes('diet') || esp.includes('alimen');
+        if (f === 'nutricion') return esp.includes('taller') || esp.includes('workshop');
+        return true;
+    });
+}
+
+window.filtrarProfesoresAdmin = function(filtro) {
+    activeProfesoresAdminFilter = filtro || 'todos';
+    cargarProfesoresAdmin();
+};
+
+function setBotonFiltroProfesActive(filtro) {
+    const ids = [
+        { id: 'prof-filter-todos', key: 'todos' },
+        { id: 'prof-filter-clases', key: 'clases' },
+        { id: 'prof-filter-psico', key: 'psicologia' },
+        { id: 'prof-filter-nutri', key: 'nutricion' }
+    ];
+
+    ids.forEach(({ id, key }) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (key === (filtro || 'todos')) {
+            el.className = 'px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-cocoa text-white shadow-sm';
+        } else {
+            el.className = 'px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-white/70 text-cocoa hover:bg-white transition';
+        }
+    });
+}
+
+function opcionesCategoriaProfesional(selected = '') {
+    const cats = [
+        { value: 'Profesor de yoga', label: 'Yoga' },
+        { value: 'Consultas', label: 'Consultas' },
+        { value: 'Talleres', label: 'Talleres' }
+    ];
+
+    const isPredefined = cats.some(c => c.value === selected);
+    let optionsHtml = cats.map(c => `<option value="${escapeHtml(c.value)}" ${c.value === selected ? 'selected' : ''}>${escapeHtml(c.label)}</option>`).join('');
+
+    if (selected && !isPredefined) {
+        optionsHtml += `<option value="${escapeHtml(selected)}" selected>${escapeHtml(selected)}</option>`;
+    }
+
+    return optionsHtml;
+}
+
+window.crearProfesor = async function() {
+    if (!isAdmin) return;
+
+    const { value: formValues } = await Swal.fire({
+        title: 'Nuevo Profesional',
+        html: `
+            <div class="space-y-4 text-left">
+                <div>
+                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Nombre</label>
+                    <input id="swal-prof-nombre" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-q19-500 outline-none" value="">
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Email (opcional)</label>
+                    <input id="swal-prof-email" type="email" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-q19-500 outline-none" value="">
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Categoría</label>
+                    <select id="swal-prof-especialidad" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-q19-500 outline-none">
+                        ${opcionesCategoriaProfesional('Profesor de yoga')}
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Descripción (opcional)</label>
+                    <textarea id="swal-prof-descripcion" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-q19-500 outline-none" rows="3"></textarea>
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">URL Foto (opcional)</label>
+                    <input id="swal-prof-foto" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-q19-500 outline-none" value="">
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Color Identificativo</label>
+                    <input id="swal-prof-color" type="color" class="w-full h-10 rounded cursor-pointer border border-gray-200" value="#2d8a8e">
+                </div>
+            </div>
+        `,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Crear',
+        confirmButtonColor: '#1a4d4f',
+        preConfirm: () => ({
+            nombre: document.getElementById('swal-prof-nombre')?.value?.trim(),
+            email: document.getElementById('swal-prof-email')?.value?.trim(),
+            especialidad: document.getElementById('swal-prof-especialidad')?.value,
+            descripcion: document.getElementById('swal-prof-descripcion')?.value?.trim(),
+            foto_url: document.getElementById('swal-prof-foto')?.value?.trim(),
+            color: document.getElementById('swal-prof-color')?.value
+        })
+    });
+
+    if (!formValues) return;
+    if (!formValues.nombre) return Swal.fire('Error', 'El nombre es obligatorio', 'error');
+
+    const { error } = await client.from('profesionales').insert([formValues]);
+    if (error) Swal.fire('Error', error.message, 'error');
+    else {
+        await cargarProfesionalesCache();
+        Swal.fire({ icon: 'success', title: 'Profesional creado', timer: 1200, showConfirmButton: false });
+        cargarProfesoresAdmin();
+    }
+};
+
 async function cargarProfesoresAdmin() {
     const grid = document.getElementById('admin-profesores-grid');
     const noData = document.getElementById('no-profesores');
+
+    await cargarProfesionalesCache();
     grid.innerHTML = '';
 
-    await cargarProfesoresCache();
-
-    if (!allProfesoresCache || allProfesoresCache.length === 0) {
+    if (!allProfesionalesCache || allProfesionalesCache.length === 0) {
         noData.classList.remove('hidden');
         return;
     }
     noData.classList.add('hidden');
 
-    grid.innerHTML = allProfesoresCache.map(p => {
+    setBotonFiltroProfesActive(activeProfesoresAdminFilter);
+    const profesionales = filtrarProfesionalesPorArea(allProfesionalesCache, activeProfesoresAdminFilter);
+
+    if (!profesionales || profesionales.length === 0) {
+        grid.innerHTML = '';
+        noData.classList.remove('hidden');
+        return;
+    }
+
+    grid.innerHTML = profesionales.map(p => {
         const initials = p.nombre
             ? p.nombre.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
             : '??';
 
-        // Determinar gradiente basado en su color o default
-        const bgGradient = p.color
-            ? `linear-gradient(135deg, ${p.color}aa, ${p.color})`
-            : 'linear-gradient(135deg, #6b7280, #374151)';
+        // Determinar icono según especialidad
+        let iconClass = 'ph-user';
+        const esp = (p.especialidad || '').toLowerCase();
+        if (esp.includes('consulta') || esp.includes('psico') || esp.includes('terapia')) {
+            iconClass = 'ph-brain';
+        } else if (esp.includes('nutri') || esp.includes('diet')) {
+            iconClass = 'ph-apple';
+        } else if (esp.includes('taller') || esp.includes('workshop')) {
+            iconClass = 'ph-chalkboard-teacher';
+        } else if (esp.includes('yoga') || esp.includes('instructor')) {
+            iconClass = 'ph-person-simple-tai-chi';
+        }
 
-        const fotoHtml = p.foto_url
-            ? `<img src="${p.foto_url}" class="absolute inset-0 w-full h-full object-cover z-0" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden')">
-               <div class="absolute inset-0 flex items-center justify-center z-0 hidden bg-gradient-to-br from-gray-400 to-gray-600">
-                    <span class="text-9xl font-sans font-bold text-white/20 select-none">${initials}</span>
+        const baseColor = p.color || '#8c8658';
+        const bgGradient = `linear-gradient(135deg, ${baseColor}15, ${baseColor}30)`;
+        const textColor = baseColor;
+        const tagBg = `${baseColor}08`;
+        const borderStyle = `outline: 1px solid ${baseColor}30;`;
+
+        const avatarInner = p.foto_url
+            ? `<img src="${p.foto_url}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden')">
+               <div class="w-full h-full flex flex-col items-center justify-center hidden" style="background: ${bgGradient}">
+                    <i class="ph-fill ${iconClass}" style="font-size: 32px; color: ${textColor}"></i>
                </div>`
-            : `<div class="absolute inset-0 flex items-center justify-center z-0 bg-gradient-to-br from-gray-400 to-gray-600">
-                    <span class="text-9xl font-sans font-bold text-white/20 select-none">${initials}</span>
+            : `<div class="w-full h-full flex flex-col items-center justify-center" style="background: ${bgGradient}">
+                    <i class="ph-fill ${iconClass}" style="font-size: 32px; color: ${textColor}"></i>
                </div>`;
 
+        const bioHtml = p.descripcion
+            ? `<p class="text-xs text-cocoa/60 font-light line-clamp-2 px-4 text-center mt-3 leading-relaxed" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${p.descripcion}</p>`
+            : '';
+
+        const emailHtml = p.email
+            ? `<div class="text-[10px] text-cocoa/40 mt-1 font-light flex items-center gap-1 justify-center">
+                <i class="ph ph-envelope-simple"></i> ${p.email}
+               </div>`
+            : '';
+
         return `
-        <div class="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition group flex flex-col">
-            <!-- Header / Cover -->
-            <div class="relative h-48 bg-gray-200 overflow-hidden">
-                ${fotoHtml}
-                
-                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10 pointer-events-none"></div>
-
-                <!-- Botones de Acción (Top Right) -->
-                <div class="absolute top-3 right-3 z-30 flex gap-2">
-                    <button onclick="editarProfesor(${p.id})" 
-                        class="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white hover:text-q19-700 transition flex items-center justify-center shadow-sm"
-                        title="Editar">
-                        <i class="ph-bold ph-pencil-simple text-sm"></i>
-                    </button>
-                    <button onclick="borrarProfesor(${p.id})" 
-                        class="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-red-500 hover:text-white transition flex items-center justify-center shadow-sm"
-                        title="Eliminar">
-                        <i class="ph-bold ph-trash text-sm"></i>
-                    </button>
-                </div>
-
-                <!-- Info Principal (Bottom Left) -->
-                <div class="absolute bottom-4 left-5 z-20">
-                    <h3 class="text-white font-serif font-bold text-4xl leading-none drop-shadow-md mb-1">${p.nombre}</h3>
-                    <p class="text-white/80 text-[10px] font-bold uppercase tracking-widest drop-shadow-sm">${p.especialidad || 'INSTRUCTOR'}</p>
-                </div>
+        <div class="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-cocoa/10 hover:shadow-md hover:scale-[1.01] transition duration-300 group flex flex-col items-center relative min-h-[260px] w-full sm:w-[300px]">
+            
+            <!-- Botones de Acción (Top Right) -->
+            <div style="position: absolute; top: 16px; right: 16px; display: flex; gap: 8px; z-index: 10;">
+                <button onclick="editarProfesor(${p.id})" 
+                    class="hover:bg-cocoa hover:text-white transition flex items-center justify-center shadow-sm"
+                    style="width: 32px; height: 32px; border-radius: 50%; background-color: rgba(211,202,180,0.15); border: 1px solid rgba(38,22,12,0.05); color: #26160C;"
+                    title="Editar">
+                    <i class="ph-bold ph-pencil-simple text-sm"></i>
+                </button>
+                <button onclick="borrarProfesor(${p.id})" 
+                    class="hover:bg-red-500 hover:text-white transition flex items-center justify-center shadow-sm"
+                    style="width: 32px; height: 32px; border-radius: 50%; background-color: rgba(211,202,180,0.15); border: 1px solid rgba(38,22,12,0.05); color: #26160C;"
+                    title="Eliminar">
+                    <i class="ph-bold ph-trash text-sm"></i>
+                </button>
             </div>
 
-            <!-- Body / Detalles -->
-            <div class="p-5 flex flex-col gap-3">
-                <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 rounded-full shadow-sm" style="background-color: ${p.color || '#9ca3af'}"></div>
-                    <span class="text-xs text-gray-400 font-bold">Color Identificativo</span>
-                </div>
-                
-                <p class="text-sm text-gray-500 line-clamp-2">
-                    ${p.descripcion || 'Sin descripción disponible.'}
-                </p>
+            <!-- Contenedor del Avatar Circular -->
+            <div class="rounded-full overflow-hidden shadow-sm relative group-hover:scale-105 transition duration-300 mt-2 mb-4 bg-gray-50 flex items-center justify-center"
+                 style="width: 80px; height: 80px; min-width: 80px; min-height: 80px; border: 3px solid #ffffff; ${borderStyle} box-shadow: 0 4px 10px rgba(38,22,12,0.08);">
+                ${avatarInner}
             </div>
+
+            <!-- Nombre -->
+            <h3 class="brand-font text-lg font-bold text-cocoa text-center mb-0.5" style="color: #26160C;">${p.nombre}</h3>
+            
+            <!-- Email -->
+            ${emailHtml}
+
+            <!-- Etiqueta de Especialidad -->
+            <div class="mt-3">
+                <span class="inline-block py-1 px-3 rounded-full text-[9px] font-bold tracking-widest uppercase"
+                      style="background-color: ${tagBg}; color: ${textColor}; border: 1px solid ${baseColor}20;">
+                    ${p.especialidad || 'Instructor'}
+                </span>
+            </div>
+
+            <!-- Descripción (Bio) -->
+            ${bioHtml}
         </div>
-    `}).join('');
+        `;
+    }).join('');
 }
 
 async function editarProfesor(id) {
-    const profesor = allProfesoresCache.find(p => p.id === id);
+    const profesor = allProfesionalesCache.find(p => p.id === id);
     if (!profesor) return;
 
     const { value: formValues } = await Swal.fire({
-        title: 'Editar Profesor',
+        title: 'Editar Profesional',
         html: `
                         <div class="space-y-4 text-left">
                             <div>
@@ -1160,8 +1903,19 @@ async function editarProfesor(id) {
                                 <input id="swal-prof-nombre" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-q19-500 outline-none" value="${profesor.nombre || ''}">
                             </div>
                             <div>
-                                <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Especialidad</label>
-                                <input id="swal-prof-especialidad" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-q19-500 outline-none" value="${profesor.especialidad || ''}">
+                                <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Email (opcional)</label>
+                                <input id="swal-prof-email" type="email" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-q19-500 outline-none" value="${profesor.email || ''}">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Categoría</label>
+                                <select id="swal-prof-especialidad" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-q19-500 outline-none">
+                                    ${opcionesCategoriaProfesional(profesor.especialidad || '')}
+                                </select>
+                                <p class="text-[10px] text-gray-400 mt-1">Se usa para separar Yoga / Consultas / Talleres.</p>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Descripción (opcional)</label>
+                                <textarea id="swal-prof-descripcion" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-q19-500 outline-none" rows="3">${profesor.descripcion || ''}</textarea>
                             </div>
                             <div>
                                 <label class="text-xs font-bold uppercase text-gray-500 block mb-1">URL Foto</label>
@@ -1180,7 +1934,9 @@ async function editarProfesor(id) {
         preConfirm: () => {
             return {
                 nombre: document.getElementById('swal-prof-nombre').value,
+                email: document.getElementById('swal-prof-email').value,
                 especialidad: document.getElementById('swal-prof-especialidad').value,
+                descripcion: document.getElementById('swal-prof-descripcion').value,
                 foto_url: document.getElementById('swal-prof-foto').value,
                 color: document.getElementById('swal-prof-color').value
             }
@@ -1190,16 +1946,16 @@ async function editarProfesor(id) {
     if (formValues) {
         if (!formValues.nombre) return Swal.fire('Error', 'El nombre es obligatorio', 'error');
 
-        const { error } = await client.from('profesores').update(formValues).eq('id', id);
+        const { error } = await client.from('profesionales').update(formValues).eq('id', id);
         if (error) Swal.fire('Error', error.message, 'error');
         else {
             Swal.fire({
                 icon: 'success',
-                title: 'Profesor actualizado',
+                title: 'Profesional actualizado',
                 showConfirmButton: false,
                 timer: 1500
             });
-            await cargarProfesoresCache();
+            await cargarProfesionalesCache();
             cargarProfesoresAdmin();
         }
     }
@@ -1207,7 +1963,7 @@ async function editarProfesor(id) {
 
 async function borrarProfesor(id) {
     const res = await Swal.fire({
-        title: '¿Eliminar profesor?',
+        title: '¿Eliminar profesional?',
         text: "Esta acción no se puede deshacer.",
         icon: 'warning',
         showCancelButton: true,
@@ -1217,12 +1973,12 @@ async function borrarProfesor(id) {
     });
 
     if (res.isConfirmed) {
-        const { error } = await client.from('profesores').delete().eq('id', id);
+        const { error } = await client.from('profesionales').delete().eq('id', id);
         if (error) Swal.fire('Error', error.message, 'error');
         else {
-            await cargarProfesoresCache();
+            await cargarProfesionalesCache();
             cargarProfesoresAdmin();
-            Swal.fire('Eliminado', 'El profesor ha sido eliminado.', 'success');
+            Swal.fire('Eliminado', 'El profesional ha sido eliminado.', 'success');
         }
     }
 }
@@ -1233,11 +1989,17 @@ function filtrarUsuarios() {
     renderUsersTable(filtered);
 }
 
-async function sumarBono(userId, qty) {
-    const { data } = await client.from('profiles').select('bonos').eq('id', userId).single();
-    const nuevoSaldo = (data.bonos || 0) + qty;
+async function sumarSaldo(userId, tipo, qty) {
+    const config = getSaldoConfig(tipo);
+    const { data, error: readError } = await client.from('profiles').select(config.field).eq('id', userId).single();
 
-    const { error } = await client.from('profiles').update({ bonos: nuevoSaldo }).eq('id', userId);
+    if (readError) {
+        Swal.fire('Error', `No se pudo leer el saldo de ${config.label}. Revisa que exista el campo ${config.field}.`, 'error');
+        return;
+    }
+
+    const nuevoSaldo = Math.max(0, toSafeNumber(data?.[config.field]) + qty);
+    const { error } = await client.from('profiles').update({ [config.field]: nuevoSaldo }).eq('id', userId);
 
     if (error) Swal.fire('Error', error.message, 'error');
     else {
@@ -1245,6 +2007,10 @@ async function sumarBono(userId, qty) {
         Toast.fire({ icon: 'success', title: 'Saldo actualizado' });
         cargarUsuariosAdmin();
     }
+}
+
+async function sumarBono(userId, qty) {
+    return sumarSaldo(userId, 'yoga', qty);
 }
 
 async function borrarUsuario(uid) {
@@ -1260,7 +2026,9 @@ async function borrarUsuario(uid) {
 
     if (res.isConfirmed) {
         Swal.showLoading();
-        const { error: errReservas } = await client.from('reservas').delete().eq('user_id', uid);
+        const { error: errReservas } = await client.from('reservas_yoga').delete().eq('user_id', uid);
+        await client.from('reservas_psicologia').delete().eq('user_id', uid);
+        await client.from('reservas_nutricion').delete().eq('user_id', uid);
         const { data, error } = await client.from('profiles').delete().eq('id', uid).select();
 
         if (error) {
@@ -1284,6 +2052,12 @@ async function abrirModalCrearClase() {
     modal.classList.remove('hidden');
 
     const hoy = new Date().toISOString().split('T')[0];
+
+    // Reset repetición
+    const repEnabled = document.getElementById('clase-repeat-enabled');
+    const repOptions = document.getElementById('clase-repeat-options');
+    if (repEnabled) repEnabled.checked = false;
+    if (repOptions) repOptions.classList.add('hidden');
 
     if (datePickerInstance) {
         datePickerInstance.set('minDate', hoy);
@@ -1325,10 +2099,10 @@ async function abrirModalCrearClase() {
     }
 
     const selectProfesor = document.getElementById('clase-profesor-id');
-    selectProfesor.innerHTML = '<option value="" disabled selected>Selecciona un profesor</option>';
+    selectProfesor.innerHTML = '<option value="" disabled selected>Selecciona un profesional</option>';
 
-    if (allProfesoresCache && allProfesoresCache.length > 0) {
-        allProfesoresCache.forEach(p => {
+    if (allProfesionalesCache && allProfesionalesCache.length > 0) {
+        allProfesionalesCache.forEach(p => {
             const option = document.createElement('option');
             option.value = p.id;
             option.textContent = p.nombre + (p.especialidad ? ` (${p.especialidad})` : '');
@@ -1337,7 +2111,7 @@ async function abrirModalCrearClase() {
     } else {
         const option = document.createElement('option');
         option.disabled = true;
-        option.textContent = 'No hay profesores disponibles';
+        option.textContent = 'No hay profesionales disponibles';
         selectProfesor.appendChild(option);
     }
 }
@@ -1359,8 +2133,14 @@ document.getElementById('form-crear-clase').addEventListener('submit', async (e)
     const capacidad = parseInt(document.getElementById('clase-capacidad').value);
     const profesorId = document.getElementById('clase-profesor-id').value;
 
+    const repeatEnabled = !!document.getElementById('clase-repeat-enabled')?.checked;
+    const repeatEveryWeeks = parseInt(document.getElementById('clase-repeat-every')?.value || '1', 10);
+    let repeatCount = parseInt(document.getElementById('clase-repeat-count')?.value || '1', 10);
+    if (!repeatEnabled) repeatCount = 1;
+    repeatCount = Math.max(1, Math.min(52, Number.isFinite(repeatCount) ? repeatCount : 1));
+
     if (!profesorId) {
-        Swal.fire('Error', 'Debes seleccionar un profesor', 'error');
+        Swal.fire('Error', 'Debes seleccionar un profesional', 'error');
         return;
     }
 
@@ -1372,13 +2152,22 @@ document.getElementById('form-crear-clase').addEventListener('submit', async (e)
         didOpen: () => Swal.showLoading()
     });
 
-    const { data, error } = await client.from('clases').insert([{
-        nombre: nombre,
-        fecha_inicio: fechaInicio.toISOString(),
-        fecha_fin: fechaFin.toISOString(),
-        capacidad_max: capacidad,
-        profesor_id: profesorId
-    }]).select();
+    const inserts = [];
+    for (let i = 0; i < repeatCount; i++) {
+        const start = new Date(fechaInicio);
+        start.setDate(start.getDate() + (i * 7 * repeatEveryWeeks));
+        const end = new Date(start.getTime() + duracion * 60000);
+        inserts.push({
+            tipo_clase: 'yoga',
+            nombre,
+            fecha_inicio: start.toISOString(),
+            fecha_fin: end.toISOString(),
+            capacidad_max: capacidad,
+            profesor_id: profesorId
+        });
+    }
+
+    const { data, error } = await client.from('clases').insert(inserts).select();
 
     Swal.close();
 
@@ -1394,7 +2183,7 @@ document.getElementById('form-crear-clase').addEventListener('submit', async (e)
         Swal.fire({
             icon: 'success',
             title: '¡Clase creada!',
-            text: `${nombre} ha sido añadida al calendario.`,
+            text: repeatCount > 1 ? `${nombre} ha sido añadida (${repeatCount} repeticiones).` : `${nombre} ha sido añadida al calendario.`,
             showConfirmButton: false,
             timer: 2000
         });
@@ -1430,8 +2219,24 @@ async function borrarClase(id) {
 client.channel('public:db').on('postgres_changes', { event: '*', schema: 'public' }, async () => {
     if (currentUser) {
         await checkProfile();
-        await cargarHorarios();
+        await Promise.all([
+            cargarHorarios(),
+            cargarPsicologia(),
+            cargarNutricion()
+        ]);
         if (isAdmin) await cargarAsistenciasPorClase();
+        if (tieneAccesoConsultasAdmin()) {
+            const consultasView = document.getElementById('view-admin-consultas');
+            const talleresView = document.getElementById('view-admin-talleres');
+            if (consultasView && !consultasView.classList.contains('hidden')) await cargarConsultasAdmin();
+            if (talleresView && !talleresView.classList.contains('hidden')) await cargarTalleresAdmin();
+        }
+        if (esTrabajador()) {
+            const profesorCalendario = document.getElementById('view-profesor-calendario');
+            const alumnosClase = document.getElementById('view-asistencias');
+            if (profesorCalendario && !profesorCalendario.classList.contains('hidden')) await cargarAgendaProfesor();
+            if (alumnosClase && !alumnosClase.classList.contains('hidden')) await cargarAsistenciasPorClase();
+        }
     }
 }).subscribe();
 
@@ -1581,7 +2386,7 @@ async function cargarConfiguracion() {
                                         <div class="grid grid-cols-2 gap-4">
                                             <div>
                                                 <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block pl-1">Nombre</label>
-                                                <input type="text" id="new-tipo-nombre" placeholder="Ej: Pilates" required 
+                                                <input type="text" id="new-tipo-nombre" placeholder="Ej: Yoga suave" required 
                                                     class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition hover:bg-white text-gray-800">
                                             </div>
                                             <div>
@@ -1679,8 +2484,8 @@ async function cargarConfiguracion() {
                                     <p class="text-[10px] text-gray-400 font-bold tracking-wide">${t.duracion_predeterminada} MIN</p>
                                 </div>
                             </div>
-                            <button onclick="borrarTipoClase(${t.id})" class="text-gray-300 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition opacity-0 group-hover:opacity-100">
-                                <i class="ph-bold ph-trash"></i>
+                            <button onclick="borrarTipoClase(${t.id})" class="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition" title="Eliminar">
+                                <i class="ph-bold ph-trash text-lg"></i>
                             </button>
                         </div>`;
             }).join('');
@@ -1830,8 +2635,8 @@ async function cargarConfiguracion() {
 
     window.promoverAProfesor = async (uid, email) => {
         const res = await Swal.fire({
-            title: '¿Promover a Profesor?',
-            text: `El usuario ${email} tendrá acceso al panel de profesores.`,
+            title: '¿Promover a Profesional?',
+            text: `El usuario ${email} tendrá acceso al panel de profesionales.`,
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#9333ea',
@@ -1843,8 +2648,8 @@ async function cargarConfiguracion() {
             try {
                 const { data: userData } = await client.from('profiles').select('*').eq('id', uid).single();
                 await client.from('profiles').update({ rol: 'profesor' }).eq('id', uid);
-                await client.from('profesores').insert([{
-                    nombre: userData.nombre || 'Profesor',
+                await client.from('profesionales').insert([{
+                    nombre: userData.nombre || 'Profesional',
                     apellidos: userData.apellidos || '',
                     email: userData.email,
                     foto_url: userData.avatar_url,
@@ -1919,32 +2724,7 @@ async function agregarConfiguracion() {
     }
 }
 
-// ================= PERFIL & RANGO =================
-function getRankConfig(count) {
-    const images = {
-        bronce: 'https://raw.githubusercontent.com/jaime312/Q19/main/images/gen_bronce.png',
-        plata: 'https://raw.githubusercontent.com/jaime312/Q19/main/images/gen_plata.png',
-        oro: 'https://raw.githubusercontent.com/jaime312/Q19/main/images/gen_oro.png',
-        platino: 'https://raw.githubusercontent.com/jaime312/Q19/main/images/gen_platino.png',
-        diamante: 'https://raw.githubusercontent.com/jaime312/Q19/main/images/gen_diamante.png'
-    };
-    const colors = {
-        bronce: 'text-amber-700',
-        plata: 'text-gray-400',
-        oro: 'text-yellow-500',
-        platino: 'text-slate-500',
-        diamante: 'text-blue-500'
-    };
-
-    let level = {};
-    if (count > 16) level = { name: 'Diamante', color: colors.diamante, img: images.diamante, discount: 20, min: 17, next: null, nextName: null };
-    else if (count >= 12) level = { name: 'Platino', color: colors.platino, img: images.platino, discount: 15, min: 12, next: 17, nextName: 'Diamante' };
-    else if (count >= 7) level = { name: 'Oro', color: colors.oro, img: images.oro, discount: 10, min: 7, next: 12, nextName: 'Platino' };
-    else if (count >= 3) level = { name: 'Plata', color: colors.plata, img: images.plata, discount: 5, min: 3, next: 7, nextName: 'Oro' };
-    else level = { name: 'Bronce', color: colors.bronce, img: images.bronce, discount: 0, min: 0, next: 3, nextName: 'Plata' };
-    return level;
-}
-
+// ================= PERFIL =================
 function renderProfileCard(profile) {
     const wrapper = document.getElementById('profile-card');
     if (!wrapper) return;
@@ -1955,71 +2735,16 @@ function renderProfileCard(profile) {
     const fullNameEl = document.getElementById('profile-nombre-full');
     if (fullNameEl) fullNameEl.textContent = `${nombre} ${apellidos}`.trim();
 
-    const countLastMonth = profile.clases_mes_anterior || 0;
-    const currentLevel = getRankConfig(countLastMonth);
-
-    const badgeImg = document.getElementById('rank-badge');
-    if (badgeImg) {
-        badgeImg.src = currentLevel.img;
-        badgeImg.style.display = 'block';
-    }
-
-    const rankNameEl = document.getElementById('rank-name');
-    if (rankNameEl) {
-        rankNameEl.textContent = currentLevel.name;
-        rankNameEl.className = `text-xs font-black uppercase tracking-widest ${currentLevel.color}`;
-    }
-
-    const disc = document.getElementById('discount-badge');
-    if (disc) {
-        if ((currentLevel.discount || 0) > 0) {
-            disc.textContent = `-${currentLevel.discount}%`;
-            disc.classList.remove('hidden');
-        } else {
-            disc.classList.add('hidden');
-        }
-    }
-
-    const countThisMonth = profile.clases_completadas_mes || 0;
-    const countEl = document.getElementById('clases-count-num');
-    if (countEl) countEl.textContent = countThisMonth;
-
-    const progressConfig = getRankConfig(countThisMonth);
-    const progressBar = document.getElementById('rank-progress-bar');
-    const nextInfo = document.getElementById('next-level-info');
-    const nextDiscountText = document.getElementById('next-discount-text');
-
-    if (progressConfig.next) {
-        const target = progressConfig.next;
-        const faltan = target - countThisMonth;
-        const range = progressConfig.next - progressConfig.min;
-        const doneInTier = countThisMonth - progressConfig.min;
-        const pct = range > 0 ? Math.min(100, Math.max(5, (doneInTier / range) * 100)) : 100;
-
-        if (progressBar) progressBar.style.width = `${pct}%`;
-        const nextLvlConfig = getRankConfig(target);
-        if (nextInfo) nextInfo.innerHTML = `Faltan ${faltan} para <span class="${nextLvlConfig.color}">${progressConfig.nextName}</span>`;
-
-        if (nextDiscountText) {
-            if (nextLvlConfig.discount > 0) {
-                nextDiscountText.textContent = `Próximo descuento: -${nextLvlConfig.discount}%`;
-                nextDiscountText.classList.remove('hidden');
-            } else {
-                nextDiscountText.classList.add('hidden');
-            }
-        }
-    } else {
-        if (progressBar) progressBar.style.width = '100%';
-        if (nextInfo) nextInfo.textContent = '¡Nivel Máximo!';
-        if (nextDiscountText) nextDiscountText.textContent = 'Máximo beneficio alcanzado';
-    }
+    animateBalance("profile-bonos-count", userBonos);
+    animateBalance("profile-saldo-psicologia-count", userSaldoPsicologia);
+    animateBalance("profile-saldo-nutricion-count", userSaldoNutricion);
     wrapper.classList.remove('hidden');
 }
 
 async function loadProfileCard() {
     try {
         if (!currentUser?.id) { renderProfileCard(null); return; }
-        const { data } = await client.from('profiles').select('nombre, apellidos, clases_completadas_mes, clases_mes_anterior').eq('id', currentUser.id).single();
+        const { data } = await client.from('profiles').select('nombre, apellidos').eq('id', currentUser.id).single();
         renderProfileCard(data);
     } catch (e) { renderProfileCard(null); }
 }
@@ -2031,117 +2756,404 @@ async function abrirEditarPerfil() {
     const currentApellidos = parts.slice(1).join(' ') || '';
 
     const { value: formValues } = await Swal.fire({
-        title: 'Editar Perfil',
+        title: 'Ajustes de Perfil',
         html: `
-                    <div class="flex flex-col gap-3 text-left">
-                        <div><label class="text-xs font-bold text-gray-500 uppercase">Nombre</label><input id="swal-nombre" class="swal-input-custom w-full px-4 py-2 border rounded-lg bg-gray-50" value="${currentNombre}"></div>
-                        <div><label class="text-xs font-bold text-gray-500 uppercase">Apellidos</label><input id="swal-apellidos" class="swal-input-custom w-full px-4 py-2 border rounded-lg bg-gray-50" value="${currentApellidos}"></div>
-                    </div>
-                `,
+            <div class="flex flex-col gap-4 text-left font-sans">
+                <div>
+                    <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">Nombre</label>
+                    <input id="swal-nombre" class="w-full px-4 py-2.5 border border-cocoa/10 rounded-xl bg-ivory text-cocoa focus:ring-2 focus:ring-olive outline-none transition" value="${currentNombre}">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wider block mb-1">Apellidos</label>
+                    <input id="swal-apellidos" class="w-full px-4 py-2.5 border border-cocoa/10 rounded-xl bg-ivory text-cocoa focus:ring-2 focus:ring-olive outline-none transition" value="${currentApellidos}">
+                </div>
+                <div class="mt-4 pt-4 border-t border-cocoa/10">
+                    <label class="text-xs font-bold text-red-500 uppercase tracking-wider block mb-2">Zona de Peligro</label>
+                    <button type="button" onclick="Swal.close(); window.eliminarPropiaCuenta();" 
+                        class="w-full py-3 px-4 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200/50 font-bold rounded-xl transition-all duration-200 text-xs flex items-center justify-center gap-2 active:scale-95">
+                        <i class="ph-bold ph-trash-simple text-sm"></i> Eliminar Cuenta Permanentemente
+                    </button>
+                </div>
+            </div>
+        `,
         focusConfirm: false,
         showCancelButton: true,
-        confirmButtonColor: '#d4af37',
-        preConfirm: () => [document.getElementById('swal-nombre').value, document.getElementById('swal-apellidos').value]
+        confirmButtonColor: '#B48A47',
+        confirmButtonText: 'Guardar',
+        cancelButtonText: 'Cancelar',
+        preConfirm: () => [
+            document.getElementById('swal-nombre').value.trim(),
+            document.getElementById('swal-apellidos').value.trim()
+        ]
     });
 
     if (formValues) {
         const [newNombre, newApellidos] = formValues;
+        if (!newNombre) {
+            Swal.fire('Error', 'El nombre es obligatorio', 'error');
+            return;
+        }
         await client.from('profiles').update({ nombre: newNombre, apellidos: newApellidos }).eq('id', currentUser.id);
         loadProfileCard();
     }
 }
 
-// --- 11. GESTIÓN PÚBLICA ---
-function switchPublicView(viewName) {
-    const vHorarios = document.getElementById('view-horarios');
-    const vProfesores = document.getElementById('view-profesores');
-    const vAsistencias = document.getElementById('view-asistencias');
+window.eliminarPropiaCuenta = async function() {
+    const res = await Swal.fire({
+        title: '¿Eliminar tu cuenta definitivamente?',
+        text: 'Esta acción borrará de forma permanente tu perfil, tus saldos y todas tus reservas. No se puede deshacer.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar mi cuenta',
+        cancelButtonText: 'Cancelar'
+    });
 
-    const btnHorarios = document.getElementById('nav-public-horarios');
-    const btnProfesores = document.getElementById('nav-public-profesores');
-    const btnMisClases = document.getElementById('nav-public-mis-clases');
+    if (!res.isConfirmed) return;
 
-    vHorarios.classList.add('hidden');
-    if (vProfesores) vProfesores.classList.add('hidden');
-    if (vAsistencias) vAsistencias.classList.add('hidden');
+    const { value: confirmEmail } = await Swal.fire({
+        title: 'Confirmar eliminación',
+        text: 'Por favor, escribe tu correo electrónico para confirmar que deseas eliminar tu cuenta permanentemente:',
+        input: 'email',
+        inputPlaceholder: 'tu@email.com',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Eliminar permanentemente',
+        cancelButtonText: 'Cancelar'
+    });
 
-    btnHorarios.classList.remove('border-cocoa', 'text-cocoa');
-    btnHorarios.classList.add('border-transparent', 'text-cocoa/60');
-    btnProfesores.classList.remove('border-cocoa', 'text-cocoa');
-    btnProfesores.classList.add('border-transparent', 'text-cocoa/60');
-    if (btnMisClases) {
-        btnMisClases.classList.remove('border-cocoa', 'text-cocoa');
-        btnMisClases.classList.add('border-transparent', 'text-cocoa/60');
-    }
+    if (!confirmEmail) return;
 
-    if (viewName === 'horarios') {
-        vHorarios.classList.remove('hidden');
-        btnHorarios.classList.add('border-cocoa', 'text-cocoa');
-        btnHorarios.classList.remove('border-transparent', 'text-cocoa/60');
-    } else if (viewName === 'profesores') {
-        if (vProfesores) {
-            vProfesores.classList.remove('hidden');
-            renderProfesoresPublic();
-        }
-        btnProfesores.classList.add('border-cocoa', 'text-cocoa');
-        btnProfesores.classList.remove('border-transparent', 'text-cocoa/60');
-    } else if (viewName === 'mis-clases') {
-        if (vAsistencias) {
-            vAsistencias.classList.remove('hidden');
-            cargarAsistenciasPorClase();
-        }
-        if (btnMisClases) {
-            btnMisClases.classList.add('border-cocoa', 'text-cocoa');
-            btnMisClases.classList.remove('border-transparent', 'text-cocoa/60');
-        }
-    }
-}
-
-function renderProfesoresPublic() {
-    const grid = document.getElementById('public-profesores-grid');
-    if (!grid) return;
-
-    if (!allProfesoresCache || allProfesoresCache.length === 0) {
-        grid.innerHTML = '<div class="col-span-full text-center text-gray-400 italic py-10">No hay información de instructores disponible.</div>';
+    if (confirmEmail.toLowerCase().trim() !== currentUser.email.toLowerCase().trim()) {
+        await Swal.fire('Error', 'El correo electrónico no coincide. La eliminación ha sido cancelada.', 'error');
         return;
     }
 
-    grid.innerHTML = allProfesoresCache.map(p => {
-        const nombres = (p.nombre || 'Instructor').split(' ');
-        const iniciales = nombres.length > 1
-            ? (nombres[0][0] + nombres[1][0]).toUpperCase()
-            : (nombres[0][0] + (nombres[0][1] || '')).toUpperCase();
-        const baseColor = p.color || '#d4af37';
+    Swal.fire({
+        title: 'Eliminando cuenta...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+
+    try {
+        const uid = currentUser.id;
+        
+        // Borrar reservas
+        const { error: errReservasYoga } = await client.from('reservas_yoga').delete().eq('user_id', uid);
+        if (errReservasYoga) console.error('Error al borrar reservas de yoga:', errReservasYoga);
+        
+        const { error: errReservasPsicologia } = await client.from('reservas_psicologia').delete().eq('user_id', uid);
+        if (errReservasPsicologia) console.error('Error al borrar reservas de psicología:', errReservasPsicologia);
+
+        const { error: errReservasNutricion } = await client.from('reservas_nutricion').delete().eq('user_id', uid);
+        if (errReservasNutricion) console.error('Error al borrar reservas de nutrición:', errReservasNutricion);
+
+        // Borrar perfil
+        const { error: errProfile } = await client.from('profiles').delete().eq('id', uid);
+        
+        if (errProfile) {
+            throw new Error(errProfile.message);
+        }
+
+        // Cerrar sesión
+        await client.auth.signOut();
+        
+        await Swal.fire({
+            icon: 'success',
+            title: 'Cuenta eliminada',
+            text: 'Tu cuenta y todos tus datos asociados han sido eliminados correctamente.',
+            confirmButtonText: 'Entendido'
+        });
+        
+        location.reload();
+    } catch (err) {
+        console.error('Error al eliminar cuenta:', err);
+        Swal.fire('Error', 'No se pudo eliminar tu cuenta: ' + err.message, 'error');
+    }
+}
+
+// --- 11. GESTIÓN PÚBLICA ---
+function switchPublicView(viewName) {
+    if (viewName === 'nutricion') {
+        // Redirigir a la vista de consultas (psicología) con la pestaña de nutrición activa
+        switchPublicView('psicologia');
+        switchConsultasSubTab('nutricion');
+        return;
+    }
+
+    const views = {
+        'profesor-calendario': { btn: 'nav-public-profesor-calendario', view: 'view-profesor-calendario' },
+        'inicio': { btn: 'nav-public-inicio', view: 'view-inicio' },
+        'horarios': { btn: 'nav-public-horarios', view: 'view-horarios' },
+        'psicologia': { btn: 'nav-public-psicologia', view: 'view-psicologia' },
+        'nutricion': { btn: 'nav-public-nutricion', view: 'view-nutricion' },
+        'profesores': { btn: 'nav-public-profesores', view: 'view-profesores' },
+        'mis-clases': { btn: 'nav-public-mis-clases', view: 'view-asistencias' }
+    };
+
+    // Hide all views and deactivate all buttons
+    Object.values(views).forEach(item => {
+        const vEl = document.getElementById(item.view);
+        const bEl = document.getElementById(item.btn);
+        if (vEl) vEl.classList.add('hidden');
+        if (bEl) {
+            bEl.classList.remove('border-cocoa', 'text-cocoa');
+            bEl.classList.add('border-transparent', 'text-cocoa/60');
+        }
+    });
+
+    // Activate selected view/button
+    const active = views[viewName];
+    if (active) {
+        const vEl = document.getElementById(active.view);
+        const bEl = document.getElementById(active.btn);
+        if (vEl) vEl.classList.remove('hidden');
+        if (bEl) {
+            bEl.classList.add('border-cocoa', 'text-cocoa');
+            bEl.classList.remove('border-transparent', 'text-cocoa/60');
+        }
+    }
+
+    activePublicView = viewName;
+
+    // Load data based on view name
+    if (viewName === 'inicio') {
+        renderizarCalendarioInicio();
+        renderizarConsolidadoDia();
+    } else if (viewName === 'profesor-calendario') {
+        cargarAgendaProfesor();
+    } else if (viewName === 'horarios') {
+        renderizarCalendario();
+        renderizarClases();
+    } else if (viewName === 'psicologia') {
+        const btnNutri = document.getElementById('btn-subtab-nutricion');
+        if (btnNutri && btnNutri.classList.contains('active')) {
+            cargarNutricion();
+        } else {
+            cargarPsicologia();
+        }
+    } else if (viewName === 'profesores') {
+        renderProfesoresPublic();
+    } else if (viewName === 'mis-clases') {
+        cargarAsistenciasPorClase();
+    }
+}
+
+function switchConsultasSubTab(type) {
+    const btnPsico = document.getElementById('btn-subtab-psicologia');
+    const btnNutri = document.getElementById('btn-subtab-nutricion');
+    const subviewPsico = document.getElementById('sub-view-psicologia');
+    const subviewNutri = document.getElementById('sub-view-nutricion');
+
+    if (type === 'psicologia') {
+        if (btnPsico) btnPsico.classList.add('active');
+        if (btnNutri) btnNutri.classList.remove('active');
+        if (subviewPsico) subviewPsico.classList.remove('hidden');
+        if (subviewNutri) subviewNutri.classList.add('hidden');
+        cargarPsicologia();
+    } else {
+        if (btnPsico) btnPsico.classList.remove('active');
+        if (btnNutri) btnNutri.classList.add('active');
+        if (subviewPsico) subviewPsico.classList.add('hidden');
+        if (subviewNutri) subviewNutri.classList.remove('hidden');
+        cargarNutricion();
+    }
+}
+
+window.switchConsultasSubTab = switchConsultasSubTab;
+
+function parseBio(text) {
+    const sections = {
+        lugar: '',
+        titulos: [],
+        sobreMi: [],
+        teAcompano: [],
+        meDefine: ''
+    };
+    if (!text) return sections;
+
+    const normalized = text.replace(/\r\n/g, '\n');
+    const parts = normalized.split(/\n?(LUGAR DE NACIMIENTO|TITULACIONES|SOBRE MI|SOBRE MÍ|TE ACOMPAÑO|ME DEFINE):?\s*/i);
+    
+    for (let i = 1; i < parts.length; i += 2) {
+        const header = parts[i].toUpperCase();
+        const content = parts[i+1] ? parts[i+1].trim() : '';
+        if (header.includes('LUGAR')) {
+            sections.lugar = content.replace(/,$/, '').trim();
+        } else if (header.includes('TITULACION')) {
+            sections.titulos = content.split('\n').map(l => l.replace(/^[\s*\-•]+/g, '').trim()).filter(Boolean);
+        } else if (header.includes('SOBRE')) {
+            sections.sobreMi = content.split('\n').map(p => p.trim()).filter(Boolean);
+        } else if (header.includes('ACOMPA')) {
+            sections.teAcompano = content.split('\n').map(l => l.replace(/^[\s*\-•*]+/g, '').trim()).filter(Boolean);
+        } else if (header.includes('DEFINE')) {
+            sections.meDefine = content.replace(/^["'“”«»]+/g, '').replace(/["'“”«»]+$/g, '').trim();
+        }
+    }
+    return sections;
+}
+
+function truncateTextProfile(text, max = 150) {
+    const clean = String(text || '').replace(/\s+/g, ' ').trim();
+    if (clean.length <= max) return clean;
+    return `${clean.slice(0, max).trim()}...`;
+}
+
+window.toggleProfesorDetalle = function(cardId) {
+    const detailsDiv = document.getElementById(`details-${cardId}`);
+    const btnSpan = document.querySelector(`#btn-toggle-${cardId} span`);
+    const btnIcon = document.getElementById(`icon-toggle-${cardId}`);
+    
+    if (detailsDiv) {
+        const isHidden = detailsDiv.classList.contains('hidden');
+        if (isHidden) {
+            detailsDiv.classList.remove('hidden');
+            if (btnSpan) btnSpan.textContent = 'Saber menos';
+            if (btnIcon) {
+                btnIcon.classList.remove('ph-caret-down');
+                btnIcon.classList.add('ph-caret-up');
+            }
+        } else {
+            detailsDiv.classList.add('hidden');
+            if (btnSpan) btnSpan.textContent = 'Saber más';
+            if (btnIcon) {
+                btnIcon.classList.remove('ph-caret-up');
+                btnIcon.classList.add('ph-caret-down');
+            }
+        }
+    }
+};
+
+function renderProfesoresPublic(filtro = 'todos') {
+    const grid = document.getElementById('public-profesores-grid');
+    if (!grid) return;
+
+    if (!allProfesionalesCache || allProfesionalesCache.length === 0) {
+        grid.innerHTML = '<div class="col-span-full text-center text-gray-400 italic py-10">No hay información de profesionales disponible.</div>';
+        return;
+    }
+
+    const filtersDiv = grid.previousElementSibling;
+    if (filtersDiv && filtersDiv.tagName === 'DIV') {
+        filtersDiv.style.display = 'flex';
+    }
+
+    let filtrados = allProfesionalesCache;
+
+    if (filtro === 'yoga') {
+        filtrados = allProfesionalesCache.filter(p => {
+            const esp = (p.especialidad || '').toLowerCase();
+            return esp.includes('yoga') || esp.includes('vinyasa') || esp.includes('hatha') || esp.includes('instructor') || esp.includes('clase') || esp === '';
+        });
+    } else if (filtro === 'psicologia') {
+        filtrados = allProfesionalesCache.filter(p => {
+            const esp = (p.especialidad || '').toLowerCase();
+            return esp.includes('consulta') || esp.includes('psico') || esp.includes('terapia') || esp.includes('nutri') || esp.includes('diet') || esp.includes('alimen');
+        });
+    } else if (filtro === 'nutricion') {
+        filtrados = allProfesionalesCache.filter(p => {
+            const esp = (p.especialidad || '').toLowerCase();
+            return esp.includes('taller') || esp.includes('workshop');
+        });
+    }
+
+    if (filtrados.length === 0) {
+        grid.innerHTML = '<div class="col-span-full text-center text-gray-400 italic py-10">No hay profesionales registrados en esta categoría.</div>';
+        return;
+    }
+
+    grid.className = "flex flex-wrap justify-center gap-8 w-full";
+    grid.innerHTML = filtrados.map((p, index) => {
+        const parsed = parseBio(p.descripcion || p.bio || '');
+        const cardId = p.id || `idx-${index}`;
+        const nombre = `${p.nombre || ''} ${p.apellidos || ''}`.trim() || 'Profesional';
+        const baseColor = p.color || '#8c8658';
+        const lugar = parsed.lugar
+            ? `<span class="block text-xs uppercase tracking-widest text-cocoa/50 mt-1">${escapeHtml(parsed.lugar)}</span>`
+            : '';
+
+        const fotoHtml = p.foto_url
+            ? `<img src="${escapeHtml(p.foto_url)}" alt="${escapeHtml(nombre)}" class="w-full h-full object-cover">`
+            : `<div class="w-full h-full bg-cocoa/5 flex items-center justify-center text-cocoa text-4xl font-serif">${escapeHtml(nombre.charAt(0))}</div>`;
+
+        const fullBio = parsed.sobreMi.join(' ');
+        const bioText = truncateTextProfile(fullBio || p.descripcion || p.bio || 'Profesional de GEN Yoga.', 180);
+
+        const titulosParagraphs = parsed.titulos.length
+            ? parsed.titulos.map(t => `<p class="flex items-start gap-1.5"><span class="text-olive text-sm font-bold leading-none">•</span><span>${escapeHtml(t)}</span></p>`).join('')
+            : '';
+
+        const acompanoParagraphs = parsed.teAcompano.length
+            ? parsed.teAcompano.map(item => `<p class="flex items-start gap-1.5"><span class="text-olive text-sm font-bold leading-none">•</span><span>${escapeHtml(item)}</span></p>`).join('')
+            : '';
+
+        const defineText = parsed.meDefine ? `"${escapeHtml(parsed.meDefine)}"` : '';
 
         return `
-                <div class="relative bg-white rounded-[2rem] overflow-hidden shadow-sm border border-gray-100">
-                    <div class="h-[28rem] w-full relative overflow-hidden bg-gray-50 flex items-center justify-center">
-                        <div class="absolute inset-0 opacity-20"
-                             style="background: radial-gradient(circle at 70% 20%, ${baseColor}, transparent 60%), radial-gradient(circle at 0% 100%, ${baseColor}, transparent 50%);">
-                        </div>
-                         <span class="brand-font text-[12rem] leading-none font-bold opacity-10 select-none"
-                               style="color: ${baseColor}; text-shadow: 0 10px 30px rgba(0,0,0,0.05);">
-                            ${iniciales}
-                        </span>
-                        <div class="absolute inset-0 bg-white/10 backdrop-blur-[1px]"></div>
-                        <div class="absolute bottom-0 left-0 w-full p-8 bg-gradient-to-t from-white via-white/90 to-transparent pt-24">
-                             <div class="relative">
-                                <span class="inline-block px-3 py-1 mb-3 text-[10px] font-bold tracking-[0.2em] uppercase text-gray-500 bg-gray-100 rounded-full border border-gray-200">
-                                    ${p.especialidad || 'Instructor'}
-                                </span>
-                                <h3 class="text-4xl brand-font font-bold text-gray-900 mb-2 leading-tight" style="color: ${baseColor}">
-                                    ${p.nombre}
-                                </h3>
-                                <div>
-                                    <p class="text-gray-500 text-sm font-light leading-relaxed mt-4 pt-4 border-t border-gray-100">
-                                         ${p.descripcion || 'Instructor certificado apasionado por el bienestar y la enseñanza de técnicas avanzadas.'}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+            <div class="bg-ivory/80 backdrop-blur-md rounded-[32px] p-6 border border-ivory/40 text-center shadow-sm w-full sm:w-[320px] md:w-[340px] flex flex-col justify-between min-h-[460px] transition-all duration-300 hover:shadow-md hover:scale-[1.015]">
+                <div class="flex flex-col items-center flex-grow w-full">
+                    <!-- Elegant Square Image Frame (matching Silvia's 250x250 size) -->
+                    <div class="rounded-3xl overflow-hidden shadow-sm bg-white border-2 border-white mb-4 relative flex-shrink-0" style="width: 250px; height: 250px; outline: 1px solid ${baseColor}30;">
+                        ${fotoHtml}
                     </div>
+                    <h3 class="text-3xl font-serif text-cocoa leading-tight font-bold">
+                        ${escapeHtml(nombre)}
+                    </h3>
+                    <p class="text-xs uppercase tracking-widest text-olive font-bold mt-1.5">${escapeHtml(p.especialidad || 'Profesional')}</p>
+                    ${lugar}
+
+                    <!-- Bio Short -->
+                    <p class="text-sm md:text-[15px] text-cocoa/80 leading-relaxed font-normal mt-4 text-center">
+                        ${bioText}
+                    </p>
+
+                    <!-- Collapsible Details -->
+                    <div id="details-${cardId}" class="hidden w-full mt-4 pt-4 border-t border-cocoa/10 text-left space-y-4">
+                        <!-- Bio Completa (párrafos adicionales) -->
+                        ${parsed.sobreMi.length > 1 ? `
+                        <div class="space-y-2 text-sm text-cocoa/75 font-normal leading-relaxed">
+                            ${parsed.sobreMi.slice(1).map(para => `<p>${escapeHtml(para)}</p>`).join('')}
+                        </div>` : ''}
+
+                        <!-- Titulaciones -->
+                        ${titulosParagraphs ? `
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-cocoa/50 mb-2 flex items-center gap-1">
+                                <i class="ph-bold ph-graduation-cap text-olive"></i> Titulaciones
+                            </h4>
+                            <div class="space-y-1 text-sm text-cocoa/75">
+                                ${titulosParagraphs}
+                            </div>
+                        </div>` : ''}
+
+                        <!-- Ámbitos de Sesión -->
+                        ${acompanoParagraphs ? `
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-cocoa/50 mb-2 flex items-center gap-1">
+                                <i class="ph-bold ph-heart text-olive"></i> Ámbitos de Sesión
+                            </h4>
+                            <div class="space-y-1 text-sm text-cocoa/75">
+                                ${acompanoParagraphs}
+                            </div>
+                        </div>` : ''}
+                    </div>
+
+                    <!-- Toggle Button -->
+                    <button onclick="toggleProfesorDetalle('${cardId}')" id="btn-toggle-${cardId}" class="mt-4 px-4 py-2.5 bg-cocoa/5 hover:bg-cocoa/10 text-cocoa text-xs font-bold uppercase tracking-widest rounded-xl transition w-full flex items-center justify-center gap-1.5">
+                        <span>Saber más</span>
+                        <i id="icon-toggle-${cardId}" class="ph-bold ph-caret-down"></i>
+                    </button>
                 </div>
-                `;
+
+                <!-- Quote / Define at the bottom -->
+                ${defineText ? `
+                <div class="w-full mt-6 pt-4 border-t border-cocoa/10 text-sm italic text-cocoa/60 text-center font-serif leading-relaxed">
+                    ${defineText}
+                </div>` : ''}
+            </div>
+        `;
     }).join('');
 }
 
@@ -2199,7 +3211,1925 @@ function playYogaSound() {
         gainNode.gain.exponentialRampToValueAtTime(0.001, now + decays[index]);
         osc.connect(gainNode);
         gainNode.connect(masterGain);
-        osc.start(now);
-        osc.stop(now + decays[index] + 1);
     });
+}
+
+function mostrarFuncionEnPruebas() {
+    Swal.fire({
+        icon: 'info',
+        title: 'Función en pruebas',
+        text: 'Esta función está en periodo de pruebas y aún no está disponible.',
+        confirmButtonColor: '#B48A47'
+    });
+}
+
+window.mostrarFuncionEnPruebas = mostrarFuncionEnPruebas;
+
+// =======================================================
+// CONSULTAS Y TALLERES (Versión 3.0)
+// =======================================================
+
+async function cargarPsicologia() {
+    const container = document.getElementById('psicologia-container');
+    if (!container) return;
+    container.innerHTML = `
+    <div class="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
+      <i class="ph-duotone ph-spinner animate-spin text-4xl text-[#3B82F6]"></i>
+      <span class="text-xs uppercase tracking-widest font-bold text-gray-500">Cargando consultas...</span>
+    </div>`;
+
+    const now = new Date();
+    now.setHours(now.getHours() - 2);
+    const nowIso = now.toISOString();
+
+    const { data: clases, error: errClases } =
+        await client.from('clases')
+            .select('*, profesionales(*)')
+            .eq('tipo_clase', 'psicologia')
+            .gte('fecha_inicio', nowIso)
+            .order('fecha_inicio');
+
+    if (errClases) {
+        console.error('Error cargando consultas', errClases);
+        container.innerHTML = '';
+        document.getElementById('psicologia-empty-state').classList.remove('hidden');
+        allPsicologiaCache = [];
+        return;
+    }
+
+    if (!clases || clases.length === 0) {
+        container.innerHTML = '';
+        document.getElementById('psicologia-empty-state').classList.remove('hidden');
+        allPsicologiaCache = [];
+        return;
+    }
+
+    const claseIds = clases.map(c => c.id);
+    const { data: reservas, error: errReservas } =
+        await client.from('reservas_psicologia')
+            .select('*')
+            .in('clase_id', claseIds);
+
+    if (errReservas) {
+        console.error('Error cargando reservas de consultas', errReservas);
+    }
+    document.getElementById('psicologia-empty-state').classList.add('hidden');
+
+    const reservasMap = {};
+    (reservas || []).forEach(r => {
+        if (!reservasMap[r.clase_id]) reservasMap[r.clase_id] = [];
+        reservasMap[r.clase_id].push(r);
+    });
+
+    clases.forEach(c => {
+        const resClase = reservasMap[c.id] || [];
+        const confirmadas = resClase.filter(r => r.estado === 'confirmada');
+        c.ocupadas = confirmadas.length;
+        c.miReserva = confirmadas.find(r => r.user_id === currentUser.id) || null;
+    });
+
+    allPsicologiaCache = clases;
+    renderizarCalendarioPsicologia();
+    renderizarPsicologia();
+}
+
+async function cargarNutricion() {
+    const container = document.getElementById('nutricion-container');
+    if (!container) return;
+    container.innerHTML = `
+    <div class="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
+      <i class="ph-duotone ph-spinner animate-spin text-4xl text-[#8B5CF6]"></i>
+      <span class="text-xs uppercase tracking-widest font-bold text-gray-500">Cargando consultas de nutrición...</span>
+    </div>`;
+
+    const now = new Date();
+    now.setHours(now.getHours() - 2);
+    const nowIso = now.toISOString();
+
+    const { data: clases, error: errClases } =
+        await client.from('clases')
+            .select('*, profesionales(*)')
+            .eq('tipo_clase', 'nutricion')
+            .gte('fecha_inicio', nowIso)
+            .order('fecha_inicio');
+
+    if (errClases) {
+        console.error('Error cargando nutrición', errClases);
+        container.innerHTML = '';
+        document.getElementById('nutricion-empty-state').classList.remove('hidden');
+        allNutricionCache = [];
+        return;
+    }
+
+    if (!clases || clases.length === 0) {
+        container.innerHTML = '';
+        document.getElementById('nutricion-empty-state').classList.remove('hidden');
+        allNutricionCache = [];
+        return;
+    }
+
+    const claseIds = clases.map(c => c.id);
+    const { data: reservas, error: errReservas } =
+        await client.from('reservas_nutricion')
+            .select('*')
+            .in('clase_id', claseIds);
+
+    if (errReservas) {
+        console.error('Error cargando reservas de nutrición', errReservas);
+    }
+    document.getElementById('nutricion-empty-state').classList.add('hidden');
+
+    const reservasMap = {};
+    (reservas || []).forEach(r => {
+        if (!reservasMap[r.clase_id]) reservasMap[r.clase_id] = [];
+        reservasMap[r.clase_id].push(r);
+    });
+
+    clases.forEach(c => {
+        const resClase = reservasMap[c.id] || [];
+        const confirmadas = resClase.filter(r => r.estado === 'confirmada');
+        c.ocupadas = confirmadas.length;
+        c.miReserva = confirmadas.find(r => r.user_id === currentUser.id) || null;
+    });
+
+    allNutricionCache = clases;
+    renderizarCalendarioNutricion();
+    renderizarNutricion();
+}
+
+function renderizarPsicologia() {
+    const container = document.getElementById('psicologia-container');
+    if (!container) return;
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    let clasesAMostrar = allPsicologiaCache.filter(c => {
+        const fechaClase = new Date(c.fecha_inicio);
+        fechaClase.setHours(0, 0, 0, 0);
+        return fechaClase >= hoy;
+    });
+
+    if (selectedDatePsicologia) {
+        clasesAMostrar = clasesAMostrar.filter(c => {
+            const claseDate = formatDateLocal(new Date(c.fecha_inicio));
+            return claseDate === selectedDatePsicologia;
+        });
+    }
+
+    if (clasesAMostrar.length === 0) {
+        container.innerHTML = `
+            <div class="bg-white/90 backdrop-blur-md rounded-2xl p-12 text-center border border-white/20 shadow-lg">
+                <i class="ph-duotone ph-calendar-x text-5xl text-[#3B82F6]/30 mb-4"></i>
+                <p class="text-cocoa/60 font-medium">No hay consultas en esta fecha</p>
+                <button onclick="limpiarFiltroFechaPsicologia()" class="mt-4 text-[#3B82F6] hover:underline text-sm font-bold">Ver todas</button>
+            </div>`;
+        return;
+    }
+
+    const grupos = {};
+    clasesAMostrar.forEach(c => {
+        const dateKey = formatDateLocal(new Date(c.fecha_inicio));
+        if (!grupos[dateKey]) grupos[dateKey] = [];
+        grupos[dateKey].push(c);
+    });
+
+    container.innerHTML = '';
+
+    Object.keys(grupos).sort().forEach(dateKey => {
+        const dateObj = new Date(dateKey);
+        const diaNombre = dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
+        const diaNumero = dateObj.getDate();
+        const mes = dateObj.toLocaleDateString('es-ES', { month: 'long' });
+
+        const section = document.createElement('div');
+        section.className = 'bg-white/90 backdrop-blur-md rounded-3xl border border-white/20 shadow-lg overflow-hidden';
+
+        section.innerHTML = `
+            <div class="bg-gradient-to-r from-blue-50 to-white px-6 py-4 border-b border-cocoa/5 flex items-center justify-between">
+                <div class="flex items-baseline gap-2">
+                    <span class="brand-font text-xl font-bold text-cocoa capitalize">${diaNombre}</span>
+                    <span class="text-xs font-semibold text-[#3B82F6] bg-[#3B82F6]/10 px-2 py-0.5 rounded-md border border-[#3B82F6]/20">${diaNumero} ${mes}</span>
+                </div>
+            </div>
+            <div id="psicologia-grid-${dateKey}" class="divide-y divide-cocoa/5"></div>
+        `;
+        container.appendChild(section);
+
+        const grid = section.querySelector(`#psicologia-grid-${dateKey}`);
+
+        grupos[dateKey].forEach(c => {
+            const hora = new Date(c.fecha_inicio).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            const llena = c.ocupadas >= c.capacidad_max;
+            const reservada = !!c.miReserva;
+
+            let btnAction = '';
+            if (reservada) {
+                btnAction = `
+                    <button onclick="cancelarConsulta('psicologia', ${c.miReserva.id})" class="group flex items-center gap-2 text-[11px] font-bold text-cocoa/40 hover:text-red-500 border border-cocoa/10 hover:border-red-200 bg-ivory px-4 py-2 rounded-full transition shadow-sm">
+                        <i class="ph-bold ph-x group-hover:scale-110 transition"></i> CANCELAR
+                    </button>`;
+            } else if (llena) {
+                btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">Reservado</span>`;
+            } else {
+                btnAction = `
+                    <button onclick="mostrarFuncionEnPruebas()" class="bg-[#3B82F6] hover:bg-blue-600 text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform hover:shadow-lg hover:brightness-110 active:scale-95">
+                        RESERVAR
+                    </button>`;
+            }
+
+            const adminTrash = `<button onclick="borrarConsultaAdmin('psicologia', ${c.id})" class="admin-only text-cocoa/20 hover:text-red-500 transition ml-2 p-1" title="Eliminar Consulta"><i class="ph-bold ph-trash"></i></button>`;
+
+            const profesionalName = c.profesionales ? c.profesionales.nombre : 'Staff GEN';
+            const profesionalFoto = c.profesionales && c.profesionales.foto_url ? c.profesionales.foto_url : null;
+            const profesionalAvatar = profesionalFoto ? `<img src="${profesionalFoto}" class="w-full h-full object-cover">` : `<div class="w-full h-full bg-blue-50 flex items-center justify-center text-[#3B82F6] text-[10px] font-bold">${profesionalName.charAt(0)}</div>`;
+
+            const row = document.createElement('div');
+            row.className = 'p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-blue-50/5 transition duration-300 group';
+
+            row.innerHTML = `
+                <div class="flex items-start gap-4 w-full">
+                    <div class="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-blue-50 text-[#3B82F6] border border-blue-100 shadow-sm flex-shrink-0">
+                        <span class="text-[9px] font-bold opacity-80 uppercase pb-0.5">Cita</span>
+                        <span class="text-base font-black tracking-tight leading-none">${hora}</span>
+                    </div>
+                    
+                    <div class="flex-grow">
+                        <div class="flex flex-col gap-1">
+                            <div class="flex flex-wrap items-center gap-3">
+                                <h4 class="brand-font font-bold text-lg text-cocoa group-hover:text-[#3B82F6] transition leading-tight">
+                                    ${c.nombre || 'Consulta Individual'}
+                                </h4>
+                                <div class="flex items-center gap-2 bg-sand/10 px-2.5 py-1 rounded-full border border-cocoa/10 shadow-sm order-last sm:order-none" title="Profesional">
+                                    <div class="w-6 h-6 rounded-full overflow-hidden border border-cocoa/10 shadow-sm flex-shrink-0">
+                                        ${profesionalAvatar}
+                                    </div>
+                                    <span class="text-xs sm:text-sm font-bold text-cocoa/70 truncate max-w-[150px]">${profesionalName}</span>
+                                </div>
+                                ${adminTrash}
+                            </div>
+
+                            <div class="flex items-center gap-2 mt-1">
+                                ${c.descripcion ? `<span class="text-xs text-cocoa/50"><i class="ph-bold ph-info"></i> ${c.descripcion}</span>` : ''}
+                                ${reservada ? '<span class="text-[10px] font-bold text-[#3B82F6] bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-fill ph-check-circle"></i> Tu Consulta</span>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end sm:min-w-[120px]">
+                    ${btnAction}
+                </div>
+            `;
+            grid.appendChild(row);
+        });
+    });
+}
+
+function renderizarNutricion() {
+    const container = document.getElementById('nutricion-container');
+    if (!container) return;
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    let clasesAMostrar = allNutricionCache.filter(c => {
+        const fechaClase = new Date(c.fecha_inicio);
+        fechaClase.setHours(0, 0, 0, 0);
+        return fechaClase >= hoy;
+    });
+
+    if (selectedDateNutricion) {
+        clasesAMostrar = clasesAMostrar.filter(c => {
+            const claseDate = formatDateLocal(new Date(c.fecha_inicio));
+            return claseDate === selectedDateNutricion;
+        });
+    }
+
+    if (clasesAMostrar.length === 0) {
+        container.innerHTML = `
+            <div class="bg-white/90 backdrop-blur-md rounded-2xl p-12 text-center border border-white/20 shadow-lg">
+                <i class="ph-duotone ph-calendar-x text-5xl text-[#8B5CF6]/30 mb-4"></i>
+                <p class="text-cocoa/60 font-medium">No hay consultas de nutrición en esta fecha</p>
+                <button onclick="limpiarFiltroFechaNutricion()" class="mt-4 text-[#8B5CF6] hover:underline text-sm font-bold">Ver todas</button>
+            </div>`;
+        return;
+    }
+
+    const grupos = {};
+    clasesAMostrar.forEach(c => {
+        const dateKey = formatDateLocal(new Date(c.fecha_inicio));
+        if (!grupos[dateKey]) grupos[dateKey] = [];
+        grupos[dateKey].push(c);
+    });
+
+    container.innerHTML = '';
+
+    Object.keys(grupos).sort().forEach(dateKey => {
+        const dateObj = new Date(dateKey);
+        const diaNombre = dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
+        const diaNumero = dateObj.getDate();
+        const mes = dateObj.toLocaleDateString('es-ES', { month: 'long' });
+
+        const section = document.createElement('div');
+        section.className = 'bg-white/90 backdrop-blur-md rounded-3xl border border-white/20 shadow-lg overflow-hidden';
+
+        section.innerHTML = `
+            <div class="bg-gradient-to-r from-purple-50 to-white px-6 py-4 border-b border-cocoa/5 flex items-center justify-between">
+                <div class="flex items-baseline gap-2">
+                    <span class="brand-font text-xl font-bold text-cocoa capitalize">${diaNombre}</span>
+                    <span class="text-xs font-semibold text-[#8B5CF6] bg-[#8B5CF6]/10 px-2 py-0.5 rounded-md border border-[#8B5CF6]/20">${diaNumero} ${mes}</span>
+                </div>
+            </div>
+            <div id="nutricion-grid-${dateKey}" class="divide-y divide-cocoa/5"></div>
+        `;
+        container.appendChild(section);
+
+        const grid = section.querySelector(`#nutricion-grid-${dateKey}`);
+
+        grupos[dateKey].forEach(c => {
+            const hora = new Date(c.fecha_inicio).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            const llena = c.ocupadas >= c.capacidad_max;
+            const reservada = !!c.miReserva;
+
+            let btnAction = '';
+            if (reservada) {
+                btnAction = `
+                    <button onclick="cancelarConsulta('nutricion', ${c.miReserva.id})" class="group flex items-center gap-2 text-[11px] font-bold text-cocoa/40 hover:text-red-500 border border-cocoa/10 hover:border-red-200 bg-ivory px-4 py-2 rounded-full transition shadow-sm">
+                        <i class="ph-bold ph-x group-hover:scale-110 transition"></i> CANCELAR
+                    </button>`;
+            } else if (llena) {
+                btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">Reservado</span>`;
+            } else {
+                btnAction = `
+                    <button onclick="mostrarFuncionEnPruebas()" class="bg-[#8B5CF6] hover:bg-purple-600 text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform hover:shadow-lg hover:brightness-110 active:scale-95">
+                        RESERVAR
+                    </button>`;
+            }
+
+            const adminTrash = `<button onclick="borrarConsultaAdmin('nutricion', ${c.id})" class="admin-only text-cocoa/20 hover:text-red-500 transition ml-2 p-1" title="Eliminar Consulta"><i class="ph-bold ph-trash"></i></button>`;
+
+            const profesionalName = c.profesionales ? c.profesionales.nombre : 'Staff GEN';
+            const profesionalFoto = c.profesionales && c.profesionales.foto_url ? c.profesionales.foto_url : null;
+            const profesionalAvatar = profesionalFoto ? `<img src="${profesionalFoto}" class="w-full h-full object-cover">` : `<div class="w-full h-full bg-purple-50 flex items-center justify-center text-[#8B5CF6] text-[10px] font-bold">${profesionalName.charAt(0)}</div>`;
+
+            const row = document.createElement('div');
+            row.className = 'p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-purple-50/5 transition duration-300 group';
+
+            row.innerHTML = `
+                <div class="flex items-start gap-4 w-full">
+                    <div class="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-purple-50 text-[#8B5CF6] border border-purple-100 shadow-sm flex-shrink-0">
+                        <span class="text-[9px] font-bold opacity-80 uppercase pb-0.5">Cita</span>
+                        <span class="text-base font-black tracking-tight leading-none">${hora}</span>
+                    </div>
+                    
+                    <div class="flex-grow">
+                        <div class="flex flex-col gap-1">
+                            <div class="flex flex-wrap items-center gap-3">
+                                <h4 class="brand-font font-bold text-lg text-cocoa group-hover:text-[#8B5CF6] transition leading-tight">
+                                    ${c.nombre || 'Consulta Nutrición'}
+                                </h4>
+                                <div class="flex items-center gap-2 bg-sand/10 px-2.5 py-1 rounded-full border border-cocoa/10 shadow-sm order-last sm:order-none" title="Profesional">
+                                    <div class="w-6 h-6 rounded-full overflow-hidden border border-cocoa/10 shadow-sm flex-shrink-0">
+                                        ${profesionalAvatar}
+                                    </div>
+                                    <span class="text-xs sm:text-sm font-bold text-cocoa/70 truncate max-w-[150px]">${profesionalName}</span>
+                                </div>
+                                ${adminTrash}
+                            </div>
+
+                            <div class="flex items-center gap-2 mt-1">
+                                ${c.descripcion ? `<span class="text-xs text-cocoa/50"><i class="ph-bold ph-info"></i> ${c.descripcion}</span>` : ''}
+                                ${reservada ? '<span class="text-[10px] font-bold text-[#8B5CF6] bg-purple-50 border border-purple-100 px-2 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-fill ph-check-circle"></i> Tu Cita</span>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end sm:min-w-[120px]">
+                    ${btnAction}
+                </div>
+            `;
+            grid.appendChild(row);
+        });
+    });
+}
+
+function esClienteAsignable(profile) {
+    const rol = (profile?.rol || '').toLowerCase().trim();
+    return !['admin', ...STAFF_ROLES].includes(rol);
+}
+
+async function descontarSaldoConsulta(userId, tipo) {
+    const config = getConsultaConfig(tipo);
+    const { data, error } = await client.from('profiles')
+        .select(`id, nombre, apellidos, email, rol, ${config.saldoField}`)
+        .eq('id', userId)
+        .single();
+
+    if (error) return { ok: false, error };
+    if (!esClienteAsignable(data)) return { ok: true, skipped: true, perfil: data };
+
+    const saldoActual = toSafeNumber(data?.[config.saldoField]);
+    if (saldoActual < 1) return { ok: false, sinSaldo: true, perfil: data };
+
+    const { error: updateError } = await client.from('profiles')
+        .update({ [config.saldoField]: saldoActual - 1 })
+        .eq('id', userId);
+
+    if (updateError) return { ok: false, error: updateError, perfil: data };
+    return { ok: true, perfil: data, saldoAnterior: saldoActual };
+}
+
+async function devolverSaldoConsulta(userId, tipo) {
+    const config = getConsultaConfig(tipo);
+    const { data, error } = await client.from('profiles')
+        .select(`rol, ${config.saldoField}`)
+        .eq('id', userId)
+        .single();
+
+    if (error || !data || !esClienteAsignable(data)) return { ok: false, error };
+
+    const nuevoSaldo = toSafeNumber(data[config.saldoField]) + 1;
+    const { error: updateError } = await client.from('profiles')
+        .update({ [config.saldoField]: nuevoSaldo })
+        .eq('id', userId);
+
+    return { ok: !updateError, error: updateError };
+}
+
+function mostrarErrorSaldoConsulta(resultado, tipo) {
+    const config = getConsultaConfig(tipo);
+    if (resultado?.sinSaldo) {
+        Swal.fire({
+            icon: 'warning',
+            title: `Sin saldo de ${config.label}`,
+            text: `Añade saldo de ${config.label.toLowerCase()} a este cliente antes de reservar.`,
+            confirmButtonColor: config.color
+        });
+        return;
+    }
+
+    Swal.fire({
+        icon: 'error',
+        title: 'Error de saldo',
+        text: resultado?.error?.message || `No se pudo actualizar el saldo de ${config.label}.`,
+        confirmButtonColor: config.color
+    });
+}
+
+async function refrescarConsultas(tipo) {
+    await checkProfile();
+    if (tipo === 'psicologia') {
+        await cargarPsicologia();
+    } else {
+        await cargarNutricion();
+    }
+    if (tieneAccesoConsultasAdmin()) {
+        await cargarConsultasAdmin();
+    }
+}
+
+async function reservarConsulta(tipo, claseId) {
+    mostrarFuncionEnPruebas();
+    return;
+
+    if (isReserving) return;
+
+    try {
+        isReserving = true;
+
+        const config = getConsultaConfig(tipo);
+        const table = config.table;
+        const cache = tipo === 'psicologia' ? allPsicologiaCache : allNutricionCache;
+        const clase = cache.find(c => c.id === claseId);
+
+        if (clase?.miReserva) {
+            return Swal.fire({
+                icon: 'warning',
+                title: 'Ya tienes esta cita',
+                text: 'Ya hay una reserva confirmada para ti en este horario.',
+                confirmButtonColor: config.color
+            });
+        }
+
+        if (clase && clase.ocupadas >= clase.capacidad_max && !isAdmin) {
+            return Swal.fire({
+                icon: 'error',
+                title: 'Consulta reservada',
+                text: 'Este horario ya no está disponible.',
+                confirmButtonColor: config.color
+            });
+        }
+
+        const debeDescontarSaldo = !isAdmin && !esTrabajador();
+        let saldoDescontado = false;
+        if (debeDescontarSaldo) {
+            if (getSaldoConsultaActual(tipo) < 1) {
+                mostrarErrorSaldoConsulta({ sinSaldo: true }, tipo);
+                return;
+            }
+
+            const resultadoSaldo = await descontarSaldoConsulta(currentUser.id, tipo);
+            if (!resultadoSaldo.ok) {
+                mostrarErrorSaldoConsulta(resultadoSaldo, tipo);
+                return;
+            }
+            saldoDescontado = !resultadoSaldo.skipped;
+        }
+
+        const { error } = await client.from(table).insert([{
+            clase_id: claseId,
+            user_id: currentUser.id,
+            estado: 'confirmada'
+        }]);
+
+        if (error) {
+            if (saldoDescontado) await devolverSaldoConsulta(currentUser.id, tipo);
+            Swal.fire({ icon: 'error', title: 'Error al reservar', text: error.message });
+        } else {
+            playYogaSound();
+            Swal.fire({
+                icon: 'success',
+                title: '¡Cita Reservada!',
+                text: 'Tu profesional te espera.',
+                showConfirmButton: false,
+                timer: 1500
+            });
+            await refrescarConsultas(tipo);
+        }
+    } catch (e) {
+        console.error("Error al reservar consulta:", e);
+    } finally {
+        isReserving = false;
+    }
+}
+
+async function cancelarConsulta(tipo, reservaId) {
+    const res = await Swal.fire({
+        title: '¿Cancelar consulta?',
+        text: "Se liberará el turno y se devolverá el saldo correspondiente.",
+        icon: 'warning',
+        iconColor: '#D27D60',
+        showCancelButton: true,
+        confirmButtonColor: '#8C8658',
+        cancelButtonColor: '#9ca3af',
+        confirmButtonText: 'Sí, cancelar'
+    });
+
+    if (res.isConfirmed) {
+        const config = getConsultaConfig(tipo);
+        const table = config.table;
+        const { data: reserva, error: readError } = await client.from(table).select('id, user_id').eq('id', reservaId).single();
+
+        if (readError) {
+            Swal.fire('Error', readError.message, 'error');
+            return;
+        }
+
+        const { error } = await client.from(table).delete().eq('id', reservaId);
+        if (error) {
+            Swal.fire('Error', error.message, 'error');
+        } else {
+            if (reserva?.user_id) await devolverSaldoConsulta(reserva.user_id, tipo);
+            const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
+            Toast.fire({ icon: 'info', title: 'Consulta cancelada. Saldo devuelto.' });
+            await refrescarConsultas(tipo);
+        }
+    }
+}
+
+function renderizarCalendarioPsicologia() {
+    const year = currentCalendarMonthPsicologia.getFullYear();
+    const month = currentCalendarMonthPsicologia.getMonth();
+    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    
+    const label = document.getElementById('psicologia-calendar-month-year');
+    if (label) label.textContent = `${monthNames[month]} ${year}`;
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+    const daysInMonth = lastDay.getDate();
+
+    const grid = document.getElementById('psicologia-calendar-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const prevMonthDays = new Date(year, month, 0).getDate();
+    for (let i = startDayOfWeek - 1; i >= 0; i--) {
+        const day = prevMonthDays - i;
+        const div = document.createElement('div');
+        div.className = 'calendar-day rounded-lg text-sm font-medium text-cocoa bg-white/60 backdrop-blur-sm border border-white/20 other-month';
+        div.textContent = day;
+        grid.appendChild(div);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateObj = new Date(year, month, day);
+        const dateKey = formatDateLocal(dateObj);
+        const isToday = dateObj.getTime() === today.getTime();
+        const isPast = dateObj < today;
+        const hasSessions = allPsicologiaCache.some(c => {
+            const cDate = formatDateLocal(new Date(c.fecha_inicio));
+            return cDate === dateKey;
+        });
+        const isSelected = selectedDatePsicologia === dateKey;
+
+        const div = document.createElement('div');
+        div.className = 'calendar-day rounded-lg text-sm font-medium text-cocoa bg-white/60 backdrop-blur-sm border border-white/20';
+        div.textContent = day;
+        if (isToday) div.classList.add('today');
+        if (hasSessions) div.classList.add('has-psicologia');
+        if (isSelected) div.classList.add('selected');
+        if (isPast) {
+            div.classList.add('disabled');
+        } else {
+            div.onclick = () => {
+                selectedDatePsicologia = dateKey;
+                renderizarCalendarioPsicologia();
+                renderizarPsicologia();
+            };
+        }
+        grid.appendChild(div);
+    }
+
+    const totalCells = grid.children.length;
+    const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+    for (let day = 1; day <= remainingCells; day++) {
+        const div = document.createElement('div');
+        div.className = 'calendar-day rounded-lg text-sm font-medium text-cocoa bg-white/60 backdrop-blur-sm border border-white/20 other-month';
+        div.textContent = day;
+        grid.appendChild(div);
+    }
+}
+
+function cambiarMesPsicologia(delta) {
+    currentCalendarMonthPsicologia.setMonth(currentCalendarMonthPsicologia.getMonth() + delta);
+    renderizarCalendarioPsicologia();
+}
+
+function limpiarFiltroFechaPsicologia() {
+    selectedDatePsicologia = null;
+    renderizarCalendarioPsicologia();
+    renderizarPsicologia();
+}
+
+function renderizarCalendarioNutricion() {
+    const year = currentCalendarMonthNutricion.getFullYear();
+    const month = currentCalendarMonthNutricion.getMonth();
+    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    
+    const label = document.getElementById('nutricion-calendar-month-year');
+    if (label) label.textContent = `${monthNames[month]} ${year}`;
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+    const daysInMonth = lastDay.getDate();
+
+    const grid = document.getElementById('nutricion-calendar-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const prevMonthDays = new Date(year, month, 0).getDate();
+    for (let i = startDayOfWeek - 1; i >= 0; i--) {
+        const day = prevMonthDays - i;
+        const div = document.createElement('div');
+        div.className = 'calendar-day rounded-lg text-sm font-medium text-cocoa bg-white/60 backdrop-blur-sm border border-white/20 other-month';
+        div.textContent = day;
+        grid.appendChild(div);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateObj = new Date(year, month, day);
+        const dateKey = formatDateLocal(dateObj);
+        const isToday = dateObj.getTime() === today.getTime();
+        const isPast = dateObj < today;
+        const hasSessions = allNutricionCache.some(c => {
+            const cDate = formatDateLocal(new Date(c.fecha_inicio));
+            return cDate === dateKey;
+        });
+        const isSelected = selectedDateNutricion === dateKey;
+
+        const div = document.createElement('div');
+        div.className = 'calendar-day rounded-lg text-sm font-medium text-cocoa bg-white/60 backdrop-blur-sm border border-white/20';
+        div.textContent = day;
+        if (isToday) div.classList.add('today');
+        if (hasSessions) div.classList.add('has-nutricion');
+        if (isSelected) div.classList.add('selected');
+        if (isPast) {
+            div.classList.add('disabled');
+        } else {
+            div.onclick = () => {
+                selectedDateNutricion = dateKey;
+                renderizarCalendarioNutricion();
+                renderizarNutricion();
+            };
+        }
+        grid.appendChild(div);
+    }
+
+    const totalCells = grid.children.length;
+    const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+    for (let day = 1; day <= remainingCells; day++) {
+        const div = document.createElement('div');
+        div.className = 'calendar-day rounded-lg text-sm font-medium text-cocoa bg-white/60 backdrop-blur-sm border border-white/20 other-month';
+        div.textContent = day;
+        grid.appendChild(div);
+    }
+}
+
+function cambiarMesNutricion(delta) {
+    currentCalendarMonthNutricion.setMonth(currentCalendarMonthNutricion.getMonth() + delta);
+    renderizarCalendarioNutricion();
+}
+
+function limpiarFiltroFechaNutricion() {
+    selectedDateNutricion = null;
+    renderizarCalendarioNutricion();
+    renderizarNutricion();
+}
+
+function renderizarCalendarioInicio() {
+    const year = currentCalendarMonthInicio.getFullYear();
+    const month = currentCalendarMonthInicio.getMonth();
+    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    
+    const label = document.getElementById('inicio-calendar-month-year');
+    if (label) label.textContent = `${monthNames[month]} ${year}`;
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+    const daysInMonth = lastDay.getDate();
+
+    const grid = document.getElementById('inicio-calendar-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const prevMonthDays = new Date(year, month, 0).getDate();
+    for (let i = startDayOfWeek - 1; i >= 0; i--) {
+        const day = prevMonthDays - i;
+        const div = document.createElement('div');
+        div.className = 'calendar-day rounded-lg text-sm font-medium text-cocoa bg-white/60 backdrop-blur-sm border border-white/20 other-month';
+        div.textContent = day;
+        grid.appendChild(div);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateObj = new Date(year, month, day);
+        const dateKey = formatDateLocal(dateObj);
+        const isToday = dateObj.getTime() === today.getTime();
+        const isPast = dateObj < today;
+        const isSelected = selectedDateInicio === dateKey;
+
+        const hasYoga = allClasesCache.some(c => !!c.miReserva && formatDateLocal(new Date(c.fecha_inicio)) === dateKey);
+        const hasPsico = allPsicologiaCache.some(c => !!c.miReserva && formatDateLocal(new Date(c.fecha_inicio)) === dateKey);
+        const hasNutri = allNutricionCache.some(c => !!c.miReserva && formatDateLocal(new Date(c.fecha_inicio)) === dateKey);
+
+        const div = document.createElement('div');
+        div.className = 'calendar-day rounded-lg text-sm font-medium text-cocoa bg-white/60 backdrop-blur-sm border border-white/20 relative';
+        div.textContent = day;
+
+        if (isToday) div.classList.add('today');
+        if (isSelected) div.classList.add('selected');
+
+        if (hasYoga || hasPsico || hasNutri) {
+            const dotsContainer = document.createElement('div');
+            dotsContainer.className = 'calendar-dots';
+            if (hasYoga) {
+                const dot = document.createElement('div');
+                dot.className = 'calendar-dot yoga';
+                dotsContainer.appendChild(dot);
+            }
+            if (hasPsico) {
+                const dot = document.createElement('div');
+                dot.className = 'calendar-dot psicologia';
+                dotsContainer.appendChild(dot);
+            }
+            if (hasNutri) {
+                const dot = document.createElement('div');
+                dot.className = 'calendar-dot nutricion';
+                dotsContainer.appendChild(dot);
+            }
+            div.appendChild(dotsContainer);
+        }
+
+        div.onclick = () => {
+            selectedDateInicio = dateKey;
+            renderizarCalendarioInicio();
+            renderizarConsolidadoDia();
+        };
+
+        grid.appendChild(div);
+    }
+
+    const totalCells = grid.children.length;
+    const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+    for (let day = 1; day <= remainingCells; day++) {
+        const div = document.createElement('div');
+        div.className = 'calendar-day rounded-lg text-sm font-medium text-cocoa bg-white/60 backdrop-blur-sm border border-white/20 other-month';
+        div.textContent = day;
+        grid.appendChild(div);
+    }
+}
+
+function cambiarMesInicio(delta) {
+    currentCalendarMonthInicio.setMonth(currentCalendarMonthInicio.getMonth() + delta);
+    renderizarCalendarioInicio();
+}
+
+function limpiarFiltroFechaInicio() {
+    selectedDateInicio = null;
+    renderizarCalendarioInicio();
+    renderizarConsolidadoDia();
+}
+
+function renderizarConsolidadoDia() {
+    const container = document.getElementById('inicio-consolidado-container');
+    const emptyState = document.getElementById('inicio-empty-state');
+    if (!container) return;
+
+    const bookings = [];
+
+    allClasesCache.forEach(c => {
+        if (c.miReserva) {
+            bookings.push({
+                id: c.id,
+                reservaId: c.miReserva.id,
+                tipo: 'yoga',
+                nombre: c.nombre,
+                fecha: new Date(c.fecha_inicio),
+                profesional: c.profesionales ? c.profesionales.nombre : 'Staff GEN Yoga',
+                profesionalFoto: c.profesionales ? c.profesionales.foto_url : null,
+                colorClass: 'bg-[#10B981]/10 text-[#10B981] border-[#10B981]/20',
+                tipoLabel: 'Clase',
+                descripcion: c.descripcion || ''
+            });
+        }
+    });
+
+    allPsicologiaCache.forEach(c => {
+        if (c.miReserva) {
+            bookings.push({
+                id: c.id,
+                reservaId: c.miReserva.id,
+                tipo: 'psicologia',
+                nombre: c.nombre || 'Consulta',
+                fecha: new Date(c.fecha_inicio),
+                profesional: c.profesionales ? c.profesionales.nombre : 'Staff GEN',
+                profesionalFoto: c.profesionales ? c.profesionales.foto_url : null,
+                colorClass: 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/20',
+                tipoLabel: 'Consultas',
+                descripcion: c.descripcion || ''
+            });
+        }
+    });
+
+    allNutricionCache.forEach(c => {
+        if (c.miReserva) {
+            bookings.push({
+                id: c.id,
+                reservaId: c.miReserva.id,
+                tipo: 'nutricion',
+                nombre: c.nombre || 'Consulta Nutrición',
+                fecha: new Date(c.fecha_inicio),
+                profesional: c.profesionales ? c.profesionales.nombre : 'Staff GEN',
+                profesionalFoto: c.profesionales ? c.profesionales.foto_url : null,
+                colorClass: 'bg-[#8B5CF6]/10 text-[#8B5CF6] border-[#8B5CF6]/20',
+                tipoLabel: 'Nutrición',
+                descripcion: c.descripcion || ''
+            });
+        }
+    });
+
+    bookings.sort((a, b) => a.fecha - b.fecha);
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    let bookingsAMostrar = bookings;
+    if (selectedDateInicio) {
+        bookingsAMostrar = bookings.filter(b => formatDateLocal(b.fecha) === selectedDateInicio);
+    } else {
+        bookingsAMostrar = bookings.filter(b => b.fecha >= hoy);
+    }
+
+    if (bookingsAMostrar.length === 0) {
+        container.innerHTML = '';
+        if (emptyState) emptyState.classList.remove('hidden');
+        return;
+    }
+
+    if (emptyState) emptyState.classList.add('hidden');
+    container.innerHTML = '';
+
+    const grupos = {};
+    bookingsAMostrar.forEach(b => {
+        const dateKey = formatDateLocal(b.fecha);
+        if (!grupos[dateKey]) grupos[dateKey] = [];
+        grupos[dateKey].push(b);
+    });
+
+    Object.keys(grupos).sort().forEach(dateKey => {
+        const dateObj = new Date(dateKey);
+        const diaNombre = dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
+        const diaNumero = dateObj.getDate();
+        const mes = dateObj.toLocaleDateString('es-ES', { month: 'long' });
+
+        const section = document.createElement('div');
+        section.className = 'bg-white/90 backdrop-blur-md rounded-3xl border border-white/20 shadow-lg overflow-hidden';
+
+        section.innerHTML = `
+            <div class="bg-gradient-to-r from-cocoa/5 to-white px-6 py-4 border-b border-cocoa/5 flex items-center justify-between">
+                <div class="flex items-baseline gap-2">
+                    <span class="brand-font text-xl font-bold text-cocoa capitalize">${diaNombre}</span>
+                    <span class="text-xs font-semibold text-olive bg-olive/10 px-2 py-0.5 rounded-md border border-olive/20">${diaNumero} ${mes}</span>
+                </div>
+            </div>
+            <div id="consolidado-grid-${dateKey}" class="divide-y divide-cocoa/5"></div>
+        `;
+        container.appendChild(section);
+
+        const grid = section.querySelector(`#consolidado-grid-${dateKey}`);
+
+        grupos[dateKey].forEach(b => {
+            const hora = b.fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            
+            let cancelAction = '';
+            if (b.tipo === 'yoga') {
+                cancelAction = `onclick="cancelar(${b.reservaId})"`;
+            } else {
+                cancelAction = `onclick="cancelarConsulta('${b.tipo}', ${b.reservaId})"`;
+            }
+
+            const pAvatar = b.profesionalFoto
+                ? `<img src="${b.profesionalFoto}" class="w-full h-full object-cover">`
+                : `<div class="w-full h-full bg-olive/5 flex items-center justify-center text-olive text-[10px] font-bold">${b.profesional.charAt(0)}</div>`;
+
+            const row = document.createElement('div');
+            row.className = 'p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-sand/5 transition duration-300 group';
+
+            row.innerHTML = `
+                <div class="flex items-start gap-4 w-full">
+                    <div class="flex flex-col items-center justify-center w-14 h-14 rounded-xl ${b.colorClass} border shadow-sm flex-shrink-0">
+                        <span class="text-[9px] font-bold opacity-80 uppercase pb-0.5">${b.tipoLabel}</span>
+                        <span class="text-base font-black tracking-tight leading-none">${hora}</span>
+                    </div>
+                    
+                    <div class="flex-grow">
+                        <div class="flex flex-col gap-1">
+                            <div class="flex flex-wrap items-center gap-3">
+                                <h4 class="brand-font font-bold text-lg text-cocoa leading-tight">
+                                    ${b.nombre}
+                                </h4>
+                                <div class="flex items-center gap-2 bg-sand/10 px-2.5 py-1 rounded-full border border-cocoa/10 shadow-sm order-last sm:order-none" title="Profesional">
+                                    <div class="w-6 h-6 rounded-full overflow-hidden border border-cocoa/10 shadow-sm flex-shrink-0">
+                                        ${pAvatar}
+                                    </div>
+                                    <span class="text-xs sm:text-sm font-bold text-cocoa/70 truncate max-w-[150px]">${b.profesional}</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2 mt-1">
+                                ${b.descripcion ? `<span class="text-xs text-cocoa/50"><i class="ph-bold ph-info"></i> ${b.descripcion}</span>` : ''}
+                                <span class="text-[10px] font-bold text-olive bg-olive/10 border border-olive/20 px-2 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-fill ph-check-circle"></i> Confirmada</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end sm:min-w-[120px]">
+                    <button ${cancelAction} class="group flex items-center gap-2 text-[11px] font-bold text-cocoa/40 hover:text-red-500 border border-cocoa/10 hover:border-red-200 bg-ivory px-4 py-2 rounded-full transition shadow-sm">
+                        <i class="ph-bold ph-x group-hover:scale-110 transition"></i> CANCELAR
+                    </button>
+                </div>
+            `;
+            grid.appendChild(row);
+        });
+    });
+}
+
+function filtrarProfesionalesVista(especialidad) {
+    const btns = document.querySelectorAll('.filtro-prof-btn');
+    btns.forEach(btn => btn.classList.remove('active'));
+
+    const activeBtn = document.getElementById(`btn-filtro-prof-${especialidad}`);
+    if (activeBtn) activeBtn.classList.add('active');
+
+    renderProfesoresPublic(especialidad);
+}
+
+function getProfesionalesConsultaDisponibles(tipo) {
+    let filteredProfs = allProfesionalesCache;
+    if (tipo === 'psicologia') {
+        filteredProfs = allProfesionalesCache.filter(p => {
+            const esp = (p.especialidad || '').toLowerCase();
+            return esp.includes('consulta') || esp.includes('psico') || esp.includes('terapia');
+        });
+    } else if (tipo === 'nutricion') {
+        filteredProfs = allProfesionalesCache.filter(p => {
+            const esp = (p.especialidad || '').toLowerCase();
+            return esp.includes('consulta') || esp.includes('nutri') || esp.includes('diet') || esp.includes('alimen');
+        });
+    }
+
+    if (filteredProfs.length === 0) filteredProfs = allProfesionalesCache;
+
+    if (!isAdmin && esTrabajador() && currentUser?.email) {
+        const email = currentUser.email.toLowerCase();
+        const propios = filteredProfs.filter(p => (p.email || '').toLowerCase() === email);
+        if (propios.length > 0) filteredProfs = propios;
+    }
+
+    return filteredProfs;
+}
+
+function filtrarConsultasParaTrabajador(clases) {
+    if (isAdmin || !esTrabajador() || !currentUser?.email) return clases || [];
+
+    const email = currentUser.email.toLowerCase();
+    return (clases || []).filter(c => (c.profesionales?.email || '').toLowerCase() === email);
+}
+
+// --- ASIGNACIÓN MANUAL (ADMIN/TRABAJADOR) ---
+function tieneAccesoGestionAlumnos() {
+    return isAdmin || esTrabajador();
+}
+
+window.abrirModalAsignarPlazaAdmin = async function(tipo, claseId) {
+    if (!tieneAccesoGestionAlumnos()) return;
+    const t = (tipo || 'yoga').toLowerCase();
+
+    if (t === 'psicologia' || t === 'nutricion') {
+        return abrirModalAsignarConsulta(t, claseId);
+    }
+    // Por defecto: clases (yoga)
+    return abrirModalAsignarClaseYoga(claseId);
+};
+
+async function abrirModalAsignarClaseYoga(claseId) {
+    if (!tieneAccesoGestionAlumnos()) return;
+
+    const { data: clase, error: errClase } = await client.from('clases')
+        .select('id, nombre, capacidad_max')
+        .eq('id', claseId)
+        .single();
+
+    if (errClase) {
+        Swal.fire('Error', errClase.message, 'error');
+        return;
+    }
+
+    const capacidad = toSafeNumber(clase?.capacidad_max) || 1;
+    const { data: reservasExistentes, error: reservaError } = await client.from('reservas_yoga')
+        .select('id')
+        .eq('clase_id', claseId)
+        .eq('estado', 'confirmada');
+
+    if (reservaError) {
+        Swal.fire('Error', reservaError.message, 'error');
+        return;
+    }
+
+    if ((reservasExistentes || []).length >= capacidad) {
+        Swal.fire('Clase completa', 'Esta clase ya no tiene plazas disponibles.', 'warning');
+        await cargarAsistenciasPorClase();
+        return;
+    }
+
+    const { data: perfiles, error } = await client.from('profiles')
+        .select('id, nombre, apellidos, email, rol, bonos')
+        .order('email');
+
+    if (error) {
+        Swal.fire('Error', 'No se pudieron cargar los usuarios.', 'error');
+        return;
+    }
+
+    const clientes = (perfiles || []).filter(esClienteAsignable);
+    if (clientes.length === 0) {
+        Swal.fire('Sin clientes', 'No hay clientes disponibles para asignar.', 'info');
+        return;
+    }
+
+    const options = clientes.map(cliente => {
+        const nombreCompleto = `${cliente.nombre || ''} ${cliente.apellidos || ''}`.trim();
+        const label = nombreCompleto || cliente.email || 'Cliente sin email';
+        const saldo = toSafeNumber(cliente.bonos);
+        return `<option value="${cliente.id}">${escapeHtml(label)} · ${escapeHtml(cliente.email || '')} · bonos ${saldo}</option>`;
+    }).join('');
+
+    const result = await Swal.fire({
+        title: 'Asignar alumno a clase',
+        html: `
+            <div class="text-left space-y-3">
+                <label class="text-xs font-bold uppercase text-gray-500 block">Usuario</label>
+                <select id="swal-cliente-clase" class="w-full px-3 py-3 border rounded-xl focus:ring-2 outline-none text-sm">
+                    <option value="" disabled selected>Selecciona un usuario</option>
+                    ${options}
+                </select>
+                <p class="text-xs text-gray-400">Se descontará 1 bono al confirmar.</p>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Asignar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#1a4d4f',
+        focusConfirm: false,
+        preConfirm: () => {
+            const select = document.getElementById('swal-cliente-clase');
+            if (!select?.value) {
+                Swal.showValidationMessage('Selecciona un usuario');
+                return false;
+            }
+            return select.value;
+        }
+    });
+
+    if (!result.isConfirmed || !result.value) return;
+
+    Swal.fire({ title: 'Asignando...', didOpen: () => Swal.showLoading() });
+    const { error: errAssign } = await client.rpc('reservar_con_bono', {
+        p_clase_id: claseId,
+        p_user_id: result.value
+    });
+    Swal.close();
+
+    if (errAssign) {
+        Swal.fire('Error', errAssign.message, 'error');
+        return;
+    }
+
+    Swal.fire({ icon: 'success', title: 'Asignado', text: 'La plaza queda reservada.', timer: 1200, showConfirmButton: false });
+    await cargarHorarios();
+    await cargarAsistenciasPorClase();
+}
+
+async function abrirModalAsignarConsulta(tipo, claseId) {
+    if (!tieneAccesoConsultasAdmin()) return;
+
+    const config = getConsultaConfig(tipo);
+    const { data: reservasExistentes, error: reservaError } = await client.from(config.table)
+        .select('id')
+        .eq('clase_id', claseId)
+        .eq('estado', 'confirmada');
+
+    if (reservaError) {
+        Swal.fire('Error', reservaError.message, 'error');
+        return;
+    }
+
+    if ((reservasExistentes || []).length > 0) {
+        Swal.fire('Consulta ocupada', 'Este hueco ya tiene un cliente asignado.', 'warning');
+        await refrescarConsultas(tipo);
+        return;
+    }
+
+    const { data: perfiles, error } = await client.from('profiles')
+        .select(`id, nombre, apellidos, email, rol, ${config.saldoField}`)
+        .order('email');
+
+    if (error) {
+        Swal.fire('Error', `No se pudieron cargar los clientes. Revisa que exista el campo ${config.saldoField}.`, 'error');
+        return;
+    }
+
+    const clientes = (perfiles || []).filter(esClienteAsignable);
+    if (clientes.length === 0) {
+        Swal.fire('Sin clientes', 'No hay clientes disponibles para asignar.', 'info');
+        return;
+    }
+
+    const options = clientes.map(cliente => {
+        const nombreCompleto = `${cliente.nombre || ''} ${cliente.apellidos || ''}`.trim();
+        const label = nombreCompleto || cliente.email || 'Cliente sin email';
+        const saldo = toSafeNumber(cliente[config.saldoField]);
+        return `<option value="${cliente.id}">${escapeHtml(label)} · ${escapeHtml(cliente.email || '')} · saldo ${saldo}</option>`;
+    }).join('');
+
+    const result = await Swal.fire({
+        title: `Asignar cliente a ${config.label}`,
+        html: `
+            <div class="text-left space-y-3">
+                <label class="text-xs font-bold uppercase text-gray-500 block">Cliente</label>
+                <select id="swal-cliente-consulta" class="w-full px-3 py-3 border rounded-xl focus:ring-2 outline-none text-sm">
+                    <option value="" disabled selected>Selecciona un cliente</option>
+                    ${options}
+                </select>
+                <p class="text-xs text-gray-400">Se descontará 1 saldo de ${config.label.toLowerCase()} al confirmar.</p>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Asignar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: config.color,
+        focusConfirm: false,
+        preConfirm: () => {
+            const select = document.getElementById('swal-cliente-consulta');
+            if (!select?.value) {
+                Swal.showValidationMessage('Selecciona un cliente');
+                return false;
+            }
+            return select.value;
+        }
+    });
+
+    if (result.isConfirmed && result.value) {
+        await asignarClienteAConsulta(tipo, claseId, result.value);
+    }
+}
+
+async function asignarClienteAConsulta(tipo, claseId, userId) {
+    if (isReserving) return;
+
+    const config = getConsultaConfig(tipo);
+    try {
+        isReserving = true;
+        const resultadoSaldo = await descontarSaldoConsulta(userId, tipo);
+        if (!resultadoSaldo.ok) {
+            mostrarErrorSaldoConsulta(resultadoSaldo, tipo);
+            return;
+        }
+
+        const { error } = await client.from(config.table).insert([{
+            clase_id: claseId,
+            user_id: userId,
+            estado: 'confirmada'
+        }]);
+
+        if (error) {
+            if (!resultadoSaldo.skipped) await devolverSaldoConsulta(userId, tipo);
+            Swal.fire('Error al asignar', error.message, 'error');
+            return;
+        }
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Cliente asignado',
+            text: 'El hueco queda reservado.',
+            showConfirmButton: false,
+            timer: 1500
+        });
+        await refrescarConsultas(tipo);
+    } finally {
+        isReserving = false;
+    }
+}
+
+// Las funciones legacy de carga individual de consultas admin han sido eliminadas para usar la vista unificada.
+
+function cerrarModalCrearConsulta() {
+    const modal = document.getElementById('modal-crear-consulta');
+    if (modal) modal.classList.add('hidden');
+    const form = document.getElementById('form-crear-consulta');
+    if (form) form.reset();
+}
+
+async function guardarConsultaAdmin(e) {
+    if (e) e.preventDefault();
+
+    if (!tieneAccesoConsultasAdmin()) {
+        Swal.fire('Sin permiso', 'No puedes crear consultas.', 'warning');
+        return;
+    }
+
+    const tipo = document.getElementById('consulta-tipo').value;
+    const profesorId = document.getElementById('consulta-profesor-id').value;
+    const fecha = document.getElementById('consulta-fecha').value;
+    const horaInicio = document.getElementById('consulta-hora-inicio').value;
+    const duracion = parseInt(document.getElementById('consulta-duracion').value);
+    const notas = document.getElementById('consulta-notas').value;
+
+    if (!profesorId) {
+        Swal.fire('Error', 'Debes seleccionar un profesional', 'error');
+        return;
+    }
+
+    if (!isAdmin && esTrabajador()) {
+        const permitidos = getProfesionalesConsultaDisponibles(tipo).map(p => String(p.id));
+        if (permitidos.length > 0 && !permitidos.includes(String(profesorId))) {
+            Swal.fire('Sin permiso', 'Solo puedes crear consultas para tu profesional vinculado.', 'warning');
+            return;
+        }
+    }
+
+    const repeatEnabled = !!document.getElementById('consulta-repeat-enabled')?.checked;
+    const repeatEveryWeeks = parseInt(document.getElementById('consulta-repeat-every')?.value || '1', 10);
+    let repeatCount = parseInt(document.getElementById('consulta-repeat-count')?.value || '1', 10);
+    if (!repeatEnabled) repeatCount = 1;
+    repeatCount = Math.max(1, Math.min(52, Number.isFinite(repeatCount) ? repeatCount : 1));
+
+    const fechaInicio = new Date(`${fecha}T${horaInicio}`);
+
+    Swal.fire({
+        title: repeatCount > 1 ? 'Creando consultas...' : 'Creando consulta...',
+        didOpen: () => Swal.showLoading()
+    });
+
+    const nombreClase = tipo === 'psicologia' ? 'Consulta Psicología' : 'Consulta Nutrición';
+
+    const inserts = [];
+    for (let i = 0; i < repeatCount; i++) {
+        const start = new Date(fechaInicio);
+        start.setDate(start.getDate() + (i * 7 * repeatEveryWeeks));
+        const end = new Date(start.getTime() + duracion * 60000);
+        inserts.push({
+            nombre: nombreClase,
+            fecha_inicio: start.toISOString(),
+            fecha_fin: end.toISOString(),
+            capacidad_max: 1,
+            profesor_id: profesorId,
+            tipo_clase: tipo,
+            descripcion: notas,
+            duracion_minutos: duracion
+        });
+    }
+
+    const { data, error } = await client.from('clases').insert(inserts).select();
+
+    Swal.close();
+
+    if (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error al crear consulta',
+            text: error.message
+        });
+    } else {
+        cerrarModalCrearConsulta();
+        Swal.fire({
+            icon: 'success',
+            title: repeatCount > 1 ? '¡Consultas creadas!' : '¡Consulta creada!',
+            text: repeatCount > 1 ? `Los turnos han sido añadidos.` : `El turno ha sido añadido.`,
+            showConfirmButton: false,
+            timer: 2000
+        });
+        if (tipo === 'psicologia') {
+            await cargarPsicologia();
+        } else {
+            await cargarNutricion();
+        }
+        await cargarConsultasAdmin();
+    }
+}
+
+// --- NUEVAS FUNCIONES DE CONSULTAS Y TALLERES ---
+
+function actualizarProfesoresSelectConsulta(tipo) {
+    const select = document.getElementById('consulta-profesor-id');
+    if (select) {
+        select.innerHTML = '<option value="" disabled selected>Selecciona Profesional</option>';
+        
+        const filteredProfs = getProfesionalesConsultaDisponibles(tipo);
+
+        filteredProfs.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            opt.textContent = p.nombre + (p.especialidad ? ` (${p.especialidad})` : '');
+            select.appendChild(opt);
+        });
+
+        if (filteredProfs.length === 1) {
+            select.value = filteredProfs[0].id;
+        }
+    }
+}
+
+let filtroConsultasActual = 'todas';
+
+async function cargarConsultasAdmin() {
+    const container = document.getElementById('admin-consultas-container');
+    const emptyState = document.getElementById('admin-consultas-empty');
+    if (!container) return;
+
+    container.innerHTML = `
+    <div class="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
+      <i class="ph-duotone ph-spinner animate-spin text-4xl text-olive"></i>
+      <span class="text-xs uppercase tracking-widest font-bold text-gray-400">Cargando consultas...</span>
+    </div>`;
+
+    const { data: clasesData, error: errClases } = await client.from('clases')
+        .select('*, profesionales(*)')
+        .in('tipo_clase', ['psicologia', 'nutricion'])
+        .order('fecha_inicio');
+
+    if (errClases) {
+        console.error(errClases);
+        container.innerHTML = '';
+        if (emptyState) emptyState.classList.remove('hidden');
+        return;
+    }
+
+    const clases = filtrarConsultasParaTrabajador(clasesData || []);
+
+    if (!clases || clases.length === 0) {
+        container.innerHTML = '';
+        if (emptyState) emptyState.classList.remove('hidden');
+        return;
+    }
+
+    if (emptyState) emptyState.classList.add('hidden');
+
+    const claseIds = clases.map(c => c.id);
+    const [reservasPsicoRes, reservasNutriRes, perfilesRes] = await Promise.all([
+        client.from('reservas_psicologia').select('*').in('clase_id', claseIds),
+        client.from('reservas_nutricion').select('*').in('clase_id', claseIds),
+        client.from('profiles').select('id, nombre, apellidos, email')
+    ]);
+
+    const perfilesMap = {};
+    (perfilesRes.data || []).forEach(p => { perfilesMap[p.id] = p; });
+
+    const reservasMap = {}; // clase_id => reserva (confirmada)
+    (reservasPsicoRes.data || []).forEach(r => {
+        if (r.estado === 'confirmada') reservasMap[r.clase_id] = { ...r, tipo: 'psicologia' };
+    });
+    (reservasNutriRes.data || []).forEach(r => {
+        if (r.estado === 'confirmada') reservasMap[r.clase_id] = { ...r, tipo: 'nutricion' };
+    });
+
+    // Guardar en variables globales/window para renderizar con filtros
+    window.allConsultasAdminCache = clases;
+    window.allConsultasAdminReservasMap = reservasMap;
+    window.allConsultasAdminPerfilesMap = perfilesMap;
+
+    renderizarConsultasAdmin();
+}
+
+function renderizarConsultasAdmin() {
+    const container = document.getElementById('admin-consultas-container');
+    const emptyState = document.getElementById('admin-consultas-empty');
+    if (!container || !window.allConsultasAdminCache) return;
+
+    container.innerHTML = '';
+
+    const filtradas = window.allConsultasAdminCache.filter(c => {
+        if (filtroConsultasActual === 'todas') return true;
+        return c.tipo_clase === filtroConsultasActual;
+    });
+
+    if (filtradas.length === 0) {
+        if (emptyState) emptyState.classList.remove('hidden');
+        return;
+    }
+
+    if (emptyState) emptyState.classList.add('hidden');
+
+    filtradas.forEach(c => {
+        const hora = new Date(c.fecha_inicio).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        const fecha = new Date(c.fecha_inicio).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+        const profName = c.profesionales ? c.profesionales.nombre : 'Staff Q19';
+        
+        const reserva = window.allConsultasAdminReservasMap[c.id];
+        let alumnoHTML = '';
+
+        if (reserva) {
+            const perfil = window.allConsultasAdminPerfilesMap[reserva.user_id] || {};
+            const nombre = perfil.nombre || '';
+            const apellidos = perfil.apellidos || '';
+            const email = perfil.email || 'Sin email';
+
+            alumnoHTML = `
+                <div class="mt-4 flex items-center justify-between p-4 bg-sand/10 border border-cocoa/10 rounded-2xl">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center bg-cocoa/10 text-cocoa font-bold text-sm">
+                            ${(nombre ? nombre[0] : '?').toUpperCase()}
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-sm font-bold text-gray-900">${nombre} ${apellidos}</span>
+                            <span class="text-xs text-gray-500">${email}</span>
+                        </div>
+                    </div>
+                    <button onclick="cancelarConsulta('${c.tipo_clase}', ${reserva.id})" class="text-xs font-bold text-red-500 hover:underline">
+                        Cancelar Reserva
+                    </button>
+                </div>`;
+        } else {
+            alumnoHTML = `
+                <div class="mt-4 px-4 py-3 bg-gray-50 border border-dashed border-gray-200 rounded-xl text-sm text-gray-400 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <i class="ph-bold ph-calendar-blank"></i>
+                        <span>Disponible (sin reservar)</span>
+                    </div>
+                    <button onclick="abrirModalAsignarConsulta('${c.tipo_clase}', ${c.id})" class="inline-flex items-center justify-center gap-2 bg-cocoa hover:bg-black text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition">
+                        <i class="ph-bold ph-user-plus"></i> Asignar cliente
+                    </button>
+                </div>`;
+        }
+
+        const tagColor = c.tipo_clase === 'psicologia' 
+            ? 'text-blue-600 bg-blue-50 border-blue-100' 
+            : 'text-purple-600 bg-purple-50 border-purple-100';
+        const tagLabel = c.tipo_clase === 'psicologia' ? 'Psicología' : 'Nutrición';
+
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-3xl border border-gray-100 p-6 shadow-sm';
+        card.innerHTML = `
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-xs font-bold px-2.5 py-1 rounded-lg uppercase tracking-wide border ${tagColor}">${tagLabel}</span>
+                        <span class="text-xs font-bold text-gray-400">${c.duracion_minutos} min</span>
+                    </div>
+                    <h3 class="brand-font text-xl font-bold text-gray-900">${c.nombre || 'Consulta Individual'}</h3>
+                    <p class="text-sm text-gray-500 capitalize mt-1"><i class="ph-bold ph-calendar"></i> ${fecha} - ${hora}</p>
+                    <p class="text-xs text-gray-400 mt-1"><i class="ph-bold ph-user-circle"></i> Profesional: ${profName}</p>
+                    ${c.descripcion ? `<p class="text-xs text-gray-400 mt-1"><i class="ph-bold ph-info"></i> Notas: ${c.descripcion}</p>` : ''}
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="borrarConsultaAdmin('${c.tipo_clase}', ${c.id})" class="text-gray-300 hover:text-red-500 p-2 rounded-lg transition" title="Eliminar Turno">
+                        <i class="ph-bold ph-trash text-lg"></i>
+                    </button>
+                </div>
+            </div>
+            ${alumnoHTML}
+        `;
+        container.appendChild(card);
+    });
+}
+
+function filtrarConsultasAdmin(filtro) {
+    filtroConsultasActual = filtro;
+    
+    ['todas', 'psicologia', 'nutricion'].forEach(f => {
+        const btn = document.getElementById(`consulta-filter-${f}`);
+        if (btn) {
+            if (f === filtro) {
+                btn.className = "px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-cocoa text-white shadow-sm";
+            } else {
+                btn.className = "px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border border-cocoa/10 bg-white/70 text-cocoa hover:bg-white transition";
+            }
+        }
+    });
+
+    renderizarConsultasAdmin();
+}
+
+async function cargarTalleresAdmin() {
+    const container = document.getElementById('admin-talleres-container');
+    const emptyState = document.getElementById('admin-talleres-empty');
+    if (!container) return;
+
+    container.innerHTML = `
+    <div class="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
+      <i class="ph-duotone ph-spinner animate-spin text-4xl text-olive"></i>
+      <span class="text-xs uppercase tracking-widest font-bold text-gray-400">Cargando talleres...</span>
+    </div>`;
+
+    const { data: clases, error: errClases } = await client.from('clases')
+        .select('*, profesionales(*)')
+        .eq('tipo_clase', 'taller')
+        .order('fecha_inicio');
+
+    if (errClases) {
+        console.error(errClases);
+        container.innerHTML = '';
+        if (emptyState) emptyState.classList.remove('hidden');
+        return;
+    }
+
+    if (!clases || clases.length === 0) {
+        container.innerHTML = '';
+        if (emptyState) emptyState.classList.remove('hidden');
+        return;
+    }
+
+    if (emptyState) emptyState.classList.add('hidden');
+
+    const claseIds = clases.map(c => c.id);
+    const { data: reservas, error: errRes } = await client.from('reservas_yoga').select('*').in('clase_id', claseIds);
+    const { data: perfiles } = await client.from('profiles').select('id, nombre, apellidos, email');
+
+    const perfilesMap = {};
+    (perfiles || []).forEach(p => { perfilesMap[p.id] = p; });
+
+    const reservasMap = {}; // clase_id => [reservas]
+    (reservas || []).forEach(r => {
+        if (r.estado === 'confirmada') {
+            if (!reservasMap[r.clase_id]) reservasMap[r.clase_id] = [];
+            reservasMap[r.clase_id].push(r);
+        }
+    });
+
+    container.innerHTML = '';
+
+    clases.forEach(c => {
+        const hora = new Date(c.fecha_inicio).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        const fecha = new Date(c.fecha_inicio).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+        const profName = c.profesionales ? c.profesionales.nombre : 'Staff Q19';
+        
+        const resClase = reservasMap[c.id] || [];
+        const ocupadas = resClase.length;
+        
+        let alumnosHTML = '';
+        if (ocupadas > 0) {
+            alumnosHTML = `
+                <div class="mt-4 border-t border-cocoa/5 pt-4">
+                    <span class="text-[10px] font-bold text-cocoa/40 uppercase tracking-widest mb-2 block">Alumnos Inscritos (${ocupadas}/${c.capacidad_max})</span>
+                    <div class="space-y-2">
+                        ${resClase.map(r => {
+                            const perfil = perfilesMap[r.user_id] || {};
+                            const nombre = perfil.nombre || '';
+                            const apellidos = perfil.apellidos || '';
+                            const email = perfil.email || 'Sin email';
+                            return `
+                                <div class="flex items-center justify-between p-2.5 bg-sand/5 border border-cocoa/5 rounded-xl text-xs">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-6 h-6 rounded-full flex items-center justify-center bg-cocoa/10 text-cocoa font-bold text-[10px]">
+                                            ${(nombre ? nombre[0] : '?').toUpperCase()}
+                                        </div>
+                                        <span class="font-bold text-gray-900">${nombre} ${apellidos}</span>
+                                        <span class="text-gray-400">(${email})</span>
+                                    </div>
+                                    <button onclick="cancelarReservaTaller(${r.id})" class="text-red-500 font-bold hover:underline">Eliminar</button>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>`;
+        } else {
+            alumnosHTML = `
+                <div class="mt-4 px-4 py-3 bg-gray-50 border border-dashed border-gray-200 rounded-xl text-sm text-gray-400 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <i class="ph-bold ph-calendar-blank"></i>
+                        <span>Disponible (${ocupadas}/${c.capacidad_max} plazas ocupadas)</span>
+                    </div>
+                    <button onclick="abrirModalAsignarTaller(${c.id})" class="inline-flex items-center justify-center gap-2 bg-cocoa hover:bg-black text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition">
+                        <i class="ph-bold ph-user-plus"></i> Inscribir alumno
+                    </button>
+                </div>`;
+        }
+
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-3xl border border-gray-100 p-6 shadow-sm';
+        card.innerHTML = `
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-xs font-bold text-orange-600 bg-orange-50 border border-orange-100 px-2.5 py-1 rounded-lg uppercase tracking-wide">Taller</span>
+                        <span class="text-xs font-bold text-gray-400">${c.duracion_minutos} min</span>
+                    </div>
+                    <h3 class="brand-font text-xl font-bold text-gray-900">${c.nombre || 'Taller'}</h3>
+                    <p class="text-sm text-gray-500 capitalize mt-1"><i class="ph-bold ph-calendar"></i> ${fecha} - ${hora}</p>
+                    <p class="text-xs text-gray-400 mt-1"><i class="ph-bold ph-user-circle"></i> Instructor: ${profName}</p>
+                    ${c.descripcion ? `<p class="text-xs text-gray-400 mt-1"><i class="ph-bold ph-info"></i> Notas: ${c.descripcion}</p>` : ''}
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="borrarTallerAdmin(${c.id})" class="text-gray-300 hover:text-red-500 p-2 rounded-lg transition" title="Eliminar Taller">
+                        <i class="ph-bold ph-trash text-lg"></i>
+                    </button>
+                </div>
+            </div>
+            ${alumnosHTML}
+        `;
+        container.appendChild(card);
+    });
+}
+
+async function abrirModalAsignarTaller(claseId) {
+    const { data: perfiles, error } = await client.from('profiles')
+        .select('id, nombre, apellidos, email, rol, bonos')
+        .order('email');
+
+    if (error) {
+        Swal.fire('Error', 'No se pudieron cargar los clientes.', 'error');
+        return;
+    }
+
+    const clientes = (perfiles || []).filter(esClienteAsignable);
+    if (clientes.length === 0) {
+        Swal.fire('Sin clientes', 'No hay clientes disponibles para asignar.', 'info');
+        return;
+    }
+
+    const options = clientes.map(cliente => {
+        const nombreCompleto = `${cliente.nombre || ''} ${cliente.apellidos || ''}`.trim();
+        const label = nombreCompleto || cliente.email || 'Cliente sin email';
+        const saldo = toSafeNumber(cliente.bonos);
+        return `<option value="${cliente.id}">${escapeHtml(label)} · ${escapeHtml(cliente.email || '')} · bonos ${saldo}</option>`;
+    }).join('');
+
+    const result = await Swal.fire({
+        title: 'Asignar alumno a taller',
+        html: `
+            <div class="text-left space-y-3">
+                <label class="text-xs font-bold uppercase text-gray-500 block">Usuario</label>
+                <select id="swal-cliente-taller" class="w-full px-3 py-3 border rounded-xl focus:ring-2 outline-none text-sm">
+                    <option value="" disabled selected>Selecciona un usuario</option>
+                    ${options}
+                </select>
+                <p class="text-xs text-gray-400">Se descontará 1 bono al confirmar.</p>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Asignar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#1a4d4f',
+        focusConfirm: false,
+        preConfirm: () => {
+            const select = document.getElementById('swal-cliente-taller');
+            if (!select?.value) {
+                Swal.showValidationMessage('Selecciona un usuario');
+                return false;
+            }
+            return select.value;
+        }
+    });
+
+    if (!result.isConfirmed || !result.value) return;
+
+    Swal.fire({ title: 'Asignando...', didOpen: () => Swal.showLoading() });
+    const { error: errAssign } = await client.rpc('reservar_con_bono', {
+        p_clase_id: claseId,
+        p_user_id: result.value
+    });
+    Swal.close();
+
+    if (errAssign) {
+        Swal.fire('Error', errAssign.message, 'error');
+        return;
+    }
+
+    Swal.fire({ icon: 'success', title: 'Asignado', text: 'La plaza queda reservada.', timer: 1200, showConfirmButton: false });
+    await cargarTalleresAdmin();
+}
+
+async function cancelarReservaTaller(reservaId) {
+    const res = await Swal.fire({
+        title: '¿Eliminar alumno del taller?',
+        text: 'Se le devolverá el bono al alumno y se liberará su plaza.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'Sí, eliminar'
+    });
+
+    if (res.isConfirmed) {
+        Swal.fire({ title: 'Cancelando reserva...', didOpen: () => Swal.showLoading() });
+        const { error } = await client.rpc('cancelar_con_bono', { p_reserva_id: reservaId });
+        Swal.close();
+        if (error) {
+            Swal.fire('Error', error.message, 'error');
+        } else {
+            Swal.fire({ icon: 'success', title: 'Reserva cancelada', showConfirmButton: false, timer: 1500 });
+            await cargarTalleresAdmin();
+        }
+    }
+}
+
+async function abrirModalCrearTaller() {
+    const modal = document.getElementById('modal-crear-taller');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+
+    // Reset repetición
+    const repEnabled = document.getElementById('taller-repeat-enabled');
+    const repOptions = document.getElementById('taller-repeat-options');
+    if (repEnabled) repEnabled.checked = false;
+    if (repOptions) repOptions.classList.add('hidden');
+
+    const hoy = new Date().toISOString().split('T')[0];
+    if (datePickerTallerInstance) {
+        datePickerTallerInstance.set('minDate', hoy);
+        datePickerTallerInstance.setDate(hoy);
+    } else {
+        document.getElementById('taller-fecha').value = hoy;
+    }
+
+    const ahora = new Date();
+    const horaActual = `${String(ahora.getHours()).padStart(2, '0')}:${String(ahora.getMinutes()).padStart(2, '0')}`;
+    document.getElementById('taller-hora-inicio').value = horaActual;
+
+    // Populate professionals select
+    const select = document.getElementById('taller-profesor-id');
+    if (select) {
+        select.innerHTML = '<option value="" disabled selected>Selecciona Instructor</option>';
+        
+        (allProfesionalesCache || []).forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            opt.textContent = p.nombre + (p.especialidad ? ` (${p.especialidad})` : '');
+            select.appendChild(opt);
+        });
+    }
+}
+
+function cerrarModalCrearTaller() {
+    const modal = document.getElementById('modal-crear-taller');
+    if (modal) modal.classList.add('hidden');
+    const form = document.getElementById('form-crear-taller');
+    if (form) form.reset();
+}
+
+async function guardarTallerAdmin(e) {
+    if (e) e.preventDefault();
+
+    if (!tieneAccesoConsultasAdmin()) {
+        Swal.fire('Sin permiso', 'No puedes crear talleres.', 'warning');
+        return;
+    }
+
+    const nombre = document.getElementById('taller-nombre').value;
+    const profesorId = document.getElementById('taller-profesor-id').value;
+    const fecha = document.getElementById('taller-fecha').value;
+    const horaInicio = document.getElementById('taller-hora-inicio').value;
+    const duracion = parseInt(document.getElementById('taller-duracion').value);
+    const notas = document.getElementById('taller-notas').value;
+    const capacidad = parseInt(document.getElementById('taller-capacidad').value) || 15;
+
+    if (!profesorId) {
+        Swal.fire('Error', 'Debes seleccionar un instructor', 'error');
+        return;
+    }
+
+    const repeatEnabled = !!document.getElementById('taller-repeat-enabled')?.checked;
+    const repeatEveryWeeks = parseInt(document.getElementById('taller-repeat-every')?.value || '1', 10);
+    let repeatCount = parseInt(document.getElementById('taller-repeat-count')?.value || '1', 10);
+    if (!repeatEnabled) repeatCount = 1;
+    repeatCount = Math.max(1, Math.min(52, Number.isFinite(repeatCount) ? repeatCount : 1));
+
+    const fechaInicio = new Date(`${fecha}T${horaInicio}`);
+
+    Swal.fire({
+        title: repeatCount > 1 ? 'Creando talleres...' : 'Creando taller...',
+        didOpen: () => Swal.showLoading()
+    });
+
+    const inserts = [];
+    for (let i = 0; i < repeatCount; i++) {
+        const start = new Date(fechaInicio);
+        start.setDate(start.getDate() + (i * 7 * repeatEveryWeeks));
+        const end = new Date(start.getTime() + duracion * 60000);
+        inserts.push({
+            nombre: nombre,
+            fecha_inicio: start.toISOString(),
+            fecha_fin: end.toISOString(),
+            capacidad_max: capacidad,
+            profesor_id: profesorId,
+            tipo_clase: 'taller',
+            descripcion: notas,
+            duracion_minutos: duracion
+        });
+    }
+
+    const { data, error } = await client.from('clases').insert(inserts).select();
+
+    Swal.close();
+
+    if (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error al crear taller',
+            text: error.message
+        });
+    } else {
+        cerrarModalCrearTaller();
+        Swal.fire({
+            icon: 'success',
+            title: repeatCount > 1 ? '¡Talleres creados!' : '¡Taller creado!',
+            text: repeatCount > 1 ? `Los talleres han sido añadidos.` : `El taller ha sido añadido.`,
+            showConfirmButton: false,
+            timer: 2000
+        });
+        await cargarTalleresAdmin();
+    }
+}
+
+async function borrarTallerAdmin(id) {
+    if (!tieneAccesoConsultasAdmin()) return;
+
+    const res = await Swal.fire({
+        title: '¿Eliminar taller?',
+        text: 'Esta acción no se puede deshacer. Se cancelarán las reservas asociadas.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'Sí, borrar'
+    });
+
+    if (res.isConfirmed) {
+        Swal.fire({ title: 'Eliminando taller...', didOpen: () => Swal.showLoading() });
+        const { error } = await client.from('clases').delete().eq('id', id);
+        Swal.close();
+        if (error) {
+            Swal.fire('Error', error.message, 'error');
+        } else {
+            Swal.fire({ icon: 'success', title: 'Taller eliminado', showConfirmButton: false, timer: 1500 });
+            await cargarTalleresAdmin();
+        }
+    }
 }

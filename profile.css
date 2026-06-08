@@ -70,23 +70,36 @@ h6,
     display: none !important;
 }
 
-.is-admin .admin-only {
+.is-admin .admin-only:not(.hidden) {
     display: block !important;
 }
 
-.is-admin .admin-flex {
+.is-admin .admin-flex:not(.hidden) {
     display: flex !important;
+}
+
+.is-profesor .staff-only {
+    display: block !important;
+}
+
+.is-profesor .staff-flex {
+    display: flex !important;
+}
+
+.is-admin .client-only,
+.is-profesor .client-only {
+    display: none !important;
 }
 
 /* Animaciones */
 .fade-in {
-    animation: fadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(8px);
     }
 
     to {
@@ -276,4 +289,135 @@ body:not(.platform-android) .android-only {
 /* Mostrar en CUALQUIER App Móvil (No Web) */
 body.platform-web .mobile-only {
     display: none !important;
+}
+
+/* ======================================================= */
+/* 7. INDICADORES MULTI-COLOR (Versión 3.0)                */
+/* ======================================================= */
+.calendar-dots {
+    display: flex;
+    justify-content: center;
+    gap: 3px;
+    position: absolute;
+    bottom: 5px;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: fit-content;
+}
+
+.calendar-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    transition: all 0.2s ease;
+}
+
+.calendar-dot.yoga {
+    background-color: #10B981; /* Green */
+}
+
+.calendar-dot.psicologia {
+    background-color: #3B82F6; /* Blue */
+}
+
+.calendar-dot.nutricion {
+    background-color: #8B5CF6; /* Purple */
+}
+
+.calendar-day.selected .calendar-dot {
+    background-color: #ffffff !important;
+}
+
+/* Indicadores de calendarios específicos */
+.calendar-day.has-psicologia::after {
+    content: '';
+    position: absolute;
+    bottom: 5px;
+    width: 5px;
+    height: 5px;
+    background: #3B82F6;
+    border-radius: 50%;
+}
+
+.calendar-day.has-nutricion::after {
+    content: '';
+    position: absolute;
+    bottom: 5px;
+    width: 5px;
+    height: 5px;
+    background: #8B5CF6;
+    border-radius: 50%;
+}
+
+.calendar-day.selected.has-psicologia::after,
+.calendar-day.selected.has-nutricion::after {
+    background: #ffffff;
+}
+
+/* Estilos para sub-filtros de profesionales */
+.filtro-prof-btn {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(38, 22, 12, 0.2);
+    color: rgba(38, 22, 12, 0.6);
+    background-color: transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.filtro-prof-btn:hover {
+    background-color: rgba(38, 22, 12, 0.05);
+    color: #26160c;
+}
+
+.filtro-prof-btn.active {
+    background-color: #26160c;
+    color: #ffffff;
+    border-color: #26160c;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+@media (min-width: 1024px) {
+    .profile-calendar-main {
+        grid-column: span 9 / span 9;
+    }
+
+    .profile-calendar-side {
+        grid-column: span 3 / span 3;
+    }
+}
+
+/* Helper visibility for Admin view vs Client view */
+.is-admin-visible {
+    display: none !important;
+}
+.is-admin .is-admin-visible {
+    display: block !important;
+}
+.is-admin .is-admin-hidden {
+    display: none !important;
+}
+.is-admin #view-inicio {
+    display: none !important;
+}
+
+/* Reducir el tamaño del footer en modo administrador */
+.is-admin footer {
+    padding-top: 1.5rem !important;
+    padding-bottom: 1.5rem !important;
+}
+.is-admin footer .w-10 {
+    width: 1.75rem !important;
+    height: 1.75rem !important;
+    margin-bottom: 0.4rem !important;
+    padding: 0.3rem !important;
+}
+.is-admin footer p.brand-font {
+    font-size: 1rem !important;
+    margin-bottom: 0.25rem !important;
 }
