@@ -210,6 +210,10 @@ document.getElementById('form-register').addEventListener('submit', async (e) =>
 });
 
 async function logout() {
+    localStorage.removeItem('activeAdminTab');
+    localStorage.removeItem('activeAdminCrearSubTab');
+    localStorage.removeItem('activePublicView');
+    localStorage.removeItem('activeConsultasSubTab');
     await client.auth.signOut();
     location.reload();
 }
@@ -391,11 +395,14 @@ async function initApp() {
 
     // Initial render of calendars and content
     if (isAdmin) {
-        switchTab('crear');
+        const savedTab = localStorage.getItem('activeAdminTab') || 'crear';
+        await switchTab(savedTab);
     } else if (esTrabajador()) {
-        switchPublicView('profesor-calendario');
+        const savedPublicView = localStorage.getItem('activePublicView') || 'profesor-calendario';
+        switchPublicView(savedPublicView);
     } else {
-        switchPublicView('inicio');
+        const savedPublicView = localStorage.getItem('activePublicView') || 'inicio';
+        switchPublicView(savedPublicView);
     }
 }
 
@@ -520,28 +527,38 @@ async function renderSaldosCliente() {
             const stats = await getBonoMensualStats();
             const fechaFin = userBonoMensualFin ? new Date(userBonoMensualFin).toLocaleDateString('es-ES') : '--/--/----';
             profileHtml += `
-                <div class="bg-white/90 px-4 py-3 rounded-2xl border border-[#10B981] text-center min-w-[160px]">
-                    <span class="block text-[9px] text-emerald-600 font-bold uppercase tracking-widest leading-none">Bono Mensual Activo</span>
-                    <div class="flex justify-center items-center gap-3 mt-2 text-sm text-cocoa font-bold">
-                        <div class="flex items-center gap-1">
-                            <i class="ph-fill ph-flower-lotus text-[#10B981]"></i>
-                            <span>Sem: <b class="text-emerald-700 text-lg">${stats.semana}</b>/2</span>
+                <div class="bg-white/90 px-4 py-3 rounded-2xl border border-[#10B981] text-center min-w-[160px] flex flex-col justify-between items-center">
+                    <div>
+                        <span class="block text-[9px] text-emerald-600 font-bold uppercase tracking-widest leading-none">Bono Mensual Activo</span>
+                        <div class="flex justify-center items-center gap-3 mt-2 text-sm text-cocoa font-bold">
+                            <div class="flex items-center gap-1">
+                                <i class="ph-fill ph-flower-lotus text-[#10B981]"></i>
+                                <span>Sem: <b class="text-emerald-700 text-lg">${stats.semana}</b>/2</span>
+                            </div>
+                            <div class="w-px h-4 bg-gray-200"></div>
+                            <div>
+                                <span>Mes: <b class="text-emerald-700 text-lg">${stats.mes}</b>/8</span>
+                            </div>
                         </div>
-                        <div class="w-px h-4 bg-gray-200"></div>
-                        <div>
-                            <span>Mes: <b class="text-emerald-700 text-lg">${stats.mes}</b>/8</span>
-                        </div>
+                        <span class="block text-[8px] text-gray-400 mt-1 uppercase tracking-wider font-light">Vence: ${fechaFin}</span>
                     </div>
-                    <span class="block text-[8px] text-gray-400 mt-1 uppercase tracking-wider font-light">Vence: ${fechaFin}</span>
+                    <button onclick="cambiarBonoMensual('${currentUser.id}', false)" class="mt-3 w-full py-1.5 text-[10px] font-bold uppercase tracking-wider btn-desactivar-mensual rounded-lg transition shadow-sm flex items-center justify-center gap-1">
+                        <i class="ph-bold ph-x-circle text-xs"></i> Desactivar
+                    </button>
                 </div>
             `;
         } else {
             profileHtml += `
-                <div class="bg-white/60 px-4 py-3 rounded-2xl border border-dashed border-gray-300 text-center min-w-[110px] opacity-70">
-                    <span class="block text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-none">Bono Mensual</span>
-                    <div class="flex items-center justify-center gap-1.5 mt-2">
-                        <span class="bg-gray-100 text-gray-400 text-[10px] font-bold px-2.5 py-1 rounded border border-gray-200 uppercase tracking-wide">Inactivo</span>
+                <div class="bg-white/60 px-4 py-3 rounded-2xl border border-dashed border-gray-300 text-center min-w-[110px] opacity-70 flex flex-col justify-between items-center">
+                    <div>
+                        <span class="block text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-none">Bono Mensual</span>
+                        <div class="flex items-center justify-center gap-1.5 mt-2">
+                            <span class="bg-gray-100 text-gray-400 text-[10px] font-bold px-2.5 py-1 rounded border border-gray-200 uppercase tracking-wide">Inactivo</span>
+                        </div>
                     </div>
+                    <button onclick="cambiarBonoMensual('${currentUser.id}', true)" class="mt-3 w-full py-1.5 text-[10px] font-bold uppercase tracking-wider btn-activar-mensual rounded-lg transition shadow-sm flex items-center justify-center gap-1">
+                        <i class="ph-bold ph-check-circle text-xs"></i> Activar
+                    </button>
                 </div>
             `;
         }
@@ -940,13 +957,20 @@ function renderizarClases() {
             } else if (llena) {
                 btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">Completa</span>`;
             } else {
-                const disabledClass = (userBonos < 1 && !isAdmin) ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:shadow-lg hover:brightness-110 active:scale-95';
-                const btnText = (userBonos < 1 && !isAdmin) ? '0 Bonos' : 'RESERVAR';
+                const esAlumno = !isAdmin && !STAFF_ROLES.includes(currentUserRole);
+                if (!esAlumno) {
+                    btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">No Disponible</span>`;
+                } else {
+                    const tieneBonoMensual = userBonoMensualActivo && userBonoMensualInicio && userBonoMensualFin;
+                    const canBook = (userBonos >= 1 || tieneBonoMensual);
+                    const disabledClass = (!canBook) ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:shadow-lg hover:brightness-110 active:scale-95';
+                    const btnText = (!canBook) ? '0 Bonos' : 'RESERVAR';
 
-                btnAction = `
-                            <button onclick="reservar(${c.id})" class="bg-gradient-to-r from-terracotta to-golden text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform ${disabledClass}">
-                                ${btnText}
-                            </button>`;
+                    btnAction = `
+                                <button onclick="reservar(${c.id})" class="bg-gradient-to-r from-terracotta to-golden text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform ${disabledClass}">
+                                    ${btnText}
+                                </button>`;
+                }
             }
 
             const adminTrash = `<button onclick="borrarClase(${c.id})" class="admin-only text-cocoa/20 hover:text-red-500 transition ml-2 p-1" title="Eliminar Clase"><i class="ph-bold ph-trash"></i></button>`;
@@ -1006,6 +1030,18 @@ let isReserving = false;
 
 async function reservar(claseId) {
     if (isReserving) return; // Evitar doble clic
+
+    // Validación de rol: sólo los alumnos pueden reservar
+    const rol = (currentUserRole || '').toLowerCase().trim();
+    const esAlumno = !isAdmin && !STAFF_ROLES.includes(rol);
+    if (!esAlumno) {
+        return Swal.fire({
+            icon: 'error',
+            title: 'Acción no permitida',
+            text: 'Solo los alumnos pueden realizar reservas de clases.',
+            confirmButtonColor: '#D27D60'
+        });
+    }
 
     // Validación preliminar con datos en caché
     const clase = allClasesCache.find(c => c.id === claseId);
@@ -1142,6 +1178,10 @@ async function reservar(claseId) {
                 timer: 1500,
                 backdrop: `rgba(0,0,0,0.4)`
             });
+            
+            // Envío de email en segundo plano
+            enviarEmailReserva(clase, usarBonoMensual);
+
             await checkProfile();
             await cargarHorarios();
             if (isAdmin) await cargarAsistenciasPorClase();
@@ -1151,6 +1191,51 @@ async function reservar(claseId) {
         Swal.fire({ icon: 'error', title: 'Error', text: 'Ocurrió un error inesperado.' });
     } finally {
         isReserving = false;
+    }
+}
+
+async function enviarEmailReserva(clase, usarBonoMensual) {
+    try {
+        if (!currentUser?.id) return;
+        const { data: perfil, error: errPerfil } = await client
+            .from('profiles')
+            .select('nombre, apellidos, email')
+            .eq('id', currentUser.id)
+            .single();
+
+        if (errPerfil || !perfil) {
+            console.error("Error obteniendo datos del perfil para enviar email:", errPerfil);
+            return;
+        }
+
+        const nombreCompleto = `${perfil.nombre || ''} ${perfil.apellidos || ''}`.trim() || 'Alumno';
+        const userEmail = perfil.email || currentUser.email || '';
+
+        const profesorName = clase.profesionales ? clase.profesionales.nombre : 'Staff GEN Yoga';
+        const fechaClase = new Date(clase.fecha_inicio).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        const horaClase = new Date(clase.fecha_inicio).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+        const emailBody = `
+            <h3>Nueva Reserva de Clase</h3>
+            <p>El/la alumno/a <strong>${nombreCompleto}</strong> (${userEmail}) ha reservado una clase desde su perfil.</p>
+            <ul>
+                <li><strong>Clase:</strong> ${clase.nombre}</li>
+                <li><strong>Instructor:</strong> ${profesorName}</li>
+                <li><strong>Fecha:</strong> ${fechaClase}</li>
+                <li><strong>Hora:</strong> ${horaClase}</li>
+                <li><strong>Método:</strong> ${usarBonoMensual ? 'Bono Mensual' : 'Bono Individual'}</li>
+            </ul>
+        `;
+
+        await client.functions.invoke('send-email', {
+            body: {
+                to: 'hola@genyoga.studio',
+                subject: `Nueva reserva de clase: ${nombreCompleto}`,
+                html: emailBody
+            }
+        });
+    } catch (e) {
+        console.error("Error inesperado en enviarEmailReserva:", e);
     }
 }
 
@@ -1183,6 +1268,8 @@ async function cancelar(reservaId) {
 async function switchTab(tabName) {
     if (!isAdmin) return;
     window.scrollTo(0, 0);
+
+    localStorage.setItem('activeAdminTab', tabName);
 
     const tabs = {
         'crear': { tab: 'tab-crear', view: 'view-horarios' },
@@ -1223,7 +1310,8 @@ async function switchTab(tabName) {
     const adminCrearTabsEl = document.getElementById('admin-crear-tabs');
     if (tabName === 'crear') {
         if (adminCrearTabsEl) adminCrearTabsEl.classList.remove('hidden');
-        await switchAdminCrearTab('clases');
+        const savedSubTab = localStorage.getItem('activeAdminCrearSubTab') || 'clases';
+        await switchAdminCrearTab(savedSubTab);
     } else {
         if (adminCrearTabsEl) adminCrearTabsEl.classList.add('hidden');
     }
@@ -1243,6 +1331,7 @@ async function switchTab(tabName) {
 
 async function switchAdminCrearTab(type) {
     window.scrollTo(0, 0);
+    localStorage.setItem('activeAdminCrearSubTab', type);
     const subtabs = {
         'clases': { btn: 'btn-admin-tab-clases', view: 'view-horarios' },
         'consultas': { btn: 'btn-admin-tab-consultas', view: 'view-admin-consultas' },
@@ -2062,12 +2151,20 @@ async function cargarUsuariosAdmin() {
     const tbody = document.getElementById('users-table-body');
     tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-gray-400 italic"><i class="ph-duotone ph-spinner animate-spin"></i> Cargando...</td></tr>';
 
+    const staffBody = document.getElementById('staff-table-body');
+    if (staffBody) staffBody.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-gray-400 italic"><i class="ph-duotone ph-spinner animate-spin"></i> Cargando...</td></tr>';
+
     const { data: users, error } = await client.from('profiles').select('*').order('email');
 
     if (error) return Swal.fire('Error Admin', 'Fallo al cargar usuarios.', 'error');
 
     allUsersCache = users;
-    renderUsersTable(users);
+
+    const clients = users.filter(u => !['admin', ...STAFF_ROLES].includes((u.rol || '').toLowerCase().trim()));
+    const staff = users.filter(u => ['admin', ...STAFF_ROLES].includes((u.rol || '').toLowerCase().trim()));
+
+    renderUsersTable(clients);
+    renderStaffTable(staff);
 }
 
 function getSaldoConfig(tipo) {
@@ -2135,12 +2232,12 @@ function renderActionsAdmin(u) {
     let mensualButton = '';
     if (u.bono_mensual_activo) {
         mensualButton = `
-            <button onclick="cambiarBonoMensual('${u.id}', false)" class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider bg-red-500 text-white rounded-lg hover:bg-red-600 transition shadow-sm flex items-center gap-1">
+            <button onclick="cambiarBonoMensual('${u.id}', false)" class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider btn-desactivar-mensual rounded-lg transition shadow-sm flex items-center gap-1">
                 <i class="ph-bold ph-x-circle text-xs"></i> Desactivar Mensual
             </button>`;
     } else {
         mensualButton = `
-            <button onclick="cambiarBonoMensual('${u.id}', true)" class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition shadow-sm flex items-center gap-1">
+            <button onclick="cambiarBonoMensual('${u.id}', true)" class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider btn-activar-mensual rounded-lg transition shadow-sm flex items-center gap-1">
                 <i class="ph-bold ph-check-circle text-xs"></i> Activar Mensual
             </button>`;
     }
@@ -2210,6 +2307,61 @@ function renderUsersTable(users) {
     });
 }
 
+function renderStaffTable(users) {
+    const tbody = document.getElementById('staff-table-body');
+    const noRes = document.getElementById('no-staff-found');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    if (!users || users.length === 0) {
+        if (noRes) noRes.classList.remove('hidden');
+        return;
+    }
+    if (noRes) noRes.classList.add('hidden');
+
+    users.forEach(u => {
+        const rolUsuario = (u.rol || '').toLowerCase().trim();
+        const isAdminRow = rolUsuario === 'admin';
+        const row = document.createElement('tr');
+        row.className = 'bg-white/90 hover:bg-white transition shadow-sm border border-gray-100';
+
+        let roleBadge = '<span class="bg-gray-100 text-gray-400 text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest border border-gray-200">Cliente</span>';
+
+        if (rolUsuario === 'admin') {
+            roleBadge = '<span class="bg-gray-900 text-white text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest border border-gray-800">Admin</span>';
+        } else if (STAFF_ROLES.includes(rolUsuario)) {
+            roleBadge = '<span class="bg-slate-200 text-slate-600 text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest border border-slate-300">Profesional</span>';
+        }
+
+        const deleteUserButton = `
+            <button onclick="borrarUsuario('${u.id}')" class="w-7 h-7 flex items-center justify-center rounded-lg border border-red-100 text-red-400 hover:bg-red-50 hover:text-red-600 transition" title="Eliminar Usuario Completo">
+                <i class="ph-bold ph-trash text-xs"></i>
+            </button>`;
+
+        row.innerHTML = `
+            <td class="px-6 py-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${isAdminRow ? 'bg-gold-100 text-gold-700' : 'bg-gray-200 text-gray-500'}">
+                        ${u.email ? u.email.charAt(0).toUpperCase() : '?'}
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="font-medium text-gray-700 truncate max-w-[140px] sm:max-w-none">${u.email || 'Anon'}</span>
+                        <span class="text-[10px] text-gray-400">${u.nombre || ''} ${u.apellidos || ''}</span>
+                    </div>
+                </div>
+            </td>
+            <td class="px-6 py-4 text-center">${roleBadge}</td>
+            <td class="px-6 py-4 text-right">
+                <div class="flex justify-end items-center mt-1">
+                    ${deleteUserButton}
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
 async function cambiarBonoMensual(userId, activar) {
     if (activar) {
         const hoy = new Date().toISOString().split('T')[0];
@@ -2267,7 +2419,12 @@ async function cambiarBonoMensual(userId, activar) {
             Swal.fire('Error', 'No se pudo activar el bono: ' + error.message, 'error');
         } else {
             Swal.fire({ icon: 'success', title: 'Bono Mensual activado', showConfirmButton: false, timer: 1200 });
-            cargarUsuariosAdmin();
+            if (isAdmin && typeof cargarUsuariosAdmin === 'function') {
+                cargarUsuariosAdmin();
+            }
+            if (typeof checkProfile === 'function') {
+                checkProfile();
+            }
         }
     } else {
         const res = await Swal.fire({
@@ -2295,7 +2452,12 @@ async function cambiarBonoMensual(userId, activar) {
                 Swal.fire('Error', 'No se pudo desactivar el bono: ' + error.message, 'error');
             } else {
                 Swal.fire({ icon: 'success', title: 'Bono Mensual desactivado', showConfirmButton: false, timer: 1200 });
-                cargarUsuariosAdmin();
+                if (isAdmin && typeof cargarUsuariosAdmin === 'function') {
+                    cargarUsuariosAdmin();
+                }
+                if (typeof checkProfile === 'function') {
+                    checkProfile();
+                }
             }
         }
     }
@@ -2630,7 +2792,12 @@ async function borrarProfesor(id) {
 function filtrarUsuarios() {
     const term = document.getElementById('user-search').value.toLowerCase();
     const filtered = allUsersCache.filter(u => u.email && u.email.toLowerCase().includes(term));
-    renderUsersTable(filtered);
+    
+    const clients = filtered.filter(u => !['admin', ...STAFF_ROLES].includes((u.rol || '').toLowerCase().trim()));
+    const staff = filtered.filter(u => ['admin', ...STAFF_ROLES].includes((u.rol || '').toLowerCase().trim()));
+    
+    renderUsersTable(clients);
+    renderStaffTable(staff);
 }
 
 async function sumarSaldo(userId, tipo, qty) {
@@ -3661,11 +3828,15 @@ window.eliminarPropiaCuenta = async function() {
 // --- 11. GESTIÓN PÚBLICA ---
 function switchPublicView(viewName) {
     if (viewName === 'nutricion') {
+        localStorage.setItem('activePublicView', 'nutricion');
+        localStorage.setItem('activeConsultasSubTab', 'nutricion');
         // Redirigir a la vista de consultas (psicología) con la pestaña de nutrición activa
         switchPublicView('psicologia');
         switchConsultasSubTab('nutricion');
         return;
     }
+
+    localStorage.setItem('activePublicView', viewName);
 
     const views = {
         'profesor-calendario': { btn: 'nav-public-profesor-calendario', view: 'view-profesor-calendario' },
@@ -3726,6 +3897,7 @@ function switchPublicView(viewName) {
 }
 
 function switchConsultasSubTab(type) {
+    localStorage.setItem('activeConsultasSubTab', type);
     const btnPsico = document.getElementById('btn-subtab-psicologia');
     const btnNutri = document.getElementById('btn-subtab-nutricion');
     const subviewPsico = document.getElementById('sub-view-psicologia');
@@ -4010,7 +4182,7 @@ function mostrarFuncionEnPruebas() {
 window.mostrarFuncionEnPruebas = mostrarFuncionEnPruebas;
 
 // =======================================================
-// CONSULTAS Y TALLERES (Versión 3.2)
+// CONSULTAS Y TALLERES (Versión 3.3)
 // =======================================================
 
 async function cargarPsicologia() {
@@ -4221,10 +4393,18 @@ function renderizarPsicologia() {
             } else if (llena) {
                 btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">Reservado</span>`;
             } else {
-                btnAction = `
-                    <button onclick="mostrarFuncionEnPruebas()" class="bg-[#3B82F6] hover:bg-blue-600 text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform hover:shadow-lg hover:brightness-110 active:scale-95">
-                        RESERVAR
-                    </button>`;
+                const esAlumno = !isAdmin && !STAFF_ROLES.includes(currentUserRole);
+                if (!esAlumno) {
+                    btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">No Disponible</span>`;
+                } else {
+                    const saldo = getSaldoConsultaActual('psicologia');
+                    const disabledClass = (saldo < 1) ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:shadow-lg hover:brightness-110 active:scale-95';
+                    const btnText = (saldo < 1) ? '0 Sesiones' : 'RESERVAR';
+                    btnAction = `
+                        <button onclick="reservarConsulta('psicologia', ${c.id})" class="bg-[#3B82F6] text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform ${disabledClass}">
+                            ${btnText}
+                        </button>`;
+                }
             }
 
             const adminTrash = `<button onclick="borrarConsultaAdmin('psicologia', ${c.id})" class="admin-only text-cocoa/20 hover:text-red-500 transition ml-2 p-1" title="Eliminar Consulta"><i class="ph-bold ph-trash"></i></button>`;
@@ -4355,10 +4535,18 @@ function renderizarNutricion() {
             } else if (llena) {
                 btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">Reservado</span>`;
             } else {
-                btnAction = `
-                    <button onclick="mostrarFuncionEnPruebas()" class="bg-[#8B5CF6] hover:bg-purple-600 text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform hover:shadow-lg hover:brightness-110 active:scale-95">
-                        RESERVAR
-                    </button>`;
+                const esAlumno = !isAdmin && !STAFF_ROLES.includes(currentUserRole);
+                if (!esAlumno) {
+                    btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">No Disponible</span>`;
+                } else {
+                    const saldo = getSaldoConsultaActual('nutricion');
+                    const disabledClass = (saldo < 1) ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:shadow-lg hover:brightness-110 active:scale-95';
+                    const btnText = (saldo < 1) ? '0 Sesiones' : 'RESERVAR';
+                    btnAction = `
+                        <button onclick="reservarConsulta('nutricion', ${c.id})" class="bg-[#8B5CF6] text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform ${disabledClass}">
+                            ${btnText}
+                        </button>`;
+                }
             }
 
             const adminTrash = `<button onclick="borrarConsultaAdmin('nutricion', ${c.id})" class="admin-only text-cocoa/20 hover:text-red-500 transition ml-2 p-1" title="Eliminar Consulta"><i class="ph-bold ph-trash"></i></button>`;
@@ -4485,8 +4673,17 @@ async function refrescarConsultas(tipo) {
 }
 
 async function reservarConsulta(tipo, claseId) {
-    mostrarFuncionEnPruebas();
-    return;
+    // Validación de rol: sólo los alumnos pueden reservar consultas
+    const rol = (currentUserRole || '').toLowerCase().trim();
+    const esAlumno = !isAdmin && !STAFF_ROLES.includes(rol);
+    if (!esAlumno) {
+        return Swal.fire({
+            icon: 'error',
+            title: 'Acción no permitida',
+            text: 'Solo los alumnos pueden realizar reservas de consultas.',
+            confirmButtonColor: '#B48A47'
+        });
+    }
 
     if (isReserving) return;
 

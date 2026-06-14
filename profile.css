@@ -470,3 +470,23 @@ body.platform-web .mobile-only {
     background-color: #dc2626 !important;
 }
 
+/* Botones de Abono Mensual */
+.btn-activar-mensual {
+    background-color: #10b981 !important;
+    color: #ffffff !important;
+    transition: all 0.2s ease;
+}
+.btn-activar-mensual:hover {
+    background-color: #059669 !important;
+}
+
+.btn-desactivar-mensual {
+    background-color: #ef4444 !important;
+    color: #ffffff !important;
+    transition: all 0.2s ease;
+}
+.btn-desactivar-mensual:hover {
+    background-color: #dc2626 !important;
+}
+
+
