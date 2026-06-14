@@ -55,6 +55,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     fetchClasesLanding();
     fetchProfesionalesLanding();
+
+    // Cargar horas de cancelación límite de forma dinámica
+    const cancelTextEl = document.getElementById('cancelacion-horas-text');
+    if (cancelTextEl && client) {
+        client.from('configuracion').select('valor').eq('clave', 'horas_limite_cancelacion').single()
+        .then(({ data, error }) => {
+            if (data && data.valor) {
+                cancelTextEl.textContent = `Cancelación permitida hasta ${data.valor}h antes de la hora de inicio de la clase`;
+            }
+        }).catch(err => console.error("Error cargando horas de cancelación:", err));
+    }
 });
 
 // 2. SISTEMA DE MODALES

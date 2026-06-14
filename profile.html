@@ -190,36 +190,8 @@
                     <div class="flex items-center gap-4 sm:gap-8">
                         <div id="header-bonos-container" class="flex flex-col items-end">
                             <span class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-0.5">Mis saldos</span>
-                            <div class="flex flex-wrap justify-end gap-2">
-                                <!-- Saldo clases -->
-                                <div class="bg-white px-3 py-2 rounded-2xl border border-gray-200 shadow-sm hover:border-olive transition cursor-default min-w-[120px]"
-                                    title="Saldo clases">
-                                    <span class="block text-[9px] text-cocoa/50 font-bold uppercase tracking-widest leading-none">Saldo clases</span>
-                                    <div class="flex items-center justify-end gap-2 mt-1">
-                                        <i class="ph-fill ph-ticket text-olive text-lg"></i>
-                                        <span id="bonos-count" class="font-black text-cocoa text-xl leading-none">0</span>
-                                    </div>
-                                </div>
-
-                                <!-- Saldo consultas -->
-                                <div class="bg-white px-3 py-2 rounded-2xl border border-gray-200 shadow-sm hover:border-olive transition cursor-default min-w-[140px]"
-                                    title="Saldo Psicología">
-                                    <span class="block text-[9px] text-cocoa/50 font-bold uppercase tracking-widest leading-none">Saldo Psicología</span>
-                                    <div class="flex items-center justify-end gap-2 mt-1">
-                                        <i class="ph-fill ph-brain text-[#3B82F6] text-lg"></i>
-                                        <span id="saldo-psicologia-count" class="font-black text-cocoa text-xl leading-none">0</span>
-                                    </div>
-                                </div>
-
-                                <!-- Saldo talleres -->
-                                <div class="bg-white px-3 py-2 rounded-2xl border border-gray-200 shadow-sm hover:border-olive transition cursor-default min-w-[130px]"
-                                    title="Saldo Nutrición">
-                                    <span class="block text-[9px] text-cocoa/50 font-bold uppercase tracking-widest leading-none">Saldo Nutrición</span>
-                                    <div class="flex items-center justify-end gap-2 mt-1">
-                                        <i class="ph-fill ph-apple text-[#8B5CF6] text-lg"></i>
-                                        <span id="saldo-nutricion-count" class="font-black text-cocoa text-xl leading-none">0</span>
-                                    </div>
-                                </div>
+                            <div id="header-saldos-wrapper" class="flex flex-wrap justify-end gap-2">
+                                <!-- Rellenado dinámicamente en JS -->
                             </div>
                         </div>
                         <div class="h-8 w-px bg-cocoa/10 hidden sm:block"></div>
@@ -312,28 +284,8 @@
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-3 gap-2 w-full md:w-auto">
-                                <div class="bg-white/80 px-3 py-2 rounded-2xl border border-cocoa/10 text-center min-w-[80px]">
-                                    <span class="block text-[9px] text-cocoa/45 font-bold uppercase tracking-widest leading-none">Yoga</span>
-                                    <div class="flex items-center justify-center gap-1 mt-1">
-                                        <i class="ph-fill ph-ticket text-olive text-base"></i>
-                                        <span id="profile-bonos-count" class="font-black text-cocoa text-xl leading-none">0</span>
-                                    </div>
-                                </div>
-                                <div class="bg-white/80 px-3 py-2 rounded-2xl border border-cocoa/10 text-center min-w-[80px]">
-                                    <span class="block text-[9px] text-cocoa/45 font-bold uppercase tracking-widest leading-none">Psico</span>
-                                    <div class="flex items-center justify-center gap-1 mt-1">
-                                        <i class="ph-fill ph-brain text-[#3B82F6] text-base"></i>
-                                        <span id="profile-saldo-psicologia-count" class="font-black text-cocoa text-xl leading-none">0</span>
-                                    </div>
-                                </div>
-                                <div class="bg-white/80 px-3 py-2 rounded-2xl border border-cocoa/10 text-center min-w-[80px]">
-                                    <span class="block text-[9px] text-cocoa/45 font-bold uppercase tracking-widest leading-none">Nutri</span>
-                                    <div class="flex items-center justify-center gap-1 mt-1">
-                                        <i class="ph-fill ph-apple text-[#8B5CF6] text-base"></i>
-                                        <span id="profile-saldo-nutricion-count" class="font-black text-cocoa text-xl leading-none">0</span>
-                                    </div>
-                                </div>
+                            <div id="profile-saldos-wrapper" class="flex flex-wrap gap-2 w-full md:w-auto justify-end">
+                                <!-- Rellenado dinámicamente en JS -->
                             </div>
                         </div>
                     </div>
@@ -461,6 +413,16 @@
                                         class="mt-6 w-full bg-sand/20 text-cocoa/70 py-3 rounded-xl text-sm font-bold hover:bg-sand/30 transition flex items-center justify-center gap-2">
                                         <i class="ph-bold ph-x-circle"></i> Ver todos mis horarios
                                     </button>
+                                </div>
+
+                                <!-- Tarjeta de Mi Grupo de Alumnos (Solo Lectura) -->
+                                <div class="bg-ivory rounded-3xl shadow-lg border border-cocoa/10 p-6 mt-6">
+                                    <h3 class="brand-font text-lg font-bold text-cocoa mb-4 flex items-center gap-2">
+                                        <i class="ph-fill ph-users-three text-olive"></i> Mi Grupo de Alumnos
+                                    </h3>
+                                    <div id="profesor-mi-grupo-container" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                                        <!-- Se rellenará dinámicamente -->
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -830,6 +792,17 @@
                                 placeholder="Buscar email...">
                         </div>
                     </div>
+
+                    <!-- Sección de Grupos de Alumnos por Profesional -->
+                    <div class="mb-10 bg-white/80 rounded-2xl p-6 border border-cocoa/10 shadow-sm">
+                        <h3 class="brand-font text-lg font-bold text-cocoa mb-4 flex items-center gap-2">
+                            <i class="ph-fill ph-users-three text-olive"></i> Grupos de Alumnos por Profesional
+                        </h3>
+                        <div id="grupos-profesionales-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Se rellenará dinámicamente en JS -->
+                        </div>
+                    </div>
+
                     <div class="bg-white/80 rounded-2xl shadow-sm border border-cocoa/10 overflow-hidden">
                         <table class="w-full text-left border-separate border-spacing-y-2">
                             <thead
@@ -1061,29 +1034,76 @@
 
                     <!-- Repetición (solo clases) -->
                     <div class="md:col-span-2">
-                        <div class="flex items-center justify-between gap-4 bg-white/60 border border-cocoa/10 rounded-2xl px-4 py-3">
-                            <div class="flex items-center gap-3">
-                                <input id="clase-repeat-enabled" type="checkbox"
-                                    class="w-5 h-5 accent-olive cursor-pointer">
-                                <label for="clase-repeat-enabled" class="text-sm font-bold text-cocoa">Repetir clase</label>
+                        <div class="flex flex-col gap-4">
+                            <div class="flex items-center justify-between gap-4 bg-white/60 border border-cocoa/10 rounded-2xl px-4 py-3">
+                                <div class="flex items-center gap-3">
+                                    <input id="clase-repeat-enabled" type="checkbox"
+                                        class="w-5 h-5 accent-olive cursor-pointer">
+                                    <label for="clase-repeat-enabled" class="text-sm font-bold text-cocoa">Repetir clase</label>
+                                </div>
+                                <span class="text-[10px] text-cocoa/50 font-bold uppercase tracking-widest">Eventos repetidos</span>
                             </div>
-                            <span class="text-[10px] text-cocoa/50 font-bold uppercase tracking-widest">Eventos repetidos</span>
-                        </div>
 
-                        <div id="clase-repeat-options" class="hidden grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
-                            <div>
-                                <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Frecuencia</label>
-                                <select id="clase-repeat-every"
-                                    class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
-                                    <option value="1" selected>Cada semana</option>
-                                    <option value="2">Cada 2 semanas</option>
-                                </select>
+                            <div id="clase-repeat-options" class="hidden flex flex-col gap-4 bg-white/40 border border-cocoa/5 p-4 rounded-2xl">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div>
+                                        <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Frecuencia</label>
+                                        <select id="clase-repeat-every"
+                                            class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
+                                            <option value="semanal" selected>Una vez por semana</option>
+                                            <option value="mensual">Una vez al mes</option>
+                                            <option value="dias">Días específicos de la semana</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label id="clase-repeat-count-label" class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Semanas a repetir</label>
+                                        <input type="number" id="clase-repeat-count" min="1" max="52" value="4"
+                                            class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
+                                        <p id="clase-repeat-count-help" class="text-[10px] text-cocoa/40 mt-1 ml-1">Incluye la primera clase (ej: 4 = 4 semanas)</p>
+                                    </div>
+                                </div>
+                                <div id="clase-repeat-days-container" class="hidden flex flex-col gap-2 bg-sand/5 border border-cocoa/5 p-3 rounded-xl">
+                                    <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wide block mb-1">Días a repetir clase</label>
+                                    <div class="flex flex-wrap gap-2">
+                                        <label class="cursor-pointer">
+                                            <input type="checkbox" name="clase-repeat-day" value="1" class="sr-only peer">
+                                            <span class="w-9 h-9 rounded-full border border-cocoa/10 flex items-center justify-center font-bold text-xs text-cocoa/60 hover:bg-sand/10 peer-checked:bg-olive peer-checked:text-white peer-checked:border-olive transition">L</span>
+                                        </label>
+                                        <label class="cursor-pointer">
+                                            <input type="checkbox" name="clase-repeat-day" value="2" class="sr-only peer">
+                                            <span class="w-9 h-9 rounded-full border border-cocoa/10 flex items-center justify-center font-bold text-xs text-cocoa/60 hover:bg-sand/10 peer-checked:bg-olive peer-checked:text-white peer-checked:border-olive transition">M</span>
+                                        </label>
+                                        <label class="cursor-pointer">
+                                            <input type="checkbox" name="clase-repeat-day" value="3" class="sr-only peer">
+                                            <span class="w-9 h-9 rounded-full border border-cocoa/10 flex items-center justify-center font-bold text-xs text-cocoa/60 hover:bg-sand/10 peer-checked:bg-olive peer-checked:text-white peer-checked:border-olive transition">X</span>
+                                        </label>
+                                        <label class="cursor-pointer">
+                                            <input type="checkbox" name="clase-repeat-day" value="4" class="sr-only peer">
+                                            <span class="w-9 h-9 rounded-full border border-cocoa/10 flex items-center justify-center font-bold text-xs text-cocoa/60 hover:bg-sand/10 peer-checked:bg-olive peer-checked:text-white peer-checked:border-olive transition">J</span>
+                                        </label>
+                                        <label class="cursor-pointer">
+                                            <input type="checkbox" name="clase-repeat-day" value="5" class="sr-only peer">
+                                            <span class="w-9 h-9 rounded-full border border-cocoa/10 flex items-center justify-center font-bold text-xs text-cocoa/60 hover:bg-sand/10 peer-checked:bg-olive peer-checked:text-white peer-checked:border-olive transition">V</span>
+                                        </label>
+                                        <label class="cursor-pointer">
+                                            <input type="checkbox" name="clase-repeat-day" value="6" class="sr-only peer">
+                                            <span class="w-9 h-9 rounded-full border border-cocoa/10 flex items-center justify-center font-bold text-xs text-cocoa/60 hover:bg-sand/10 peer-checked:bg-olive peer-checked:text-white peer-checked:border-olive transition">S</span>
+                                        </label>
+                                        <label class="cursor-pointer">
+                                            <input type="checkbox" name="clase-repeat-day" value="0" class="sr-only peer">
+                                            <span class="w-9 h-9 rounded-full border border-cocoa/10 flex items-center justify-center font-bold text-xs text-cocoa/60 hover:bg-sand/10 peer-checked:bg-olive peer-checked:text-white peer-checked:border-olive transition">D</span>
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <label class="text-xs font-bold text-cocoa/60 uppercase tracking-wide ml-1 mb-2 block">Repeticiones</label>
-                                <input type="number" id="clase-repeat-count" min="1" max="52" value="4"
-                                    class="w-full px-4 py-3 bg-sand/10 border border-cocoa/10 rounded-xl focus:ring-2 focus:ring-olive focus:border-olive outline-none transition text-cocoa">
-                                <p class="text-[10px] text-cocoa/40 mt-1 ml-1">Incluye la primera clase (ej: 4 = 4 semanas)</p>
+
+                            <div class="flex items-center justify-between gap-4 bg-white/60 border border-cocoa/10 rounded-2xl px-4 py-3 mt-1">
+                                <div class="flex items-center gap-3">
+                                    <input id="clase-add-group-enabled" type="checkbox"
+                                        class="w-5 h-5 accent-olive cursor-pointer">
+                                    <label for="clase-add-group-enabled" class="text-sm font-bold text-cocoa">Autorellenar con grupo de alumnos del profesor</label>
+                                </div>
+                                <span class="text-[10px] text-cocoa/50 font-bold uppercase tracking-widest">Grupo Profesor</span>
                             </div>
                         </div>
                     </div>

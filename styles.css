@@ -487,4 +487,56 @@ body.platform-android select {
             display: flex;
             width: max-content;
         }
+
+        /* ======================================================= */
+        /* CORRECCIÓN DE BOTONES SWEETALERT (VISIBILIDAD)          */
+        /* ======================================================= */
+        .swal2-popup .swal2-styled.swal2-confirm {
+            background-color: #8C8658 !important;
+            color: #ffffff !important;
+            font-weight: bold !important;
+            border-radius: 0.75rem !important;
+            padding: 0.625rem 1.5rem !important;
+            font-size: 0.875rem !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+            transition: all 0.2s ease !important;
+            cursor: pointer !important;
+        }
+
+        .swal2-popup .swal2-styled.swal2-confirm:hover {
+            background-color: #76704b !important;
+            transform: translateY(-1px) !important;
+        }
+
+        .swal2-popup .swal2-styled.swal2-cancel {
+            background-color: #e5e7eb !important;
+            color: #374151 !important;
+            font-weight: bold !important;
+            border-radius: 0.75rem !important;
+            padding: 0.625rem 1.5rem !important;
+            font-size: 0.875rem !important;
+            transition: all 0.2s ease !important;
+            cursor: pointer !important;
+        }
+
+        .swal2-popup .swal2-styled.swal2-cancel:hover {
+            background-color: #d1d5db !important;
+            color: #1f2937 !important;
+        }
+
+        .swal2-popup .swal2-styled.swal2-deny {
+            background-color: #ef4444 !important;
+            color: #ffffff !important;
+            font-weight: bold !important;
+            border-radius: 0.75rem !important;
+            padding: 0.625rem 1.5rem !important;
+            font-size: 0.875rem !important;
+            transition: all 0.2s ease !important;
+            cursor: pointer !important;
+        }
+
+        .swal2-popup .swal2-styled.swal2-deny:hover {
+            background-color: #dc2626 !important;
+        }
+
     
