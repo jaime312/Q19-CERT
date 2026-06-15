@@ -262,7 +262,7 @@ body.platform-android select {
             left: 10%;
             width: 70vw;
             height: 70vw;
-            background: #D27D60;
+            background: #AB593D;
             /* Terracotta */
             animation: wander1 35s infinite ease-in-out alternate;
         }
@@ -272,7 +272,7 @@ body.platform-android select {
             right: 10%;
             width: 65vw;
             height: 65vw;
-            background: #B48A47;
+            background: #8F6B2D;
             /* Golden Ochre */
             animation: wander2 41s infinite ease-in-out alternate;
         }
@@ -282,7 +282,7 @@ body.platform-android select {
             right: 30%;
             width: 45vw;
             height: 45vw;
-            background: #8C8658;
+            background: #6A6540;
             /* Olive Green */
             animation: wander3 37s infinite ease-in-out alternate;
             animation-delay: -10s;
@@ -293,7 +293,7 @@ body.platform-android select {
             left: 10%;
             width: 50vw;
             height: 50vw;
-            background: #E6DCC3;
+            background: #C3B89A;
             /* Soft Beige */
             animation: wander4 43s infinite ease-in-out alternate;
             animation-delay: -5s;
@@ -303,12 +303,12 @@ body.platform-android select {
         @keyframes symbolCycle {
 
             0%,
-            15% {
+            20% {
                 opacity: 1;
                 transform: scale(1);
             }
 
-            20%,
+            25%,
             95% {
                 opacity: 0;
                 transform: scale(0.9);
@@ -318,6 +318,11 @@ body.platform-android select {
                 opacity: 0;
                 transform: scale(0.9);
             }
+        }
+
+        #symbols-container {
+            width: clamp(15rem, 38vh, 38rem);
+            height: clamp(15rem, 38vh, 38rem);
         }
 
         .symbol-stack {
@@ -334,10 +339,10 @@ body.platform-android select {
             height: 100%;
             object-fit: contain;
             opacity: 0;
-            animation: symbolCycle 15s infinite;
+            animation: symbolCycle 12s infinite;
         }
 
-        /* Stagger delays for 5 items over 15s (3s each) */
+        /* Stagger delays for 4 items over 12s (3s each) */
         .symbol-stack img:nth-child(1) {
             animation-delay: 0s;
         }
@@ -352,10 +357,6 @@ body.platform-android select {
 
         .symbol-stack img:nth-child(4) {
             animation-delay: 9s;
-        }
-
-        .symbol-stack img:nth-child(5) {
-            animation-delay: 12s;
         }
 
         /* NEW: Dynamic subtle animations */
@@ -430,17 +431,16 @@ body.platform-android select {
             transform-origin: bottom right;
             transition: transform 0.4s cubic-bezier(0.86, 0, 0.07, 1);
             opacity: 0.7;
+            display: none; /* Hide underline effect */
         }
 
         .group:hover .nav-link-strike::after {
-            transform: scaleX(1);
-            transform-origin: bottom left;
+            transform: scaleX(0);
         }
 
         .group:hover .nav-link-strike {
-            letter-spacing: 0.15em;
-            transform: scale(1.05);
-            /* slightly subtler scale */
+            transform: scale(1.12);
+            /* scale up on hover instead of underline */
         }
 
         .hover-image-container {

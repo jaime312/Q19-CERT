@@ -20,7 +20,7 @@ if style_match:
 # 2. Get the exact background HTML from index.html
 bg_html = """
     <!-- Background Gradient: Inspired by user image (Terracotta, Gold, Olive) -->
-    <div class="fixed inset-0 z-0 bg-[linear-gradient(to_bottom,_#E6DCC3_0%,_#D27D60_40%,_#B48A47_70%,_#8C8658_100%)]">
+    <div class="fixed inset-0 z-0 bg-[linear-gradient(to_bottom,_#C3B89A_0%,_#AB593D_40%,_#8F6B2D_70%,_#6A6540_100%)]">
     </div>
 
     <!-- Inner Glow/Highlight to mimic the center spotlight effect -->

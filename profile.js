@@ -4182,7 +4182,7 @@ function mostrarFuncionEnPruebas() {
 window.mostrarFuncionEnPruebas = mostrarFuncionEnPruebas;
 
 // =======================================================
-// CONSULTAS Y TALLERES (Versión 3.3)
+// CONSULTAS Y TALLERES (Versión 3.4)
 // =======================================================
 
 async function cargarPsicologia() {
