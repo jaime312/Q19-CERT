@@ -3,6 +3,47 @@ const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
 const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
 const client = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
+// --- DYNAMIC CATEGORIES HELPERS ---
+function getEspecialidadTexto(especialidad) {
+    if (!especialidad) return '';
+    return especialidad.split('|')[0].trim();
+}
+
+function getEspecialidadCategorias(p) {
+    if (!p) return [];
+    const especialidad = p.especialidad || '';
+    const email = (p.email || '').toLowerCase();
+    const nombre = (p.nombre || '').toLowerCase();
+    
+    const parts = especialidad.split('|');
+    if (parts.length > 1) {
+        return parts[1].split(',').map(c => c.trim().toLowerCase());
+    }
+    
+    // Explicit overrides for Yanira and Miriam if no pipe structure exists
+    if (email === 'yanira@genyoga.es' || nombre.includes('yanira')) {
+        return ['clases', 'talleres'];
+    }
+    if (email === 'miriam@respirapsicologia.es' || nombre.includes('miriam')) {
+        return ['consultas'];
+    }
+    
+    // Fallback/legacy matching based on keywords
+    const esp = especialidad.toLowerCase();
+    const cats = [];
+    if (esp.includes('yoga') || esp.includes('clase') || esp.includes('instructor') || esp.includes('vinyasa') || esp.includes('hatha')) {
+        cats.push('clases');
+    }
+    if (esp.includes('consulta') || esp.includes('psico') || esp.includes('terapia') || esp.includes('nutri') || esp.includes('diet') || esp.includes('alimen')) {
+        cats.push('consultas');
+    }
+    if (esp.includes('taller') || esp.includes('workshop')) {
+        cats.push('talleres');
+    }
+    return cats;
+}
+
+
 let currentUser = null;
 let isAdmin = false;
 let currentUserRole = '';
@@ -409,7 +450,31 @@ async function initApp() {
 async function cargarProfesionalesCache() {
     const { data, error } = await client.from('profesionales').select('*').order('nombre');
     if (!error && data) {
-        allProfesionalesCache = data;
+        allProfesionalesCache = data.map(p => {
+            if ((p.email || '').toLowerCase() === 'angel@genyoga.es' || (p.nombre || '').toLowerCase() === 'ángel') {
+                const updated = { ...p };
+                if (!updated.nombre.includes('Javier')) {
+                    updated.nombre = "Ángel Javier";
+                }
+                if (!updated.descripcion || !updated.descripcion.includes('LUGAR DE NACIMIENTO')) {
+                    updated.descripcion = `LUGAR DE NACIMIENTO: La Roda
+
+TITULACIONES:
+Ninguna. Baso mi aprendizaje en el autoestudio/práctica, en recibir clases e intensivos de profesores con larga trayectoria (anatomía, asana, filosofía, etc., lo necesario para mi desarrollo en el camino de Yoga). En septiembre empiezo la mentoría para la certificación como profesor de Yoga Iyengar.
+
+SOBRE MI:
+Cuento con 6 años de experiencia en la práctica de yoga, de los cuales 5 años y medio están dedicados a estudiar y practicar Iyengar Yoga en Valencia y La Roda.
+
+TE ACOMPAÑO:
+La práctica está basada en el ajuste preciso y la correcta alineación del cuerpo, adaptando la postura a las condiciones de cada alumno/a para encontrar los efectos y beneficios en asana. Trabajamos en la comprensión de las acciones, en sentir lo que hacemos y, desde la profundidad de ese trabajo físico, damos la posibilidad a una manera de relación acorde al conocimiento propio que se va dando con la práctica.
+
+ME DEFINE:
+"Dedicación y Cuidado"`;
+                }
+                return updated;
+            }
+            return p;
+        });
     }
 }
 
@@ -2070,7 +2135,7 @@ async function cargarGruposProfesionalesAdmin() {
                 </div>
                 <div class="min-w-0 flex-grow">
                     <h4 class="font-bold text-cocoa text-sm leading-tight truncate" title="${p.nombre}">${p.nombre}</h4>
-                    <p class="text-[10px] text-cocoa/50 font-medium uppercase tracking-wider truncate">${p.especialidad || 'INSTRUCTOR'}</p>
+                    <p class="text-[10px] text-cocoa/50 font-medium uppercase tracking-wider truncate">${getEspecialidadTexto(p.especialidad) || 'INSTRUCTOR'}</p>
                 </div>
             </div>
             
@@ -2472,13 +2537,18 @@ function normalizarEspecialidad(especialidad) {
 
 function filtrarProfesionalesPorArea(profesionales = [], filtro = 'todos') {
     const f = (filtro || 'todos').toLowerCase();
-    if (f === 'todos') return profesionales;
+    if (f === 'todos') {
+        return profesionales.filter(p => {
+            const cats = getEspecialidadCategorias(p);
+            return cats.includes('clases') || cats.includes('consultas') || cats.includes('talleres');
+        });
+    }
 
     return profesionales.filter(p => {
-        const esp = normalizarEspecialidad(p.especialidad);
-        if (f === 'clases') return esp.includes('yoga') || esp.includes('clase') || esp.includes('instructor');
-        if (f === 'psicologia') return esp.includes('consulta') || esp.includes('psico') || esp.includes('terapia') || esp.includes('nutri') || esp.includes('diet') || esp.includes('alimen');
-        if (f === 'nutricion') return esp.includes('taller') || esp.includes('workshop');
+        const cats = getEspecialidadCategorias(p);
+        if (f === 'clases') return cats.includes('clases');
+        if (f === 'psicologia') return cats.includes('consultas');
+        if (f === 'nutricion') return cats.includes('talleres');
         return true;
     });
 }
@@ -2540,10 +2610,26 @@ window.crearProfesor = async function() {
                     <input id="swal-prof-email" type="email" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-q19-500 outline-none" value="">
                 </div>
                 <div>
-                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Categoría</label>
-                    <select id="swal-prof-especialidad" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-q19-500 outline-none">
-                        ${opcionesCategoriaProfesional('Profesor de yoga')}
-                    </select>
+                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Especialidad Texto (ej: Vinyasa & Restaurativa)</label>
+                    <input id="swal-prof-especialidad-texto" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-olive outline-none" value="Yoga">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Categorías / Subcategorías (Elige al menos una)</label>
+                    <div class="flex flex-col gap-2 bg-sand/5 p-3 rounded-lg border border-cocoa/10">
+                        <label class="flex items-center gap-2 text-sm text-cocoa cursor-pointer">
+                            <input type="checkbox" id="swal-prof-cat-clases" class="accent-olive w-4 h-4" checked>
+                            <span>Clases (Yoga)</span>
+                        </label>
+                        <label class="flex items-center gap-2 text-sm text-cocoa cursor-pointer">
+                            <input type="checkbox" id="swal-prof-cat-consultas" class="accent-olive w-4 h-4">
+                            <span>Consultas (Psicología / Nutrición)</span>
+                        </label>
+                        <label class="flex items-center gap-2 text-sm text-cocoa cursor-pointer">
+                            <input type="checkbox" id="swal-prof-cat-talleres" class="accent-olive w-4 h-4">
+                            <span>Talleres (Workshops)</span>
+                        </label>
+                    </div>
+                    <p class="text-[10px] text-gray-400">Nota: Un profesional no puede estar en Clases y Consultas a la vez. Debe estar en al menos una categoría.</p>
                 </div>
                 <div>
                     <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Descripción (opcional)</label>
@@ -2563,14 +2649,41 @@ window.crearProfesor = async function() {
         showCancelButton: true,
         confirmButtonText: 'Crear',
         confirmButtonColor: '#1a4d4f',
-        preConfirm: () => ({
-            nombre: document.getElementById('swal-prof-nombre')?.value?.trim(),
-            email: document.getElementById('swal-prof-email')?.value?.trim(),
-            especialidad: document.getElementById('swal-prof-especialidad')?.value,
-            descripcion: document.getElementById('swal-prof-descripcion')?.value?.trim(),
-            foto_url: document.getElementById('swal-prof-foto')?.value?.trim(),
-            color: document.getElementById('swal-prof-color')?.value
-        })
+        preConfirm: () => {
+            const nombre = document.getElementById('swal-prof-nombre')?.value?.trim();
+            const email = document.getElementById('swal-prof-email')?.value?.trim();
+            const especialidadTexto = document.getElementById('swal-prof-especialidad-texto')?.value?.trim() || 'General';
+            const descripcion = document.getElementById('swal-prof-descripcion')?.value?.trim();
+            const foto_url = document.getElementById('swal-prof-foto')?.value?.trim();
+            const color = document.getElementById('swal-prof-color')?.value;
+
+            const catClases = document.getElementById('swal-prof-cat-clases')?.checked;
+            const catConsultas = document.getElementById('swal-prof-cat-consultas')?.checked;
+            const catTalleres = document.getElementById('swal-prof-cat-talleres')?.checked;
+
+            const selectedCats = [];
+            if (catClases) selectedCats.push('clases');
+            if (catConsultas) selectedCats.push('consultas');
+            if (catTalleres) selectedCats.push('talleres');
+
+            if (selectedCats.length === 0) {
+                Swal.showValidationMessage('Debes seleccionar al menos una categoría.');
+                return false;
+            }
+            if (catClases && catConsultas) {
+                Swal.showValidationMessage('Un profesional no puede pertenecer a Clases y Consultas a la vez.');
+                return false;
+            }
+
+            return {
+                nombre,
+                email,
+                especialidad: `${especialidadTexto} | ${selectedCats.join(', ')}`,
+                descripcion,
+                foto_url,
+                color
+            };
+        }
     });
 
     if (!formValues) return;
@@ -2685,7 +2798,7 @@ async function cargarProfesoresAdmin() {
             <div class="mt-3">
                 <span class="inline-block py-1 px-3 rounded-full text-[9px] font-bold tracking-widest uppercase"
                       style="background-color: ${tagBg}; color: ${textColor}; border: 1px solid ${baseColor}20;">
-                    ${p.especialidad || 'Instructor'}
+                    ${getEspecialidadTexto(p.especialidad) || 'Instructor'}
                 </span>
             </div>
 
@@ -2700,6 +2813,12 @@ async function editarProfesor(id) {
     const profesor = allProfesionalesCache.find(p => p.id === id);
     if (!profesor) return;
 
+    const espTexto = getEspecialidadTexto(profesor.especialidad);
+    const espCats = getEspecialidadCategorias(profesor);
+    const tieneClases = espCats.includes('clases');
+    const tieneConsultas = espCats.includes('consultas');
+    const tieneTalleres = espCats.includes('talleres');
+
     const { value: formValues } = await Swal.fire({
         title: 'Editar Profesional',
         html: `
@@ -2713,11 +2832,26 @@ async function editarProfesor(id) {
                                 <input id="swal-prof-email" type="email" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-q19-500 outline-none" value="${profesor.email || ''}">
                             </div>
                             <div>
-                                <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Categoría</label>
-                                <select id="swal-prof-especialidad" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-q19-500 outline-none">
-                                    ${opcionesCategoriaProfesional(profesor.especialidad || '')}
-                                </select>
-                                <p class="text-[10px] text-gray-400 mt-1">Se usa para separar Yoga / Consultas / Talleres.</p>
+                                <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Especialidad Texto (ej: Vinyasa & Restaurativa)</label>
+                                <input id="swal-prof-especialidad-texto" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-olive outline-none" value="${escapeHtml(espTexto)}">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Categorías / Subcategorías (Elige al menos una)</label>
+                                <div class="flex flex-col gap-2 bg-sand/5 p-3 rounded-lg border border-cocoa/10">
+                                    <label class="flex items-center gap-2 text-sm text-cocoa cursor-pointer">
+                                        <input type="checkbox" id="swal-prof-cat-clases" class="accent-olive w-4 h-4" ${tieneClases ? 'checked' : ''}>
+                                        <span>Clases (Yoga)</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 text-sm text-cocoa cursor-pointer">
+                                        <input type="checkbox" id="swal-prof-cat-consultas" class="accent-olive w-4 h-4" ${tieneConsultas ? 'checked' : ''}>
+                                        <span>Consultas (Psicología / Nutrición)</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 text-sm text-cocoa cursor-pointer">
+                                        <input type="checkbox" id="swal-prof-cat-talleres" class="accent-olive w-4 h-4" ${tieneTalleres ? 'checked' : ''}>
+                                        <span>Talleres (Workshops)</span>
+                                    </label>
+                                </div>
+                                <p class="text-[10px] text-gray-400">Nota: Un profesional no puede estar en Clases y Consultas a la vez. Debe estar en al menos una categoría.</p>
                             </div>
                             <div>
                                 <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Descripción (opcional)</label>
@@ -2738,14 +2872,39 @@ async function editarProfesor(id) {
         confirmButtonText: 'Guardar',
         confirmButtonColor: '#1a4d4f',
         preConfirm: () => {
-            return {
-                nombre: document.getElementById('swal-prof-nombre').value,
-                email: document.getElementById('swal-prof-email').value,
-                especialidad: document.getElementById('swal-prof-especialidad').value,
-                descripcion: document.getElementById('swal-prof-descripcion').value,
-                foto_url: document.getElementById('swal-prof-foto').value,
-                color: document.getElementById('swal-prof-color').value
+            const nombre = document.getElementById('swal-prof-nombre')?.value?.trim();
+            const email = document.getElementById('swal-prof-email')?.value?.trim();
+            const especialidadTexto = document.getElementById('swal-prof-especialidad-texto')?.value?.trim() || 'General';
+            const descripcion = document.getElementById('swal-prof-descripcion')?.value?.trim();
+            const foto_url = document.getElementById('swal-prof-foto')?.value?.trim();
+            const color = document.getElementById('swal-prof-color')?.value;
+
+            const catClases = document.getElementById('swal-prof-cat-clases')?.checked;
+            const catConsultas = document.getElementById('swal-prof-cat-consultas')?.checked;
+            const catTalleres = document.getElementById('swal-prof-cat-talleres')?.checked;
+
+            const selectedCats = [];
+            if (catClases) selectedCats.push('clases');
+            if (catConsultas) selectedCats.push('consultas');
+            if (catTalleres) selectedCats.push('talleres');
+
+            if (selectedCats.length === 0) {
+                Swal.showValidationMessage('Debes seleccionar al menos una categoría.');
+                return false;
             }
+            if (catClases && catConsultas) {
+                Swal.showValidationMessage('Un profesional no puede pertenecer a Clases y Consultas a la vez.');
+                return false;
+            }
+
+            return {
+                nombre,
+                email,
+                especialidad: `${especialidadTexto} | ${selectedCats.join(', ')}`,
+                descripcion,
+                foto_url,
+                color
+            };
         }
     });
 
@@ -2925,10 +3084,11 @@ async function abrirModalCrearClase() {
     selectProfesor.innerHTML = '<option value="" disabled selected>Selecciona un profesional</option>';
 
     if (allProfesionalesCache && allProfesionalesCache.length > 0) {
-        allProfesionalesCache.forEach(p => {
+        const clasesProfs = allProfesionalesCache.filter(p => getEspecialidadCategorias(p).includes('clases'));
+        clasesProfs.forEach(p => {
             const option = document.createElement('option');
             option.value = p.id;
-            option.textContent = p.nombre + (p.especialidad ? ` (${p.especialidad})` : '');
+            option.textContent = p.nombre + (p.especialidad ? ` (${getEspecialidadTexto(p.especialidad)})` : '');
             selectProfesor.appendChild(option);
         });
     } else {
@@ -3998,21 +4158,17 @@ function renderProfesoresPublic(filtro = 'todos') {
 
     let filtrados = allProfesionalesCache;
 
-    if (filtro === 'yoga') {
+    if (filtro === 'todos') {
         filtrados = allProfesionalesCache.filter(p => {
-            const esp = (p.especialidad || '').toLowerCase();
-            return esp.includes('yoga') || esp.includes('vinyasa') || esp.includes('hatha') || esp.includes('instructor') || esp.includes('clase') || esp === '';
+            const cats = getEspecialidadCategorias(p);
+            return cats.includes('clases') || cats.includes('consultas') || cats.includes('talleres');
         });
+    } else if (filtro === 'yoga') {
+        filtrados = allProfesionalesCache.filter(p => getEspecialidadCategorias(p).includes('clases'));
     } else if (filtro === 'psicologia') {
-        filtrados = allProfesionalesCache.filter(p => {
-            const esp = (p.especialidad || '').toLowerCase();
-            return esp.includes('consulta') || esp.includes('psico') || esp.includes('terapia') || esp.includes('nutri') || esp.includes('diet') || esp.includes('alimen');
-        });
+        filtrados = allProfesionalesCache.filter(p => getEspecialidadCategorias(p).includes('consultas'));
     } else if (filtro === 'nutricion') {
-        filtrados = allProfesionalesCache.filter(p => {
-            const esp = (p.especialidad || '').toLowerCase();
-            return esp.includes('taller') || esp.includes('workshop');
-        });
+        filtrados = allProfesionalesCache.filter(p => getEspecialidadCategorias(p).includes('talleres'));
     }
 
     if (filtrados.length === 0) {
@@ -4032,7 +4188,14 @@ function renderProfesoresPublic(filtro = 'todos') {
 
         const fotoHtml = p.foto_url
             ? `<img src="${escapeHtml(p.foto_url)}" alt="${escapeHtml(nombre)}" class="w-full h-full object-cover">`
-            : `<div class="w-full h-full bg-cocoa/5 flex items-center justify-center text-cocoa text-4xl font-serif">${escapeHtml(nombre.charAt(0))}</div>`;
+            : `<div class="w-full h-full bg-gradient-to-br from-[#F5F2EB] to-[#E5DEC9] flex items-center justify-center text-[#8C8658] relative">
+                 <svg viewBox="0 0 100 100" fill="currentColor" class="w-24 h-24 opacity-80">
+                   <path d="M50 20C50 20 40 38 40 50C40 60 44 66 50 66C56 66 60 60 60 50C60 38 50 20 50 20Z" />
+                   <path d="M50 32C45 40 32 50 32 60C32 68 38 72 45 72C48 72 50 69 50 69C50 69 52 72 55 72C62 72 68 68 68 60C68 50 55 40 50 32Z" opacity="0.85" />
+                   <path d="M50 44C42 50 22 58 22 68C22 76 28 80 36 80C42 80 48 76 50 74C52 76 58 80 64 80C72 80 78 76 78 68C78 58 58 50 50 44Z" opacity="0.7" />
+                   <path d="M35 84C45 86 55 86 65 84C60 83 50 82 35 84Z" opacity="0.5" />
+                 </svg>
+               </div>`;
 
         const fullBio = parsed.sobreMi.join(' ');
         const bioText = truncateTextProfile(fullBio || p.descripcion || p.bio || 'Profesional de GEN Yoga.', 180);
@@ -4057,7 +4220,7 @@ function renderProfesoresPublic(filtro = 'todos') {
                     <h3 class="text-3xl font-serif text-cocoa leading-tight font-bold">
                         ${escapeHtml(nombre)}
                     </h3>
-                    <p class="text-xs uppercase tracking-widest text-olive font-bold mt-1.5">${escapeHtml(p.especialidad || 'Profesional')}</p>
+                    <p class="text-xs uppercase tracking-widest text-olive font-bold mt-1.5">${escapeHtml(getEspecialidadTexto(p.especialidad) || 'Profesional')}</p>
                     ${lugar}
 
                     <!-- Bio Short -->
@@ -5217,16 +5380,17 @@ function filtrarProfesionalesVista(especialidad) {
 }
 
 function getProfesionalesConsultaDisponibles(tipo) {
-    let filteredProfs = allProfesionalesCache;
+    let filteredProfs = allProfesionalesCache.filter(p => getEspecialidadCategorias(p).includes('consultas'));
+    
     if (tipo === 'psicologia') {
-        filteredProfs = allProfesionalesCache.filter(p => {
-            const esp = (p.especialidad || '').toLowerCase();
-            return esp.includes('consulta') || esp.includes('psico') || esp.includes('terapia');
+        filteredProfs = filteredProfs.filter(p => {
+            const esp = getEspecialidadTexto(p.especialidad).toLowerCase();
+            return esp.includes('consulta') || esp.includes('psico') || esp.includes('terapia') || esp === '';
         });
     } else if (tipo === 'nutricion') {
-        filteredProfs = allProfesionalesCache.filter(p => {
-            const esp = (p.especialidad || '').toLowerCase();
-            return esp.includes('consulta') || esp.includes('nutri') || esp.includes('diet') || esp.includes('alimen');
+        filteredProfs = filteredProfs.filter(p => {
+            const esp = getEspecialidadTexto(p.especialidad).toLowerCase();
+            return esp.includes('consulta') || esp.includes('nutri') || esp.includes('diet') || esp.includes('alimen') || esp === '';
         });
     }
 
@@ -5275,7 +5439,7 @@ async function abrirModalAsignarClaseYoga(claseId) {
     if (!tieneAccesoGestionAlumnos()) return;
 
     const { data: clase, error: errClase } = await client.from('clases')
-        .select('id, nombre, capacidad_max')
+        .select('id, nombre, capacidad_max, profesor_id, profesionales(nombre, apellidos)')
         .eq('id', claseId)
         .single();
 
@@ -5334,6 +5498,18 @@ async function abrirModalAsignarClaseYoga(claseId) {
         return `<option value="${cliente.id}">${escapeHtml(label)} · ${escapeHtml(cliente.email || '')} · bonos ind: ${saldo} · ${mensual}</option>`;
     }).join('');
 
+    let grupoBtnHtml = '';
+    if (clase?.profesor_id && clase?.profesionales) {
+        const profNombre = `${clase.profesionales.nombre || ''} ${clase.profesionales.apellidos || ''}`.trim() || 'Profesor';
+        grupoBtnHtml = `
+            <div class="pt-3 border-t border-cocoa/5 mt-4">
+                <button type="button" id="btn-swal-cargar-grupo" class="w-full py-2.5 bg-olive/10 hover:bg-olive/20 text-olive border border-olive/20 font-bold text-xs uppercase tracking-wider rounded-xl transition flex items-center justify-center gap-2">
+                    <i class="ph-bold ph-users-three text-sm"></i> Cargar Grupo de ${escapeHtml(profNombre)}
+                </button>
+            </div>
+        `;
+    }
+
     const result = await Swal.fire({
         title: 'Asignar alumno a clase',
         html: `
@@ -5344,6 +5520,7 @@ async function abrirModalAsignarClaseYoga(claseId) {
                     ${options}
                 </select>
                 <p class="text-xs text-gray-400">Se descontará de su bono mensual (si tiene saldo) o de sus bonos individuales al confirmar.</p>
+                ${grupoBtnHtml}
             </div>
         `,
         showCancelButton: true,
@@ -5351,6 +5528,15 @@ async function abrirModalAsignarClaseYoga(claseId) {
         cancelButtonText: 'Cancelar',
         confirmButtonColor: '#1a4d4f',
         focusConfirm: false,
+        didOpen: () => {
+            const btnCargar = document.getElementById('btn-swal-cargar-grupo');
+            if (btnCargar) {
+                btnCargar.addEventListener('click', () => {
+                    Swal.close();
+                    cargarGrupoEnClaseCreada(claseId, clase.profesor_id, `${clase.profesionales.nombre || ''} ${clase.profesionales.apellidos || ''}`.trim());
+                });
+            }
+        },
         preConfirm: () => {
             const select = document.getElementById('swal-cliente-clase');
             if (!select?.value) {
@@ -5376,6 +5562,116 @@ async function abrirModalAsignarClaseYoga(claseId) {
     }
 
     Swal.fire({ icon: 'success', title: 'Asignado', text: 'La plaza queda reservada.', timer: 1200, showConfirmButton: false });
+    await cargarHorarios();
+    await cargarAsistenciasPorClase();
+}
+
+async function cargarGrupoEnClaseCreada(claseId, profesorId, profesorNombre) {
+    if (!tieneAccesoGestionAlumnos()) return;
+
+    const confirmResult = await Swal.fire({
+        title: '¿Asignar grupo completo?',
+        text: `¿Estás seguro de que quieres inscribir a todos los alumnos del grupo de ${profesorNombre} en esta clase? Se descontará un bono a cada alumno si corresponde.`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, asignar grupo',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#1a4d4f',
+        cancelButtonColor: '#7F5040'
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
+    Swal.fire({
+        title: 'Buscando alumnos del grupo...',
+        didOpen: () => Swal.showLoading()
+    });
+
+    const { data: groupMembers, error: errGroup } = await client
+        .from('grupos_profesionales')
+        .select('alumno_id')
+        .eq('profesional_id', profesorId);
+
+    if (errGroup) {
+        Swal.close();
+        Swal.fire('Error', 'No se pudo cargar el grupo del profesor: ' + errGroup.message, 'error');
+        return;
+    }
+
+    if (!groupMembers || groupMembers.length === 0) {
+        Swal.close();
+        Swal.fire('Grupo vacío', 'Este profesor no tiene ningún alumno asignado en su grupo de alumnos.', 'info');
+        return;
+    }
+
+    const studentIds = groupMembers.map(m => m.alumno_id);
+    const totalAlumnos = studentIds.length;
+    let inscritosOk = 0;
+    const failedReservations = [];
+
+    Swal.fire({
+        title: 'Inscribiendo alumnos...',
+        html: `Progreso: <b>0</b> de <b>${totalAlumnos}</b> alumnos procesados.`,
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+
+    for (let i = 0; i < totalAlumnos; i++) {
+        const studentId = studentIds[i];
+        
+        Swal.update({
+            html: `Progreso: <b>${i}</b> de <b>${totalAlumnos}</b> alumnos procesados.`
+        });
+
+        const { error: errRes } = await client.rpc('reservar_con_bono', {
+            p_clase_id: claseId,
+            p_user_id: studentId
+        });
+
+        if (errRes) {
+            failedReservations.push({
+                alumno: studentId,
+                error: errRes.message
+            });
+        } else {
+            inscritosOk++;
+        }
+    }
+
+    Swal.close();
+
+    const studentNames = {};
+    allUsersCache.forEach(u => {
+        const fullName = `${u.nombre || ''} ${u.apellidos || ''}`.trim();
+        studentNames[u.id] = fullName || u.email || u.id;
+    });
+
+    let resultHtml = `Se han procesado ${totalAlumnos} alumnos:<br>`;
+    if (inscritosOk > 0) {
+        resultHtml += `<span class="text-emerald-600 font-bold">• ${inscritosOk} inscritos con éxito.</span><br>`;
+    }
+
+    if (failedReservations.length > 0) {
+        const details = failedReservations
+            .map(fr => `• ${studentNames[fr.alumno] || fr.alumno}: ${fr.error}`)
+            .join('<br>');
+        resultHtml += `<div class="text-left mt-3 text-xs bg-red-50 border border-red-100 p-3 rounded-xl max-h-40 overflow-y-auto"><span class="font-bold text-red-700 block mb-1">Alumnos que no pudieron ser inscritos:</span>${details}</div>`;
+        
+        Swal.fire({
+            icon: 'warning',
+            title: 'Inscripción del grupo completada con avisos',
+            html: resultHtml,
+            confirmButtonColor: '#1a4d4f'
+        });
+    } else {
+        Swal.fire({
+            icon: 'success',
+            title: '¡Grupo asignado con éxito!',
+            text: `Todos los alumnos (${inscritosOk}) se han inscrito correctamente y sus bonos han sido descontados.`,
+            confirmButtonColor: '#1a4d4f'
+        });
+    }
+
     await cargarHorarios();
     await cargarAsistenciasPorClase();
 }
@@ -5593,7 +5889,7 @@ function actualizarProfesoresSelectConsulta(tipo) {
         filteredProfs.forEach(p => {
             const opt = document.createElement('option');
             opt.value = p.id;
-            opt.textContent = p.nombre + (p.especialidad ? ` (${p.especialidad})` : '');
+            opt.textContent = p.nombre + (p.especialidad ? ` (${getEspecialidadTexto(p.especialidad)})` : '');
             select.appendChild(opt);
         });
 
@@ -6014,10 +6310,11 @@ async function abrirModalCrearTaller() {
     if (select) {
         select.innerHTML = '<option value="" disabled selected>Selecciona Instructor</option>';
         
-        (allProfesionalesCache || []).forEach(p => {
+        const talleresProfs = (allProfesionalesCache || []).filter(p => getEspecialidadCategorias(p).includes('talleres'));
+        talleresProfs.forEach(p => {
             const opt = document.createElement('option');
             opt.value = p.id;
-            opt.textContent = p.nombre + (p.especialidad ? ` (${p.especialidad})` : '');
+            opt.textContent = p.nombre + (p.especialidad ? ` (${getEspecialidadTexto(p.especialidad)})` : '');
             select.appendChild(opt);
         });
     }

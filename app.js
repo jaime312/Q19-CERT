@@ -5,6 +5,47 @@ const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
 const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
 const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
+// --- DYNAMIC CATEGORIES HELPERS ---
+function getEspecialidadTexto(especialidad) {
+    if (!especialidad) return '';
+    return especialidad.split('|')[0].trim();
+}
+
+function getEspecialidadCategorias(p) {
+    if (!p) return [];
+    const especialidad = p.especialidad || '';
+    const email = (p.email || '').toLowerCase();
+    const nombre = (p.nombre || '').toLowerCase();
+    
+    const parts = especialidad.split('|');
+    if (parts.length > 1) {
+        return parts[1].split(',').map(c => c.trim().toLowerCase());
+    }
+    
+    // Explicit overrides for Yanira and Miriam if no pipe structure exists
+    if (email === 'yanira@genyoga.es' || nombre.includes('yanira')) {
+        return ['clases', 'talleres'];
+    }
+    if (email === 'miriam@respirapsicologia.es' || nombre.includes('miriam')) {
+        return ['consultas'];
+    }
+    
+    // Fallback/legacy matching based on keywords
+    const esp = especialidad.toLowerCase();
+    const cats = [];
+    if (esp.includes('yoga') || esp.includes('clase') || esp.includes('instructor') || esp.includes('vinyasa') || esp.includes('hatha')) {
+        cats.push('clases');
+    }
+    if (esp.includes('consulta') || esp.includes('psico') || esp.includes('terapia') || esp.includes('nutri') || esp.includes('diet') || esp.includes('alimen')) {
+        cats.push('consultas');
+    }
+    if (esp.includes('taller') || esp.includes('workshop')) {
+        cats.push('talleres');
+    }
+    return cats;
+}
+
+
 document.addEventListener('DOMContentLoaded', () => {
     // Platform detection (simplificado)
     const ua = navigator.userAgent.toLowerCase();
@@ -391,7 +432,31 @@ async function fetchProfesionalesLanding() {
         return;
     }
 
-    allProfesionalesLanding = profesionales;
+    allProfesionalesLanding = profesionales.map(p => {
+        if ((p.email || '').toLowerCase() === 'angel@genyoga.es' || (p.nombre || '').toLowerCase() === 'ángel') {
+            const updated = { ...p };
+            if (!updated.nombre.includes('Javier')) {
+                updated.nombre = "Ángel Javier";
+            }
+            if (!updated.descripcion || !updated.descripcion.includes('LUGAR DE NACIMIENTO')) {
+                updated.descripcion = `LUGAR DE NACIMIENTO: La Roda
+
+TITULACIONES:
+Ninguna. Baso mi aprendizaje en el autoestudio/práctica, en recibir clases e intensivos de profesores con larga trayectoria (anatomía, asana, filosofía, etc., lo necesario para mi desarrollo en el camino de Yoga). En septiembre empiezo la mentoría para la certificación como profesor de Yoga Iyengar.
+
+SOBRE MI:
+Cuento con 6 años de experiencia en la práctica de yoga, de los cuales 5 años y medio están dedicados a estudiar y practicar Iyengar Yoga en Valencia y La Roda.
+
+TE ACOMPAÑO:
+La práctica está basada en el ajuste preciso y la correcta alineación del cuerpo, adaptando la postura a las condiciones de cada alumno/a para encontrar los efectos y beneficios en asana. Trabajamos en la comprensión de las acciones, en sentir lo que hacemos y, desde la profundidad de ese trabajo físico, damos la posibilidad a una manera de relación acorde al conocimiento propio que se va dando con la práctica.
+
+ME DEFINE:
+"Dedicación y Cuidado"`;
+            }
+            return updated;
+        }
+        return p;
+    });
 
     // Check query param 'cat'
     const urlParams = new URLSearchParams(window.location.search);
@@ -423,21 +488,17 @@ window.filtrarProfesionalesLanding = function(category) {
     }
 
     let filtrados = allProfesionalesLanding;
-    if (selectedCategory === 'yoga') {
+    if (selectedCategory === 'todos') {
         filtrados = allProfesionalesLanding.filter(p => {
-            const esp = (p.especialidad || '').toLowerCase();
-            return esp.includes('yoga') || esp.includes('vinyasa') || esp.includes('hatha') || esp.includes('instructor') || esp.includes('clase');
+            const cats = getEspecialidadCategorias(p);
+            return cats.includes('clases') || cats.includes('consultas') || cats.includes('talleres');
         });
+    } else if (selectedCategory === 'yoga') {
+        filtrados = allProfesionalesLanding.filter(p => getEspecialidadCategorias(p).includes('clases'));
     } else if (selectedCategory === 'psicologia') {
-        filtrados = allProfesionalesLanding.filter(p => {
-            const esp = (p.especialidad || '').toLowerCase();
-            return esp.includes('consulta') || esp.includes('psico') || esp.includes('terapia') || esp.includes('nutri') || esp.includes('diet') || esp.includes('alimen');
-        });
+        filtrados = allProfesionalesLanding.filter(p => getEspecialidadCategorias(p).includes('consultas'));
     } else if (selectedCategory === 'talleres') {
-        filtrados = allProfesionalesLanding.filter(p => {
-            const esp = (p.especialidad || '').toLowerCase();
-            return esp.includes('taller') || esp.includes('workshop');
-        });
+        filtrados = allProfesionalesLanding.filter(p => getEspecialidadCategorias(p).includes('talleres'));
     }
 
     renderProfesionalesLanding(filtrados);
@@ -559,7 +620,14 @@ function renderProfesionalesLanding(profesionales) {
 
         const avatarHtml = fotoUrl
             ? `<img src="${escapeHtmlPublic(fotoUrl)}" alt="${escapeHtmlPublic(nombre)}" class="w-full h-full object-cover">`
-            : `<div class="w-full h-full bg-white/10 flex items-center justify-center text-white text-4xl font-serif">${escapeHtmlPublic(nombre.charAt(0))}</div>`;
+            : `<div class="w-full h-full bg-gradient-to-br from-[#F5F2EB] to-[#E5DEC9] flex items-center justify-center text-[#8C8658] relative">
+                 <svg viewBox="0 0 100 100" fill="currentColor" class="w-24 h-24 opacity-80">
+                   <path d="M50 20C50 20 40 38 40 50C40 60 44 66 50 66C56 66 60 60 60 50C60 38 50 20 50 20Z" />
+                   <path d="M50 32C45 40 32 50 32 60C32 68 38 72 45 72C48 72 50 69 50 69C50 69 52 72 55 72C62 72 68 68 68 60C68 50 55 40 50 32Z" opacity="0.85" />
+                   <path d="M50 44C42 50 22 58 22 68C22 76 28 80 36 80C42 80 48 76 50 74C52 76 58 80 64 80C72 80 78 76 78 68C78 58 58 50 50 44Z" opacity="0.7" />
+                   <path d="M35 84C45 86 55 86 65 84C60 83 50 82 35 84Z" opacity="0.5" />
+                 </svg>
+               </div>`;
 
         const fullBio = parsed.sobreMi.join(' ');
         const bioText = truncateTextLanding(fullBio || prof.descripcion || prof.bio || 'Profesional de GEN Yoga.', 180);
@@ -583,7 +651,7 @@ function renderProfesionalesLanding(profesionales) {
                     ${avatarHtml}
                 </div>
                 <h3 class="text-3xl font-serif text-white leading-tight font-bold">${escapeHtmlPublic(nombre)}</h3>
-                <p class="text-xs uppercase tracking-widest text-sand font-bold mt-1.5">${escapeHtmlPublic(prof.especialidad || 'Profesional')}</p>
+                <p class="text-xs uppercase tracking-widest text-sand font-bold mt-1.5">${escapeHtmlPublic(getEspecialidadTexto(prof.especialidad) || 'Profesional')}</p>
                 ${lugar}
 
                 <!-- Bio Short -->
