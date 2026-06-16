@@ -41,6 +41,42 @@
             <h2 class="brand-font text-3xl md:text-5xl lg:text-7xl text-center text-white mb-8 md:mb-12 drop-shadow-md">
                 Clases del Centro
             </h2>
+
+            <!-- Seccion Calendario Oficial Descargable -->
+            <div class="mb-12 flex flex-col items-center w-full">
+                <div class="w-full max-w-3xl bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 md:p-6 shadow-xl flex flex-col items-center gap-4 text-center">
+                    <span class="inline-flex py-1 px-3 rounded-full bg-white/10 text-white font-bold tracking-widest text-[10px] uppercase border border-white/20">
+                        Horario Oficial
+                    </span>
+                    <p class="text-white/80 text-sm max-w-md font-light leading-relaxed">
+                        Haz clic sobre la imagen o pulsa el botón inferior para descargar el horario oficial en tu móvil o PC.
+                    </p>
+                    
+                    <!-- Contenedor Interactivo de la Imagen -->
+                    <div class="relative group cursor-pointer overflow-hidden rounded-xl border border-white/10 shadow-lg w-full aspect-[16/10] bg-white/5">
+                        <a id="link-img-horario" href="img_calendario/horario.jpg" download="Horario_GEN_Yoga.jpg" class="block w-full h-full download-link">
+                            <img id="img-horario-oficial" src="img_calendario/horario.jpg" alt="Horario Oficial" 
+                                 class="w-full h-full object-cover transition-all duration-500 group-hover:scale-102 group-hover:brightness-90"
+                                 onload="document.querySelectorAll('.download-link').forEach(a => { a.href = this.src; if (this.src.includes('clases.png')) { a.removeAttribute('download'); } else { a.setAttribute('download', 'Horario_GEN_Yoga.' + this.src.split('.').pop()); } });"
+                                 onerror="if (this.src.includes('horario.png')) { this.src='img_calendario/horario.jpg'; } else if (this.src.includes('horario.jpg')) { this.src='img_calendario/horario.jpeg'; } else { this.src='img/clases.png'; this.onerror=null; }">
+                            <!-- Capa de superposición al pasar el ratón -->
+                            <div class="absolute inset-0 bg-cocoa/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
+                                <span class="bg-terracotta text-white px-5 py-2.5 rounded-full font-bold text-xs uppercase tracking-widest shadow-lg transform scale-90 group-hover:scale-100 transition duration-300 flex items-center gap-2">
+                                    <i class="ph-bold ph-download-simple text-base"></i> Descargar
+                                </span>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    <!-- Botón de Descarga Directa -->
+                    <div class="flex gap-4 flex-wrap justify-center mt-2">
+                        <a href="img_calendario/horario.png" download="Horario_GEN_Yoga.png" 
+                           class="download-link flex bg-terracotta hover:bg-cocoa border border-terracotta/20 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition shadow-lg items-center gap-2">
+                            <i class="ph-bold ph-download-simple text-base"></i> Descargar Horario
+                        </a>
+                    </div>
+                </div>
+            </div>
             
             <!-- Sub-pestañas de filtrado de sesiones -->
             <div class="flex justify-center gap-2 mb-12 flex-wrap">
