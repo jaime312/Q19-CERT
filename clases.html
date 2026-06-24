@@ -14,12 +14,11 @@
 <body class="subpixel-antialiased min-h-screen w-screen overflow-x-hidden relative selection:bg-mutedgold selection:text-cocoa font-sans">
 
     
-    <!-- Background Gradient: Inspired by user image (Terracotta, Gold, Olive) -->
-    <div class="fixed inset-0 z-0 bg-[linear-gradient(to_bottom,_#C3B89A_0%,_#AB593D_40%,_#8F6B2D_70%,_#6A6540_100%)]">
-    </div>
+    <!-- Light Background -->
+    <div class="fixed inset-0 z-0 bg-[#f8f6f2]"></div>
 
     <!-- Inner Glow/Highlight to mimic the center spotlight effect -->
-    <div class="fixed inset-0 z-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.15)_0%,transparent_50%)] pointer-events-none">
+    <div class="fixed inset-0 z-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.03)_0%,transparent_50%)] pointer-events-none">
     </div>
 
     <!-- Ambient background shapes (ZEN & FRESH) -->
@@ -37,26 +36,26 @@
             <i class="ph-bold ph-arrow-left group-hover:-translate-x-1 transition"></i> Volver a inicio
         </a>
 
-        <div class="w-full bg-white/10 backdrop-blur-xl rounded-3xl p-6 md:p-12 border border-white/20 shadow-2xl mt-12 md:mt-8 text-cocoa">
-            <h2 class="brand-font text-3xl md:text-5xl lg:text-7xl text-center text-white mb-8 md:mb-12 drop-shadow-md">
+        <div class="w-full mt-12 md:mt-8">
+            <h2 class="brand-font text-3xl md:text-5xl lg:text-7xl text-center text-cocoa mb-8 md:mb-12 drop-shadow-sm">
                 Clases del Centro
             </h2>
 
             <!-- Seccion Calendario Oficial Descargable -->
             <div class="mb-12 flex flex-col items-center w-full">
-                <div class="w-full max-w-3xl bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 md:p-6 shadow-xl flex flex-col items-center gap-4 text-center">
-                    <span class="inline-flex py-1 px-3 rounded-full bg-white/10 text-white font-bold tracking-widest text-[10px] uppercase border border-white/20">
+                <div class="w-full max-w-3xl bg-white border border-cocoa/10 rounded-2xl p-4 md:p-6 shadow-sm flex flex-col items-center gap-4 text-center">
+                    <span class="inline-flex py-1 px-3 rounded-full bg-cocoa/5 text-cocoa font-bold tracking-widest text-[10px] uppercase border border-cocoa/10">
                         Horario Oficial
                     </span>
-                    <p class="text-white/80 text-sm max-w-md font-light leading-relaxed">
+                    <p class="text-cocoa/80 text-sm max-w-md font-light leading-relaxed">
                         Haz clic sobre la imagen o pulsa el botón inferior para descargar el horario oficial en tu móvil o PC.
                     </p>
                     
                     <!-- Contenedor Interactivo de la Imagen -->
-                    <div class="relative group cursor-pointer overflow-hidden rounded-xl border border-white/10 shadow-lg w-full aspect-[16/10] bg-white/5">
+                    <div class="relative group cursor-pointer overflow-hidden rounded-xl border border-cocoa/10 shadow-sm w-full aspect-[16/10] bg-cocoa/5">
                         <a id="link-img-horario" href="img_calendario/horario.jpg" download="Horario_GEN_Yoga.jpg" class="block w-full h-full download-link">
                             <img id="img-horario-oficial" src="img_calendario/horario.jpg" alt="Horario Oficial" 
-                                 class="w-full h-full object-cover transition-all duration-500 group-hover:scale-102 group-hover:brightness-90"
+                                 class="w-full h-full object-cover transition-all duration-500 group-hover:scale-102 group-hover:brightness-95"
                                  onload="document.querySelectorAll('.download-link').forEach(a => { a.href = this.src; if (this.src.includes('clases.png')) { a.removeAttribute('download'); } else { a.setAttribute('download', 'Horario_GEN_Yoga.' + this.src.split('.').pop()); } });"
                                  onerror="if (this.src.includes('horario.png')) { this.src='img_calendario/horario.jpg'; } else if (this.src.includes('horario.jpg')) { this.src='img_calendario/horario.jpeg'; } else { this.src='img/clases.png'; this.onerror=null; }">
                             <!-- Capa de superposición al pasar el ratón -->
@@ -78,29 +77,30 @@
                 </div>
             </div>
             
-            <!-- Sub-pestañas de filtrado de sesiones -->
-            <div class="flex justify-center gap-2 mb-12 flex-wrap">
+            <!-- Folder Tabs -->
+            <div class="flex items-end gap-1 px-4 md:px-8 -mb-[1px] relative z-10 w-full overflow-x-auto scrollbar-none">
                 <button id="btn-filtro-clases-todos" onclick="filtrarClasesLanding('todos')"
-                    class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-white text-cocoa transition border border-white/20 shadow-sm hover:scale-105 active:scale-95">
+                    class="folder-tab transition-all duration-300 rounded-t-2xl px-6 py-3.5 md:px-8 md:py-4 text-sm md:text-base lg:text-lg font-bold uppercase tracking-wider border border-b-0 border-cocoa/10">
                     Todas
                 </button>
                 <button id="btn-filtro-clases-yoga" onclick="filtrarClasesLanding('yoga')"
-                    class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-white/20 text-white hover:bg-white/30 transition border border-white/10 hover:scale-105 active:scale-95">
+                    class="folder-tab transition-all duration-300 rounded-t-2xl px-6 py-3.5 md:px-8 md:py-4 text-sm md:text-base lg:text-lg font-bold uppercase tracking-wider border border-b-0 border-cocoa/10">
                     Clases
                 </button>
                 <button id="btn-filtro-clases-psicologia" onclick="filtrarClasesLanding('psicologia')"
-                    class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-white/20 text-white hover:bg-white/30 transition border border-white/10 hover:scale-105 active:scale-95">
+                    class="folder-tab transition-all duration-300 rounded-t-2xl px-6 py-3.5 md:px-8 md:py-4 text-sm md:text-base lg:text-lg font-bold uppercase tracking-wider border border-b-0 border-cocoa/10">
                     Consultas
                 </button>
                 <button id="btn-filtro-clases-nutricion" onclick="filtrarClasesLanding('nutricion')"
-                    class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-white/20 text-white hover:bg-white/30 transition border border-white/10 hover:scale-105 active:scale-95">
+                    class="folder-tab transition-all duration-300 rounded-t-2xl px-6 py-3.5 md:px-8 md:py-4 text-sm md:text-base lg:text-lg font-bold uppercase tracking-wider border border-b-0 border-cocoa/10">
                     Talleres
                 </button>
             </div>
 
-            <div id="landing-clases-container"
-                class="space-y-6 [&>*]:bg-white/80 [&>*]:backdrop-blur-sm [&>*]:rounded-xl [&>*]:border-white/10">
-                <!-- Clases dinámicas aquí -->
+            <!-- Folder Body -->
+            <div id="folder-body" class="w-full bg-[#E2DDD5] border border-cocoa/10 rounded-b-3xl rounded-tr-3xl p-6 md:p-8 shadow-md transition-colors duration-500">
+                <div id="landing-clases-container" class="space-y-6">
+                    <!-- Clases dinámicas aquí -->
             </div>
         </div>
     </div>

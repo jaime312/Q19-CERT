@@ -49,21 +49,44 @@
         </script>
 
         <style>
-            @media (max-height: 740px) {
+            @media (max-height: 850px) {
+                #logo-img {
+                    height: clamp(100px, 15vh, 180px) !important;
+                }
+                #symbols-container {
+                    width: 14rem !important;
+                    height: 14rem !important;
+                }
+            }
+
+            @media (max-height: 820px) {
                 .hide-on-short {
                     display: none !important;
+                }
+            }
+
+            @media (max-height: 700px) {
+                #logo-img {
+                    height: clamp(80px, 12vh, 130px) !important;
+                }
+                #symbols-container {
+                    width: 12rem !important;
+                    height: 12rem !important;
+                }
+                #central-text-content {
+                    margin-top: 0.5vh !important;
                 }
             }
 
             @media (max-height: 580px) {
                 /* Gently scale down only on extremely short viewports to prevent collisions */
                 #logo-img {
-                    height: 120px !important;
+                    height: 100px !important;
                 }
 
                 #symbols-container {
-                    width: 6.5rem !important;
-                    height: 6.5rem !important;
+                    width: 10rem !important;
+                    height: 10rem !important;
                 }
 
                 #central-text-content > :not([hidden]) ~ :not([hidden]) {
@@ -73,6 +96,41 @@
                 footer {
                     gap: 0.25rem !important;
                 }
+            }
+
+            /* Marquesina superior personalizada según captura de pantalla */
+            .custom-marquee-bg {
+                background-color: #E1DACA !important;
+                border-bottom: 1px solid rgba(118, 108, 80, 0.15) !important;
+            }
+            .custom-marquee-text {
+                color: #766C50 !important;
+            }
+            .custom-marquee-font {
+                font-size: 11px !important;
+            }
+            @media (min-width: 768px) {
+                .custom-marquee-font {
+                    font-size: 13px !important;
+                }
+            }
+
+            /* Ajuste del contenido central para alineación vertical perfecta y separación del footer (mínimo 2 cm) */
+            #desktop-central-content {
+                padding-bottom: 5.5rem !important;
+            }
+
+            /* Efecto hover super llamativo para las 4 palabras de navegación lateral */
+            .group:hover .nav-link-strike {
+                transform: scale(1.45) !important;
+            }
+
+            /* Prevenir desbordamiento de las palabras de navegación lateral al escalar hacia los bordes */
+            #desktop-left-nav .nav-link-strike {
+                transform-origin: left center !important;
+            }
+            #desktop-right-nav .nav-link-strike {
+                transform-origin: right center !important;
             }
         </style>
     </head>
@@ -107,64 +165,34 @@
         >
             <!-- Marquee Banner Superior -->
             <div
-                class="hidden lg:flex w-full relative flex-shrink-0 z-60 bg-terracotta/40 backdrop-blur-lg border-b border-white/20 py-2.5 md:py-3 overflow-hidden items-center shadow-sm"
+                class="flex w-full relative flex-shrink-0 z-60 custom-marquee-bg py-1.5 md:py-2.5 overflow-hidden items-center shadow-sm"
             >
                 <div
-                    class="animate-marquee whitespace-nowrap flex items-center text-white pointer-events-none"
+                    class="animate-marquee whitespace-nowrap flex items-center custom-marquee-text pointer-events-none"
                 >
                     <span
-                        class="text-[10px] md:text-xs tracking-[0.2em] font-bold mx-8 uppercase drop-shadow-sm"
-                        >RESERVA TU PRIMERA CLASE DE PRUEBA &nbsp;•&nbsp;
-                        YOGA Y MEDITACIÓN &nbsp;•&nbsp; CENTRO
-                        LIDERADO POR PROFESIONALES SANITARIOS &nbsp;•&nbsp;
-                        ECOSISTEMA DE SALUD INTEGRATIVA CON FARMACIA Q19
-                        &nbsp;•&nbsp; BONOS FLEXIBLES &nbsp;•&nbsp;
-                        ALBACETE</span
+                        class="custom-marquee-font tracking-[0.2em] font-bold mx-8 uppercase drop-shadow-sm"
+                        >ECOSISTEMA DE YOGA PREVENTIVO &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ALBACETE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CENTRO LIDERADO POR PROFESIONALES SANITARIOS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; RESERVA TU PRIMERA CLASE DE PRUEBA &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; YOGA Y MEDITACIÓN &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BONOS FLEXIBLES</span
                     >
                     <span
-                        class="text-[10px] md:text-xs tracking-[0.2em] font-bold mx-8 uppercase drop-shadow-sm"
-                        >RESERVA TU PRIMERA CLASE DE PRUEBA &nbsp;•&nbsp;
-                        YOGA Y MEDITACIÓN &nbsp;•&nbsp; CENTRO
-                        LIDERADO POR PROFESIONALES SANITARIOS &nbsp;•&nbsp;
-                        ECOSISTEMA DE SALUD INTEGRATIVA CON FARMACIA Q19
-                        &nbsp;•&nbsp; BONOS FLEXIBLES &nbsp;•&nbsp;
-                        ALBACETE</span
+                        class="custom-marquee-font tracking-[0.2em] font-bold mx-8 uppercase drop-shadow-sm"
+                        >ECOSISTEMA DE YOGA PREVENTIVO &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ALBACETE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CENTRO LIDERADO POR PROFESIONALES SANITARIOS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; RESERVA TU PRIMERA CLASE DE PRUEBA &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; YOGA Y MEDITACIÓN &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BONOS FLEXIBLES</span
                     >
                     <span
-                        class="text-[10px] md:text-xs tracking-[0.2em] font-bold mx-8 uppercase drop-shadow-sm"
-                        >RESERVA TU PRIMERA CLASE DE PRUEBA &nbsp;•&nbsp;
-                        YOGA Y MEDITACIÓN &nbsp;•&nbsp; CENTRO
-                        LIDERADO POR PROFESIONALES SANITARIOS &nbsp;•&nbsp;
-                        ECOSISTEMA DE SALUD INTEGRATIVA CON FARMACIA Q19
-                        &nbsp;•&nbsp; BONOS FLEXIBLES &nbsp;•&nbsp;
-                        ALBACETE</span
+                        class="custom-marquee-font tracking-[0.2em] font-bold mx-8 uppercase drop-shadow-sm"
+                        >ECOSISTEMA DE YOGA PREVENTIVO &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ALBACETE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CENTRO LIDERADO POR PROFESIONALES SANITARIOS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; RESERVA TU PRIMERA CLASE DE PRUEBA &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; YOGA Y MEDITACIÓN &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BONOS FLEXIBLES</span
                     >
                     <span
-                        class="text-[10px] md:text-xs tracking-[0.2em] font-bold mx-8 uppercase drop-shadow-sm"
-                        >RESERVA TU PRIMERA CLASE DE PRUEBA &nbsp;•&nbsp;
-                        YOGA Y MEDITACIÓN &nbsp;•&nbsp; CENTRO
-                        LIDERADO POR PROFESIONALES SANITARIOS &nbsp;•&nbsp;
-                        ECOSISTEMA DE SALUD INTEGRATIVA CON FARMACIA Q19
-                        &nbsp;•&nbsp; BONOS FLEXIBLES &nbsp;•&nbsp;
-                        ALBACETE</span
+                        class="custom-marquee-font tracking-[0.2em] font-bold mx-8 uppercase drop-shadow-sm"
+                        >ECOSISTEMA DE YOGA PREVENTIVO &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ALBACETE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CENTRO LIDERADO POR PROFESIONALES SANITARIOS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; RESERVA TU PRIMERA CLASE DE PRUEBA &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; YOGA Y MEDITACIÓN &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BONOS FLEXIBLES</span
                     >
                     <span
-                        class="text-[10px] md:text-xs tracking-[0.2em] font-bold mx-8 uppercase drop-shadow-sm"
-                        >RESERVA TU PRIMERA CLASE DE PRUEBA &nbsp;•&nbsp;
-                        YOGA Y MEDITACIÓN &nbsp;•&nbsp; CENTRO
-                        LIDERADO POR PROFESIONALES SANITARIOS &nbsp;•&nbsp;
-                        ECOSISTEMA DE SALUD INTEGRATIVA CON FARMACIA Q19
-                        &nbsp;•&nbsp; BONOS FLEXIBLES &nbsp;•&nbsp;
-                        ALBACETE</span
+                        class="custom-marquee-font tracking-[0.2em] font-bold mx-8 uppercase drop-shadow-sm"
+                        >ECOSISTEMA DE YOGA PREVENTIVO &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ALBACETE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CENTRO LIDERADO POR PROFESIONALES SANITARIOS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; RESERVA TU PRIMERA CLASE DE PRUEBA &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; YOGA Y MEDITACIÓN &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BONOS FLEXIBLES</span
                     >
                     <span
-                        class="text-[10px] md:text-xs tracking-[0.2em] font-bold mx-8 uppercase drop-shadow-sm"
-                        >RESERVA TU PRIMERA CLASE DE PRUEBA &nbsp;•&nbsp;
-                        YOGA Y MEDITACIÓN &nbsp;•&nbsp; CENTRO
-                        LIDERADO POR PROFESIONALES SANITARIOS &nbsp;•&nbsp;
-                        ECOSISTEMA DE SALUD INTEGRATIVA CON FARMACIA Q19
-                        &nbsp;•&nbsp; BONOS FLEXIBLES &nbsp;•&nbsp;
-                        ALBACETE</span
+                        class="custom-marquee-font tracking-[0.2em] font-bold mx-8 uppercase drop-shadow-sm"
+                        >ECOSISTEMA DE YOGA PREVENTIVO &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ALBACETE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CENTRO LIDERADO POR PROFESIONALES SANITARIOS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; RESERVA TU PRIMERA CLASE DE PRUEBA &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; YOGA Y MEDITACIÓN &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BONOS FLEXIBLES</span
                     >
                 </div>
             </div>
@@ -185,11 +213,12 @@
 
             <!-- CENTRAL CONTENT -->
             <div
+                id="desktop-central-content"
                 class="hidden lg:flex flex-grow flex-shrink flex flex-col items-center justify-center text-center w-full max-w-[90vw] lg:max-w-[50vw] xl:max-w-[45vw] 2xl:max-w-4xl min-h-0 z-10 px-4 lg:px-8 relative"
             >
                 <div
                     id="central-text-content"
-                    class="transition-all duration-700 ease-in-out flex flex-col items-center justify-center space-y-[1.5vh] my-[1vh] animate-fade-in-up w-full"
+                    class="transition-all duration-700 ease-in-out flex flex-col items-center justify-center space-y-[1.5vh] mt-[1vh] mb-0 animate-fade-in-up w-full"
                 >
                     <div
                         id="symbols-container"
@@ -317,14 +346,14 @@
             <div
                 class="lg:hidden w-full max-w-[320px] px-4 mb-8 z-20 text-white text-center"
             >
-                <div class="border-t border-white/30 pt-5 flex flex-col items-center gap-3 text-xs tracking-widest uppercase drop-shadow-md">
+                <div class="border-t border-white/30 pt-5 flex flex-col items-center gap-3 text-sm tracking-widest drop-shadow-md">
                     <a
                         href="https://www.google.com/maps/place/C.+San+Carlos,+2,+02004+Albacete"
                         target="_blank"
                         class="inline-flex items-center justify-center gap-2 hover:underline"
                     >
                         <i data-lucide="map-pin" class="w-5 h-5"></i>
-                        Calle San Carlos, 2, Albacete
+                        Calle San Carlos 2, Albacete
                     </a>
                     <div class="inline-flex items-center gap-3">
                         <a
@@ -356,10 +385,11 @@
                             </svg>
                         </a>
                     </div>
-                    <div class="flex items-center justify-center pt-1">
+                    <div class="flex flex-col items-center gap-1 pt-1">
                         <a href="politica-privacidad.html" class="hover:underline">
                             Política de privacidad
                         </a>
+                        <span class="opacity-60 text-[10px]">@2026 Gen Yoga</span>
                     </div>
                 </div>
             </div>
@@ -368,6 +398,7 @@
             <!-- ESCRITORIO: NAVEGACIÓN (solo visible en >= lg) -->
             <!-- Usa clase "hidden lg:flex" = se oculta en MOVIL -->
             <div
+                id="desktop-left-nav"
                 class="hidden lg:flex flex-col items-center gap-[25vh] absolute left-12 top-1/2 -translate-y-1/2 z-30"
             >
                 <button
@@ -397,6 +428,7 @@
 
             <!-- ESCRITORIO: Navegación lateral derecha -->
             <div
+                id="desktop-right-nav"
                 class="hidden lg:flex flex-col items-center gap-[25vh] absolute right-12 top-1/2 -translate-y-1/2 z-30"
             >
                 <button
@@ -426,43 +458,40 @@
 
             <!-- FOOTER -->
             <footer
-                class="hidden lg:flex w-full flex-shrink-0 z-10 text-white font-normal drop-shadow-md"
+                class="hidden lg:flex w-full flex-shrink-0 z-10 text-white font-normal bg-transparent"
             >
                 <!-- Info Bar -->
                 <div
-                    class="w-full border-t border-white/30 pt-3 pb-1 px-6 md:px-12 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-6 text-sm font-normal tracking-[0.2em] uppercase text-center md:text-left drop-shadow-md"
+                    class="w-full border-t border-white/20 pt-3 pb-1.5 px-6 md:px-12 flex items-center justify-between gap-3 text-sm font-normal tracking-[0.2em] text-left"
                 >
-                    <div
-                        class="flex flex-col md:flex-row gap-2 md:gap-3 items-center text-white"
-                    >
+                    <div class="flex items-center gap-2">
                         <a
                             href="https://www.google.com/maps/place/C.+San+Carlos,+2,+02004+Albacete"
                             target="_blank"
-                            class="hover:underline flex items-center gap-2"
+                            class="hover:text-sand flex items-center gap-2 text-sm md:text-base font-normal tracking-[0.1em] transition-colors"
                         >
-                            <i data-lucide="map-pin" class="w-5 h-5"></i>
-                            Calle San Carlos, 2, Albacete
+                            <i data-lucide="map-pin" class="w-5 h-5 flex-shrink-0"></i>
+                            Calle San Carlos 2, Albacete
                         </a>
-                        <span class="hidden md:inline text-white">|</span>
-                        <div class="flex items-center gap-2">
-                            <span class="text-white flex items-center gap-1.5"><i data-lucide="mail" class="w-5 h-5"></i> CONTACTO:</span>
-                            <a
-                                href="mailto:hola@genyoga.studio"
-                                class="text-white hover:text-white transition underline decoration-transparent hover:decoration-white"
-                            >
-                                hola@genyoga.studio</a
-                            >
-                        </div>
-                        <span class="hidden md:inline text-white">|</span>
+                    </div>
+
+                    <div class="flex items-center gap-6 justify-center text-white">
+                        <a
+                            href="mailto:hola@genyoga.studio"
+                            class="hover:text-sand transition flex items-center"
+                            aria-label="Email"
+                        >
+                            <i data-lucide="mail" class="w-6 h-6"></i>
+                        </a>
                         <a
                             href="https://www.instagram.com/genyoga.studio"
                             target="_blank"
                             aria-label="Instagram"
-                            class="text-white hover:text-sand transition-colors duration-300 transform hover:scale-110 flex items-center"
+                            class="hover:text-sand transition-colors duration-300 transform hover:scale-110 flex items-center"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
-                                class="w-7 h-7"
+                                class="w-6 h-6"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
@@ -477,18 +506,13 @@
                         </a>
                     </div>
 
-                    <div
-                        class="flex flex-col md:flex-row gap-2 md:gap-3 items-center text-center text-white md:text-right"
-                    >
+                    <div class="flex flex-col items-end text-right text-sm gap-0.5 tracking-[0.1em] font-normal text-white">
                         <a
                             href="politica-privacidad.html"
-                            class="text-white hover:text-white transition underline decoration-transparent hover:decoration-white"
-                            >POLÍTICA DE PRIVACIDAD</a
+                            class="hover:text-sand transition underline decoration-transparent hover:decoration-sand"
+                            >Política de privacidad</a
                         >
-                        <span class="hidden md:inline text-white">|</span>
-                        <span class="text-white">© 2026 GEN YOGA</span>
-                        <span class="hidden md:inline text-white">·</span>
-                        <span class="text-white">V3.6</span>
+                        <span class="opacity-60 text-[10px]">@2026 Gen Yoga</span>
                     </div>
                 </div>
             </footer>

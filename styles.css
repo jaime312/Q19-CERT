@@ -439,7 +439,7 @@ body.platform-android select {
         }
 
         .group:hover .nav-link-strike {
-            transform: scale(1.12);
+            transform: scale(1.25);
             /* scale up on hover instead of underline */
         }
 

@@ -473,6 +473,26 @@ ME DEFINE:
                 }
                 return updated;
             }
+            if (p.id === 14 || (p.email || '').toLowerCase() === 'yanira@genyoga.es' || (p.nombre || '').toLowerCase().includes('yanira')) {
+                const updated = { ...p };
+                updated.foto_url = 'img/yanira.jpg';
+                updated.descripcion = `TRAYECTORIA:
+Procedente de Estados Unidos, con raíces salvadoreñas, he tenido la oportunidad de conocer y vivir en varias partes del mundo y me siento afortunada de conocer a personas de diferentes lugares y de varios caminos en la vida, ya que cada experiencia y aprendizaje me han formado como la persona que ahora soy.
+
+Docente de profesión, he enseñado en las escuelas del área de Washington D.C. por veinte años. Mis estudios del Yoga son un proceso continuo, pero considero que mi yoga mat es mi mejor guía.
+
+TITULACIONES:
+• Máster en Educación Internacional (Framingham State College)
+• Máster en Liderazgo en Educación (Universidad de George Mason)
+• Instructora de Yoga certificada por Yoga Alliance (entrenamiento en DownDog en Georgetown, Washington D.C.)
+• Especializaciones en Anatomía aplicada al Yoga, Yoga Infantil, Yoga y Mindfulness
+
+TE ACOMPAÑO:
+• Vinyasa Yoga (Clases virtuales y presenciales)
+• Yoga Restaurativo y Meditación
+• Mindfulness para adultos y niños`;
+                return updated;
+            }
             return p;
         });
     }
@@ -4091,7 +4111,7 @@ function parseBio(text) {
     if (!text) return sections;
 
     const normalized = text.replace(/\r\n/g, '\n');
-    const parts = normalized.split(/\n?(LUGAR DE NACIMIENTO|TITULACIONES|SOBRE MI|SOBRE MÍ|TE ACOMPAÑO|ME DEFINE):?\s*/i);
+    const parts = normalized.split(/\n?(LUGAR DE NACIMIENTO|TITULACIONES|SOBRE MI|SOBRE MÍ|TRAYECTORIA|TE ACOMPAÑO|ME DEFINE):?\s*/i);
     
     for (let i = 1; i < parts.length; i += 2) {
         const header = parts[i].toUpperCase();
@@ -4100,7 +4120,7 @@ function parseBio(text) {
             sections.lugar = content.replace(/,$/, '').trim();
         } else if (header.includes('TITULACION')) {
             sections.titulos = content.split('\n').map(l => l.replace(/^[\s*\-•]+/g, '').trim()).filter(Boolean);
-        } else if (header.includes('SOBRE')) {
+        } else if (header.includes('SOBRE') || header.includes('TRAYECTORIA')) {
             sections.sobreMi = content.split('\n').map(p => p.trim()).filter(Boolean);
         } else if (header.includes('ACOMPA')) {
             sections.teAcompano = content.split('\n').map(l => l.replace(/^[\s*\-•*]+/g, '').trim()).filter(Boolean);

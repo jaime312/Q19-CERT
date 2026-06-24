@@ -320,18 +320,43 @@ window.filtrarClasesLanding = function(category) {
         nutricion: document.getElementById('btn-filtro-clases-nutricion')
     };
 
-    // Reset button styles
+    // Swap: 'todos' (Todas) is now green (#C1CBB9) and 'yoga' (Clases) is beige (#E2DDD5)
+    const colors = {
+        todos: '#C1CBB9', // Sage green first!
+        yoga: '#E2DDD5',
+        psicologia: '#EBC0B3',
+        nutricion: '#E8DFCC'
+    };
+
+    const folderBody = document.getElementById('folder-body');
+    if (folderBody && colors[category]) {
+        folderBody.style.backgroundColor = colors[category];
+    }
+
+    // Reset styles for all tabs (make them smaller, pushed down, and translucent)
     Object.keys(buttons).forEach(key => {
         const btn = buttons[key];
         if (btn) {
-            btn.className = "px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-white/20 text-white hover:bg-white/30 transition border border-white/10 hover:scale-105 active:scale-95";
+            btn.style.backgroundColor = colors[key] + '4D'; // 30% opacity
+            btn.style.color = '#26160C77';
+            btn.style.transform = 'translateY(2px)'; // Pushed down slightly
+            btn.style.borderBottomColor = '#26160C1A';
+            btn.classList.remove('z-20');
+            btn.classList.add('z-10');
+            btn.className = "folder-tab transition-all duration-300 rounded-t-2xl px-5 py-2 md:px-7 md:py-3 text-xs md:text-sm lg:text-base font-semibold uppercase tracking-wider border border-cocoa/10";
         }
     });
 
-    // Set active button style
+    // Set active button style (pop up, larger text, full opacity, top-shadow)
     const activeBtn = buttons[category];
     if (activeBtn) {
-        activeBtn.className = "px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-white text-cocoa transition border border-white/20 shadow-sm hover:scale-105 active:scale-95";
+        activeBtn.style.backgroundColor = colors[category]; // full opacity
+        activeBtn.style.color = '#26160C';
+        activeBtn.style.transform = 'translateY(-2px)'; // Popped up
+        activeBtn.style.borderBottomColor = colors[category]; // merge bottom border with folder body
+        activeBtn.classList.remove('z-10');
+        activeBtn.classList.add('z-20');
+        activeBtn.className = "folder-tab transition-all duration-300 rounded-t-2xl px-6 py-4 md:px-8 md:py-5 text-sm md:text-base lg:text-lg font-black uppercase tracking-wider border border-cocoa/20 shadow-[-2px_-4px_8px_rgba(38,22,12,0.06)]";
     }
 
     let filtrados = allClasesLandingCache;
@@ -377,7 +402,7 @@ function renderClassesLanding(clases) {
         const botonAccion = accionNoDisponible ? 'mostrarFuncionEnPruebasPublica()' : "handleNavClick(this, 'profile.html')";
 
         const card = document.createElement('div');
-        card.className = "flex flex-col md:flex-row items-center justify-between p-8 border border-cocoa/10 hover:border-olive/50 hover:bg-cocoa/5 transition duration-300 group cursor-pointer";
+        card.className = "flex flex-col md:flex-row items-center justify-between p-8 bg-white border border-cocoa/10 rounded-2xl shadow-sm hover:border-olive/50 hover:bg-cocoa/5 transition duration-300 group cursor-pointer";
         card.innerHTML = `
             <div class="flex items-center gap-8 w-full md:w-auto">
                 <div class="flex flex-col items-center text-olive group-hover:text-cocoa transition min-w-[80px]">
@@ -455,6 +480,26 @@ ME DEFINE:
             }
             return updated;
         }
+        if (p.id === 14 || (p.email || '').toLowerCase() === 'yanira@genyoga.es' || (p.nombre || '').toLowerCase().includes('yanira')) {
+            const updated = { ...p };
+            updated.foto_url = 'img/yanira.jpg';
+            updated.descripcion = `TRAYECTORIA:
+Procedente de Estados Unidos, con raíces salvadoreñas, he tenido la oportunidad de conocer y vivir en varias partes del mundo y me siento afortunada de conocer a personas de diferentes lugares y de varios caminos en la vida, ya que cada experiencia y aprendizaje me han formado como la persona que ahora soy.
+
+Docente de profesión, he enseñado en las escuelas del área de Washington D.C. por veinte años. Mis estudios del Yoga son un proceso continuo, pero considero que mi yoga mat es mi mejor guía.
+
+TITULACIONES:
+• Máster en Educación Internacional (Framingham State College)
+• Máster en Liderazgo en Educación (Universidad de George Mason)
+• Instructora de Yoga certificada por Yoga Alliance (entrenamiento en DownDog en Georgetown, Washington D.C.)
+• Especializaciones en Anatomía aplicada al Yoga, Yoga Infantil, Yoga y Mindfulness
+
+TE ACOMPAÑO:
+• Vinyasa Yoga (Clases virtuales y presenciales)
+• Yoga Restaurativo y Meditación
+• Mindfulness para adultos y niños`;
+            return updated;
+        }
         return p;
     });
 
@@ -477,14 +522,14 @@ window.filtrarProfesionalesLanding = function(category) {
     Object.keys(buttons).forEach(key => {
         const btn = buttons[key];
         if (btn) {
-            btn.className = "px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-white/20 text-white hover:bg-white/30 transition border border-white/10 hover:scale-105 active:scale-95";
+            btn.className = "px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-cocoa/5 text-cocoa hover:bg-cocoa/10 transition border border-cocoa/10 hover:scale-105 active:scale-95";
         }
     });
 
     // Set active button style
     const activeBtn = buttons[selectedCategory];
     if (activeBtn) {
-        activeBtn.className = "px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-white text-cocoa transition border border-white/20 shadow-sm hover:scale-105 active:scale-95";
+        activeBtn.className = "px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-terracotta text-white transition shadow-sm hover:scale-105 active:scale-95";
     }
 
     let filtrados = allProfesionalesLanding;
@@ -515,7 +560,7 @@ function parseBio(text) {
     if (!text) return sections;
 
     const normalized = text.replace(/\r\n/g, '\n');
-    const parts = normalized.split(/\n?(LUGAR DE NACIMIENTO|TITULACIONES|SOBRE MI|SOBRE MÍ|TE ACOMPAÑO|ME DEFINE):?\s*/i);
+    const parts = normalized.split(/\n?(LUGAR DE NACIMIENTO|TITULACIONES|SOBRE MI|SOBRE MÍ|TRAYECTORIA|TE ACOMPAÑO|ME DEFINE):?\s*/i);
     
     for (let i = 1; i < parts.length; i += 2) {
         const header = parts[i].toUpperCase();
@@ -524,7 +569,7 @@ function parseBio(text) {
             sections.lugar = content.replace(/,$/, '').trim();
         } else if (header.includes('TITULACION')) {
             sections.titulos = content.split('\n').map(l => l.replace(/^[\s*\-•]+/g, '').trim()).filter(Boolean);
-        } else if (header.includes('SOBRE')) {
+        } else if (header.includes('SOBRE') || header.includes('TRAYECTORIA')) {
             sections.sobreMi = content.split('\n').map(p => p.trim()).filter(Boolean);
         } else if (header.includes('ACOMPA')) {
             sections.teAcompano = content.split('\n').map(l => l.replace(/^[\s*\-•*]+/g, '').trim()).filter(Boolean);
@@ -615,7 +660,7 @@ function renderProfesionalesLanding(profesionales) {
         const cardId = prof.id || `idx-${index}`;
         const nombre = `${prof.nombre || ''} ${prof.apellidos || ''}`.trim() || 'Profesional';
         const lugar = parsed.lugar
-            ? `<span class="block text-xs uppercase tracking-widest text-sand/70 mt-1">${escapeHtmlPublic(parsed.lugar)}</span>`
+            ? `<span class="block text-xs uppercase tracking-widest text-cocoa/50 mt-1">${escapeHtmlPublic(parsed.lugar)}</span>`
             : '';
 
         const avatarHtml = fotoUrl
@@ -633,47 +678,47 @@ function renderProfesionalesLanding(profesionales) {
         const bioText = truncateTextLanding(fullBio || prof.descripcion || prof.bio || 'Profesional de GEN Yoga.', 180);
 
         const titulosParagraphs = parsed.titulos.length
-            ? parsed.titulos.map(t => `<p class="flex items-start gap-1.5"><span class="text-sand text-sm font-bold leading-none">•</span><span>${escapeHtmlPublic(t)}</span></p>`).join('')
+            ? parsed.titulos.map(t => `<p class="flex items-start gap-1.5"><span class="text-[#9B7B37] text-sm font-bold leading-none">•</span><span>${escapeHtmlPublic(t)}</span></p>`).join('')
             : '';
 
         const acompanoParagraphs = parsed.teAcompano.length
-            ? parsed.teAcompano.map(item => `<p class="flex items-start gap-1.5"><span class="text-sand text-sm font-bold leading-none">•</span><span>${escapeHtmlPublic(item)}</span></p>`).join('')
+            ? parsed.teAcompano.map(item => `<p class="flex items-start gap-1.5"><span class="text-[#9B7B37] text-sm font-bold leading-none">•</span><span>${escapeHtmlPublic(item)}</span></p>`).join('')
             : '';
 
         const defineText = parsed.meDefine ? `"${escapeHtmlPublic(parsed.meDefine)}"` : '';
 
         const card = document.createElement('div');
-        card.className = "bg-transparent rounded-[32px] p-6 border border-white/10 text-center w-full sm:w-[320px] md:w-[340px] flex flex-col justify-between min-h-[460px] transition-all duration-300 hover:scale-[1.015]";
+        card.className = "bg-white rounded-[24px] p-6 border border-cocoa/10 text-center w-full sm:w-[320px] md:w-[340px] flex flex-col justify-between min-h-[480px] transition-all duration-300 hover:scale-[1.015] hover:shadow-md";
         card.innerHTML = `
             <div class="flex flex-col items-center flex-grow w-full">
                 <!-- Elegant Square Image Frame (matching Silvia's 250x250 size) -->
-                <div class="rounded-3xl overflow-hidden shadow-sm bg-white border-2 border-white mb-4 relative flex-shrink-0" style="width: 250px; height: 250px; outline: 1px solid rgba(255,255,255,0.15);">
+                <div class="rounded-2xl overflow-hidden shadow-sm bg-[#FAFAF9] border border-cocoa/10 mb-4 relative flex-shrink-0" style="width: 250px; height: 250px;">
                     ${avatarHtml}
                 </div>
-                <h3 class="text-3xl font-serif text-white leading-tight font-bold">${escapeHtmlPublic(nombre)}</h3>
-                <p class="text-xs uppercase tracking-widest text-sand font-bold mt-1.5">${escapeHtmlPublic(getEspecialidadTexto(prof.especialidad) || 'Profesional')}</p>
+                <h3 class="text-2xl font-serif text-cocoa leading-tight font-bold">${escapeHtmlPublic(nombre)}</h3>
+                <p class="text-xs uppercase tracking-widest text-[#9B7B37] font-bold mt-1.5">${escapeHtmlPublic(getEspecialidadTexto(prof.especialidad) || 'Profesional')}</p>
                 ${lugar}
 
                 <!-- Bio Short -->
-                <p class="text-sm md:text-[15px] text-white/90 leading-relaxed font-normal mt-4 text-center">
+                <p class="text-sm md:text-[14px] text-cocoa/80 leading-relaxed font-normal mt-4 text-center">
                     ${bioText}
                 </p>
 
                 <!-- Collapsible Details -->
-                <div id="details-${cardId}" class="hidden w-full mt-4 pt-4 border-t border-white/10 text-left space-y-4">
+                <div id="details-${cardId}" class="hidden w-full mt-4 pt-4 border-t border-cocoa/10 text-left space-y-4">
                     <!-- Bio Completa (párrafos adicionales) -->
                     ${parsed.sobreMi.length > 1 ? `
-                    <div class="space-y-2 text-sm text-white/80 font-normal leading-relaxed">
+                    <div class="space-y-2 text-sm text-cocoa/80 font-normal leading-relaxed">
                         ${parsed.sobreMi.slice(1).map(p => `<p>${escapeHtmlPublic(p)}</p>`).join('')}
                     </div>` : ''}
 
                     <!-- Titulaciones -->
                     ${titulosParagraphs ? `
                     <div>
-                        <h4 class="text-xs font-bold uppercase tracking-wider text-white/60 mb-2 flex items-center gap-1">
-                            <i class="ph-bold ph-graduation-cap text-sand"></i> Titulaciones
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-cocoa/60 mb-2 flex items-center gap-1">
+                            <i class="ph-bold ph-graduation-cap text-[#9B7B37]"></i> Titulaciones
                         </h4>
-                        <div class="space-y-1 text-sm text-white/80">
+                        <div class="space-y-1 text-sm text-cocoa/80">
                             ${titulosParagraphs}
                         </div>
                     </div>` : ''}
@@ -681,17 +726,17 @@ function renderProfesionalesLanding(profesionales) {
                     <!-- Ámbitos de Sesión -->
                     ${acompanoParagraphs ? `
                     <div>
-                        <h4 class="text-xs font-bold uppercase tracking-wider text-white/60 mb-2 flex items-center gap-1">
-                            <i class="ph-bold ph-heart text-sand"></i> Ámbitos de Sesión
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-cocoa/60 mb-2 flex items-center gap-1">
+                            <i class="ph-bold ph-heart text-[#9B7B37]"></i> Ámbitos de Sesión
                         </h4>
-                        <div class="space-y-1 text-sm text-white/80">
+                        <div class="space-y-1 text-sm text-cocoa/80">
                             ${acompanoParagraphs}
                         </div>
                     </div>` : ''}
                 </div>
 
                 <!-- Toggle Button -->
-                <button onclick="toggleProfesorDetalle('${cardId}')" id="btn-toggle-${cardId}" class="mt-4 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase tracking-widest rounded-xl transition w-full flex items-center justify-center gap-1.5">
+                <button onclick="toggleProfesorDetalle('${cardId}')" id="btn-toggle-${cardId}" class="mt-4 px-4 py-2.5 bg-cocoa/5 hover:bg-cocoa/10 text-cocoa text-xs font-bold uppercase tracking-widest rounded-xl transition w-full flex items-center justify-center gap-1.5">
                     <span>Saber más</span>
                     <i id="icon-toggle-${cardId}" class="ph-bold ph-caret-down"></i>
                 </button>
@@ -699,7 +744,7 @@ function renderProfesionalesLanding(profesionales) {
 
             <!-- Quote / Define at the bottom -->
             ${defineText ? `
-            <div class="w-full mt-6 pt-4 border-t border-white/10 text-sm italic text-white/70 text-center font-serif leading-relaxed">
+            <div class="w-full mt-6 pt-4 border-t border-cocoa/10 text-sm italic text-cocoa/70 text-center font-serif leading-relaxed">
                 ${defineText}
             </div>` : ''}
         `;

@@ -13,14 +13,12 @@
     <body
         class="subpixel-antialiased min-h-screen w-screen overflow-x-hidden relative selection:bg-mutedgold selection:text-cocoa font-sans"
     >
-        <!-- Background Gradient: Inspired by user image (Terracotta, Gold, Olive) -->
-        <div
-            class="fixed inset-0 z-0 bg-[linear-gradient(to_bottom,_#C3B89A_0%,_#AB593D_40%,_#8F6B2D_70%,_#6A6540_100%)]"
-        ></div>
+        <!-- Light Background -->
+        <div class="fixed inset-0 z-0 bg-[#f8f6f2]"></div>
 
         <!-- Inner Glow/Highlight to mimic the center spotlight effect -->
         <div
-            class="fixed inset-0 z-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.15)_0%,transparent_50%)] pointer-events-none"
+            class="fixed inset-0 z-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.03)_0%,transparent_50%)] pointer-events-none"
         ></div>
 
         <!-- Ambient background shapes (ZEN & FRESH) -->
@@ -48,10 +46,10 @@
             </a>
 
             <div
-                class="w-full bg-white/10 backdrop-blur-xl rounded-3xl p-6 md:p-12 border border-white/20 shadow-2xl mt-12 md:mt-8 text-cocoa"
+                class="w-full bg-[#E2DDD5] border border-cocoa/10 rounded-3xl p-6 md:p-12 shadow-sm mt-12 md:mt-8 text-cocoa"
             >
                 <h2
-                    class="text-3xl md:text-5xl lg:text-7xl text-white brand-font mb-8 md:mb-12 text-center drop-shadow-md"
+                    class="text-3xl md:text-5xl lg:text-7xl text-cocoa brand-font mb-8 md:mb-12 text-center drop-shadow-sm"
                 >
                     Maestros
                 </h2>
@@ -61,28 +59,28 @@
                     <button
                         id="btn-filtro-prof-todos"
                         onclick="filtrarProfesionalesLanding('todos')"
-                        class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-white text-cocoa transition border border-white/20 shadow-sm hover:scale-105 active:scale-95"
+                        class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-terracotta text-white transition shadow-sm hover:scale-105 active:scale-95"
                     >
                         Todos
                     </button>
                     <button
                         id="btn-filtro-prof-yoga"
                         onclick="filtrarProfesionalesLanding('yoga')"
-                        class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-white/20 text-white hover:bg-white/30 transition border border-white/10 hover:scale-105 active:scale-95"
+                        class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-cocoa/5 text-cocoa hover:bg-cocoa/10 transition border border-cocoa/10 hover:scale-105 active:scale-95"
                     >
                         Clases
                     </button>
                     <button
                         id="btn-filtro-prof-psicologia"
                         onclick="filtrarProfesionalesLanding('psicologia')"
-                        class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-white/20 text-white hover:bg-white/30 transition border border-white/10 hover:scale-105 active:scale-95"
+                        class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-cocoa/5 text-cocoa hover:bg-cocoa/10 transition border border-cocoa/10 hover:scale-105 active:scale-95"
                     >
                         Consultas
                     </button>
                     <button
                         id="btn-filtro-prof-talleres"
                         onclick="filtrarProfesionalesLanding('talleres')"
-                        class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-white/20 text-white hover:bg-white/30 transition border border-white/10 hover:scale-105 active:scale-95"
+                        class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-cocoa/5 text-cocoa hover:bg-cocoa/10 transition border border-cocoa/10 hover:scale-105 active:scale-95"
                     >
                         Talleres
                     </button>

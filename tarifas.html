@@ -16,14 +16,12 @@
     <body
         class="subpixel-antialiased min-h-screen w-screen overflow-x-hidden relative selection:bg-mutedgold selection:text-cocoa font-sans"
     >
-        <!-- Background Gradient: Inspired by user image (Terracotta, Gold, Olive) -->
-        <div
-            class="fixed inset-0 z-0 bg-[linear-gradient(to_bottom,_#C3B89A_0%,_#AB593D_40%,_#8F6B2D_70%,_#6A6540_100%)]"
-        ></div>
+        <!-- Light Background -->
+        <div class="fixed inset-0 z-0 bg-[#f8f6f2]"></div>
 
         <!-- Inner Glow/Highlight to mimic the center spotlight effect -->
         <div
-            class="fixed inset-0 z-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.15)_0%,transparent_50%)] pointer-events-none"
+            class="fixed inset-0 z-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.03)_0%,transparent_50%)] pointer-events-none"
         ></div>
 
         <!-- Ambient background shapes (ZEN & FRESH) -->
@@ -51,10 +49,10 @@
             </a>
 
             <div
-                class="w-full bg-white/10 backdrop-blur-xl rounded-3xl p-6 md:p-12 border border-white/20 shadow-2xl mt-12 md:mt-8 text-cocoa"
+                class="w-full bg-[#E2DDD5] border border-cocoa/10 rounded-3xl p-6 md:p-12 shadow-sm mt-12 md:mt-8 text-cocoa"
             >
                 <h2
-                    class="brand-font text-3xl md:text-5xl lg:text-7xl text-center text-white mb-8 md:mb-12 drop-shadow-md"
+                    class="brand-font text-3xl md:text-5xl lg:text-7xl text-center text-cocoa mb-8 md:mb-12 drop-shadow-sm"
                 >
                     Tarifas
                 </h2>
@@ -64,21 +62,21 @@
                     <button
                         id="btn-tarifa-yoga"
                         onclick="switchTarifas('yoga')"
-                        class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-white text-cocoa transition border border-white/20 shadow-sm hover:scale-105 active:scale-95"
+                        class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-terracotta text-white transition shadow-sm hover:scale-105 active:scale-95"
                     >
                         Yoga
                     </button>
                     <button
                         id="btn-tarifa-psicologia"
                         onclick="switchTarifas('psicologia')"
-                        class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-white/20 text-white hover:bg-white/30 transition border border-white/10 hover:scale-105 active:scale-95"
+                        class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-cocoa/5 text-cocoa hover:bg-cocoa/10 transition border border-cocoa/10 hover:scale-105 active:scale-95"
                     >
                         Consultas
                     </button>
                     <button
                         id="btn-tarifa-talleres"
                         onclick="switchTarifas('talleres')"
-                        class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-white/20 text-white hover:bg-white/30 transition border border-white/10 hover:scale-105 active:scale-95"
+                        class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-cocoa/5 text-cocoa hover:bg-cocoa/10 transition border border-cocoa/10 hover:scale-105 active:scale-95"
                     >
                         Talleres
                     </button>
@@ -91,10 +89,10 @@
                 >
                     <!-- Bono individual -->
                     <div
-                        class="bg-white/40 backdrop-blur-md rounded-3xl p-8 border border-white/20 shadow-sm flex flex-col justify-between hover:scale-[1.02] transition duration-300 text-cocoa"
+                        class="bg-white border border-cocoa/10 rounded-3xl p-8 shadow-sm flex flex-col justify-between hover:scale-[1.02] transition duration-300 text-cocoa"
                     >
                         <div>
-                            <div class="w-12 h-12 rounded-2xl bg-white/60 flex items-center justify-center mb-6 text-cocoa shadow-inner">
+                            <div class="w-12 h-12 rounded-2xl bg-cocoa/5 flex items-center justify-center mb-6 text-cocoa shadow-inner">
                                 <i class="ph-fill ph-ticket text-2xl"></i>
                             </div>
                             <h3 class="text-2xl font-serif text-cocoa font-bold mb-2">Bono Individual</h3>
@@ -112,7 +110,7 @@
                     </div>
                     <!-- CENTRAL CARD — Bono Mensual -->
                     <div
-                        class="relative bg-white/70 backdrop-blur-lg rounded-3xl p-8 border-2 border-white shadow-xl flex flex-col justify-between hover:scale-[1.03] transition duration-300 text-cocoa"
+                        class="relative bg-white rounded-3xl p-8 border border-cocoa/15 shadow-md flex flex-col justify-between hover:scale-[1.03] transition duration-300 text-cocoa"
                     >
                         <div
                             class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-terracotta text-white text-[9px] font-bold uppercase tracking-[0.25em] px-4 py-1.5 rounded-full shadow-md"
@@ -120,7 +118,7 @@
                             ★ Especial
                         </div>
                         <div>
-                            <div class="w-12 h-12 rounded-2xl bg-white flex items-center justify-center mb-6 text-terracotta shadow-md">
+                            <div class="w-12 h-12 rounded-2xl bg-terracotta/5 flex items-center justify-center mb-6 text-terracotta shadow-md">
                                 <i class="ph-fill ph-calendar-blank text-2xl"></i>
                             </div>
                             <h3 class="text-3xl font-serif text-cocoa font-bold mb-2">Bono Mensual</h3>
@@ -144,7 +142,7 @@
                     id="tarifas-psicologia"
                     class="grid md:grid-cols-2 gap-8 px-4 hidden"
                 >
-                    <div class="bg-white/50 backdrop-blur-md rounded-3xl p-8 border border-white/30 shadow-md flex flex-col justify-between hover:shadow-lg transition duration-300 text-cocoa">
+                    <div class="bg-white rounded-3xl p-8 border border-cocoa/10 shadow-sm flex flex-col justify-between hover:shadow-md transition duration-300 text-cocoa">
                         <div>
                             <div class="flex items-center gap-4 mb-6">
                                 <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-inner">
@@ -155,12 +153,12 @@
                                     <p class="text-xs text-cocoa/50 font-medium">Bienestar y salud mental</p>
                                 </div>
                             </div>
-                            <div class="p-5 bg-white/45 rounded-2xl border border-white/20 flex flex-col sm:flex-row justify-between items-start gap-4 mt-8">
+                            <div class="p-5 bg-cocoa/5 rounded-2xl border border-cocoa/10 flex flex-col sm:flex-row justify-between items-start gap-4 mt-8">
                                 <div class="text-left pr-4">
                                     <p class="font-bold text-cocoa text-sm">Sesión individual</p>
                                     <p class="text-xs text-cocoa/60 mt-1 font-light leading-relaxed">Consulta personalizada para cuidar tu bienestar y salud mental. Gestión y asignación por administración.</p>
                                 </div>
-                                <span class="text-xs font-bold text-cocoa bg-white/70 px-3 py-2 rounded-lg shrink-0 mt-1 sm:mt-0 text-center">Consultar con recepción las tarifas</span>
+                                <span class="text-xs font-bold text-cocoa bg-white border border-cocoa/10 px-3 py-2 rounded-lg shrink-0 mt-1 sm:mt-0 text-center">Consultar con recepción las tarifas</span>
                             </div>
                         </div>
                         <div class="mt-8">
@@ -168,7 +166,7 @@
                         </div>
                     </div>
 
-                    <div class="bg-white/50 backdrop-blur-md rounded-3xl p-8 border border-white/30 shadow-md flex flex-col justify-between hover:shadow-lg transition duration-300 text-cocoa">
+                    <div class="bg-white rounded-3xl p-8 border border-cocoa/10 shadow-sm flex flex-col justify-between hover:shadow-md transition duration-300 text-cocoa">
                         <div>
                             <div class="flex items-center gap-4 mb-6">
                                 <div class="w-12 h-12 rounded-xl bg-green-50 text-green-700 flex items-center justify-center shadow-inner">
@@ -180,19 +178,19 @@
                                 </div>
                             </div>
                             <div class="space-y-4">
-                                <div class="p-5 bg-white/45 rounded-2xl border border-white/20 flex flex-col sm:flex-row justify-between items-start gap-4 mt-6">
+                                <div class="p-5 bg-cocoa/5 rounded-2xl border border-cocoa/10 flex flex-col sm:flex-row justify-between items-start gap-4 mt-6">
                                     <div class="text-left pr-4">
                                         <p class="font-bold text-cocoa text-sm">Primera Consulta (Evaluación Inicial)</p>
                                         <p class="text-xs text-cocoa/60 mt-1 font-light leading-relaxed">Comienza tu transformación. Una sesión integral y profunda donde analizamos tu punto de partida, objetivos e historial de hábitos para diseñar tu estrategia de alimentación y bienestar personalizada. Gestión y asignación por administración.</p>
                                     </div>
-                                    <span class="text-xs font-bold text-cocoa bg-white/70 px-3 py-2 rounded-lg shrink-0 mt-1 sm:mt-0 text-center">Consultar con recepción las tarifas</span>
+                                    <span class="text-xs font-bold text-cocoa bg-white border border-cocoa/10 px-3 py-2 rounded-lg shrink-0 mt-1 sm:mt-0 text-center">Consultar con recepción las tarifas</span>
                                 </div>
-                                <div class="p-5 bg-white/45 rounded-2xl border border-white/20 flex flex-col sm:flex-row justify-between items-start gap-4">
+                                <div class="p-5 bg-cocoa/5 rounded-2xl border border-cocoa/10 flex flex-col sm:flex-row justify-between items-start gap-4">
                                     <div class="text-left pr-4">
                                         <p class="font-bold text-cocoa text-sm">Sesión de Seguimiento</p>
                                         <p class="text-xs text-cocoa/60 mt-1 font-light leading-relaxed">Tu acompañamiento en el camino. Evaluamos tus progresos cotidianos, resolvemos dudas y adaptamos tus pautas nutricionales para consolidar hábitos saludables que duren para siempre. Gestión y asignación por administración.</p>
                                     </div>
-                                    <span class="text-xs font-bold text-cocoa bg-white/70 px-3 py-2 rounded-lg shrink-0 mt-1 sm:mt-0 text-center">Consultar con recepción las tarifas</span>
+                                    <span class="text-xs font-bold text-cocoa bg-white border border-cocoa/10 px-3 py-2 rounded-lg shrink-0 mt-1 sm:mt-0 text-center">Consultar con recepción las tarifas</span>
                                 </div>
                             </div>
                         </div>
@@ -207,7 +205,7 @@
                     id="tarifas-talleres"
                     class="space-y-6 px-4 hidden text-cocoa"
                 >
-                    <div class="bg-white/50 backdrop-blur-md rounded-3xl p-6 md:p-8 border border-white/20 shadow-md hover:scale-[1.005] hover:shadow-lg transition duration-300 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <div class="bg-white rounded-3xl p-6 md:p-8 border border-cocoa/10 shadow-sm hover:scale-[1.005] hover:shadow-md transition duration-300 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                         <div class="flex items-start md:items-center gap-4 text-left">
                             <div class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center shadow-inner shrink-0 mt-1 md:mt-0">
                                 <i class="ph-fill ph-sketch-logo text-3xl"></i>
@@ -218,7 +216,7 @@
                             </div>
                         </div>
                         <div class="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto border-t md:border-t-0 pt-4 md:pt-0 border-cocoa/10">
-                            <span class="text-xs font-bold text-cocoa bg-white/70 px-4 py-3 rounded-xl border border-white/30 shadow-sm shrink-0 text-center">Consultar tarifas</span>
+                            <span class="text-xs font-bold text-cocoa bg-white border border-cocoa/10 px-4 py-3 rounded-xl shadow-sm shrink-0 text-center">Consultar tarifas</span>
                             <button onclick="Swal.fire('Próximamente', 'Los próximos talleres y eventos especiales se anunciarán muy pronto. Para cualquier consulta, ponte en contacto con recepción.', 'info')" class="px-6 py-3.5 bg-terracotta text-white text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-cocoa transition shadow-md text-center shrink-0">Saber Más</button>
                         </div>
                     </div>
@@ -271,10 +269,10 @@
                     if (!btn) return;
                     if (key === category) {
                         btn.className =
-                            "px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-white text-cocoa transition border border-white/20 shadow-sm hover:scale-105 active:scale-95";
+                            "px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-terracotta text-white transition shadow-sm hover:scale-105 active:scale-95";
                     } else {
                         btn.className =
-                            "px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-white/20 text-white hover:bg-white/30 transition border border-white/10 hover:scale-105 active:scale-95";
+                            "px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-cocoa/5 text-cocoa hover:bg-cocoa/10 transition border border-cocoa/10 hover:scale-105 active:scale-95";
                     }
                 });
             }
