@@ -506,7 +506,104 @@ async function initApp() {
 }
 
 async function cargarProfesionalesCache() {
-    const { data, error } = await client.from('profesionales').select('*').order('nombre');
+    let { data, error } = await client.from('profesionales').select('*').order('nombre');
+    
+    // Lista de profesionales por defecto
+    const defaultProfs = [
+        { email: 'profesor@profesor.com', nombre: 'Profesor de Pruebas', apellidos: 'Test', especialidad: 'Yoga | clases', color: '#9B7B37', color_bg: 'bg-olive', visible_publico: false },
+        { email: 'angel_profesor@genyoga.studio', nombre: 'Ángel Javier', apellidos: '', especialidad: 'Yoga | clases', color: '#9B7B37', color_bg: 'bg-olive', visible_publico: true },
+        { email: 'yanira_profesora@genyoga.studio', nombre: 'Yanira', apellidos: '', especialidad: 'Yoga | clases', color: '#D27D60', color_bg: 'bg-terracotta', visible_publico: true },
+        { email: 'miriam_profesora@genyoga.studio', nombre: 'Miriam', apellidos: '', especialidad: 'Yoga | clases', color: '#8b5cf6', color_bg: 'bg-purple-50', visible_publico: true },
+        { email: 'silvia_profesora@genyoga.studio', nombre: 'Silvia', apellidos: '', especialidad: 'Yoga | clases', color: '#E1654E', color_bg: 'bg-terracotta', visible_publico: true }
+    ];
+
+    if (!error && data) {
+        let needsReload = false;
+        
+        // 1. Auto-crear o actualizar fichas en la tabla profesionales si no existen
+        for (const p of defaultProfs) {
+            const existingProfIndex = data.findIndex(existing => 
+                (existing.email || '').toLowerCase() === p.email.toLowerCase() ||
+                (existing.nombre || '').toLowerCase().trim().replace(/á/g, 'a').replace(/é/g, 'e').replace(/í/g, 'i').replace(/ó/g, 'o').replace(/ú/g, 'u') === 
+                p.nombre.toLowerCase().trim().replace(/á/g, 'a').replace(/é/g, 'e').replace(/í/g, 'i').replace(/ó/g, 'o').replace(/ú/g, 'u')
+            );
+
+            if (existingProfIndex === -1) {
+                let { error: insErr } = await client.from('profesionales').insert([{
+                    nombre: p.nombre,
+                    apellidos: p.apellidos,
+                    email: p.email,
+                    especialidad: p.especialidad,
+                    color: p.color,
+                    color_bg: p.color_bg,
+                    foto_url: "",
+                    descripcion: `Ficha de ${p.nombre}.`,
+                    visible_publico: p.visible_publico
+                }]);
+                
+                // Fallback si la columna no existe en BD
+                if (insErr && insErr.message && insErr.message.includes('visible_publico')) {
+                    const { error: fallbackErr } = await client.from('profesionales').insert([{
+                        nombre: p.nombre,
+                        apellidos: p.apellidos,
+                        email: p.email,
+                        especialidad: p.especialidad,
+                        color: p.color,
+                        color_bg: p.color_bg,
+                        foto_url: "",
+                        descripcion: `Ficha de ${p.nombre}.`
+                    }]);
+                    insErr = fallbackErr;
+                }
+                
+                if (!insErr) {
+                    needsReload = true;
+                }
+            } else {
+                // Si existe pero con otro email, lo actualizamos al nuevo
+                const existing = data[existingProfIndex];
+                if ((existing.email || '').toLowerCase() !== p.email.toLowerCase()) {
+                    const updatePayload = { email: p.email };
+                    if (existing.visible_publico !== undefined) {
+                        updatePayload.visible_publico = p.visible_publico;
+                    }
+                    
+                    const { error: updErr } = await client.from('profesionales')
+                        .update(updatePayload)
+                        .eq('id', existing.id);
+                        
+                    if (!updErr) {
+                        needsReload = true;
+                    }
+                }
+            }
+        }
+
+        if (needsReload) {
+            const { data: newData, error: newErr } = await client.from('profesionales').select('*').order('nombre');
+            if (!newErr && newData) {
+                data = newData;
+            }
+        }
+
+        // 2. Auto-crear perfiles en la tabla profiles (rol de profesor) si no existen
+        const { data: allProfiles, error: errProfiles } = await client.from('profiles').select('email');
+        if (!errProfiles && allProfiles) {
+            for (const p of defaultProfs) {
+                if (!allProfiles.some(existing => (existing.email || '').toLowerCase() === p.email.toLowerCase())) {
+                    const newId = generarUuidLocal();
+                    await client.from('profiles').insert([{
+                        id: newId,
+                        email: p.email,
+                        nombre: p.nombre,
+                        apellidos: p.apellidos,
+                        rol: 'profesor',
+                        bonos: 0
+                    }]);
+                }
+            }
+        }
+    }
     if (!error && data) {
         allProfesionalesCache = data.map(p => {
             if ((p.email || '').toLowerCase() === 'angel@genyoga.es' || (p.nombre || '').toLowerCase() === 'ángel') {
@@ -886,7 +983,12 @@ function renderizarCalendario() {
         const dateKey = formatDateLocal(dateObj);
         const isToday = dateObj.getTime() === today.getTime();
         const isPast = dateObj < today;
+        const isTestUser = (currentUser?.email || '').toLowerCase() === 'profesor@profesor.com';
+        const showTestProfesor = isAdmin || isTestUser;
         const hasClasses = allClasesCache.some(c => {
+            if (!showTestProfesor && c.profesionales && c.profesionales.visible_publico === false) {
+                return false;
+            }
             const claseDate = formatDateLocal(new Date(c.fecha_inicio));
             return claseDate === dateKey;
         });
@@ -941,6 +1043,89 @@ function limpiarFiltroFecha() {
     renderizarClases();
 }
 
+function aplicarFiltrosClases() {
+    renderizarClases();
+}
+
+function limpiarTodosLosFiltrosClases() {
+    selectedDate = null;
+    const selectProfesor = document.getElementById('filtro-profesor');
+    const selectTipoYoga = document.getElementById('filtro-tipo-yoga');
+    const selectHorario = document.getElementById('filtro-horario');
+    const selectDisponibilidad = document.getElementById('filtro-disponibilidad');
+
+    if (selectProfesor) selectProfesor.value = 'todos';
+    if (selectTipoYoga) selectTipoYoga.value = 'todos';
+    if (selectHorario) selectHorario.value = 'todos';
+    if (selectDisponibilidad) selectDisponibilidad.value = 'todos';
+
+    renderizarCalendario();
+    renderizarClases();
+}
+
+function actualizarOpcionesFiltrosClases() {
+    const selectProfesor = document.getElementById('filtro-profesor');
+    const selectTipoYoga = document.getElementById('filtro-tipo-yoga');
+    
+    if (!selectProfesor || !selectTipoYoga) return;
+
+    // Guardar selección actual
+    const valorProfesorPrevio = selectProfesor.value;
+    const valorTipoYogaPrevio = selectTipoYoga.value;
+
+    // Obtener valores únicos de allClasesCache
+    const profesoresMap = new Map(); // id -> nombre
+    const tiposYogaSet = new Set();
+
+    const isTestUser = (currentUser?.email || '').toLowerCase() === 'profesor@profesor.com';
+    const showTestProfesor = isAdmin || isTestUser;
+
+    allClasesCache.forEach(c => {
+        if (c.profesionales) {
+            if (!showTestProfesor && c.profesionales.visible_publico === false) {
+                return;
+            }
+            profesoresMap.set(c.profesionales.id, c.profesionales.nombre);
+        } else {
+            profesoresMap.set('staff', 'Staff GEN Yoga');
+        }
+        if (c.nombre) {
+            tiposYogaSet.add(c.nombre);
+        }
+    });
+
+    // Rellenar Profesor
+    selectProfesor.innerHTML = '<option value="todos">Todos los profesores</option>';
+    profesoresMap.forEach((nombre, id) => {
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = nombre;
+        selectProfesor.appendChild(opt);
+    });
+
+    // Rellenar Tipo de Yoga
+    selectTipoYoga.innerHTML = '<option value="todos">Todos los tipos</option>';
+    Array.from(tiposYogaSet).sort().forEach(tipo => {
+        const opt = document.createElement('option');
+        opt.value = tipo;
+        opt.textContent = tipo;
+        selectTipoYoga.appendChild(opt);
+    });
+
+    // Restaurar selección previa si existe
+    if (Array.from(selectProfesor.options).some(o => o.value === valorProfesorPrevio)) {
+        selectProfesor.value = valorProfesorPrevio;
+    } else {
+        selectProfesor.value = 'todos';
+    }
+
+    if (Array.from(selectTipoYoga.options).some(o => o.value === valorTipoYogaPrevio)) {
+        selectTipoYoga.value = valorTipoYogaPrevio;
+    } else {
+        selectTipoYoga.value = 'todos';
+    }
+}
+
 // --- 5. HORARIOS (CLASES) ---
 async function cargarHorarios() {
     const container = document.getElementById('schedule-container');
@@ -967,6 +1152,7 @@ async function cargarHorarios() {
         container.innerHTML = '';
         document.getElementById('empty-state').classList.remove('hidden');
         allClasesCache = [];
+        actualizarOpcionesFiltrosClases();
         return;
     }
 
@@ -974,6 +1160,7 @@ async function cargarHorarios() {
         container.innerHTML = '';
         document.getElementById('empty-state').classList.remove('hidden');
         allClasesCache = [];
+        actualizarOpcionesFiltrosClases();
         return;
     }
 
@@ -1006,8 +1193,10 @@ async function cargarHorarios() {
     });
 
     allClasesCache = clases;
+    actualizarOpcionesFiltrosClases();
     renderizarCalendario();
     renderizarClases();
+    refrescarInicioSiActivo();
 }
 
 function renderizarClases() {
@@ -1029,12 +1218,63 @@ function renderizarClases() {
         });
     }
 
+    const isTestUser = (currentUser?.email || '').toLowerCase() === 'profesor@profesor.com';
+    const showTestProfesor = isAdmin || isTestUser;
+
+    if (!showTestProfesor) {
+        clasesAMostrar = clasesAMostrar.filter(c => !c.profesionales || c.profesionales.visible_publico !== false);
+    }
+
+    // Aplicar filtros adicionales
+    const selectProfesor = document.getElementById('filtro-profesor');
+    const selectTipoYoga = document.getElementById('filtro-tipo-yoga');
+    const selectHorario = document.getElementById('filtro-horario');
+    const selectDisponibilidad = document.getElementById('filtro-disponibilidad');
+
+    if (selectProfesor && selectProfesor.value !== 'todos') {
+        const profId = selectProfesor.value;
+        clasesAMostrar = clasesAMostrar.filter(c => {
+            if (profId === 'staff') {
+                return !c.profesionales || !c.profesionales.id;
+            }
+            return c.profesionales && String(c.profesionales.id) === profId;
+        });
+    }
+
+    if (selectTipoYoga && selectTipoYoga.value !== 'todos') {
+        const tipoYoga = selectTipoYoga.value;
+        clasesAMostrar = clasesAMostrar.filter(c => c.nombre === tipoYoga);
+    }
+
+    if (selectHorario && selectHorario.value !== 'todos') {
+        const rango = selectHorario.value;
+        clasesAMostrar = clasesAMostrar.filter(c => {
+            const fechaInicio = new Date(c.fecha_inicio);
+            const hora = fechaInicio.getHours();
+            if (rango === 'manana') return hora >= 7 && hora < 12;
+            if (rango === 'mediodia') return hora >= 12 && hora < 16;
+            if (rango === 'tarde') return hora >= 16 && hora < 20;
+            if (rango === 'noche') return hora >= 20;
+            return true;
+        });
+    }
+
+    if (selectDisponibilidad && selectDisponibilidad.value !== 'todos') {
+        const disp = selectDisponibilidad.value;
+        clasesAMostrar = clasesAMostrar.filter(c => {
+            const llena = c.ocupadas >= c.capacidad_max;
+            if (disp === 'huecos') return !llena;
+            if (disp === 'completas') return llena;
+            return true;
+        });
+    }
+
     if (clasesAMostrar.length === 0) {
         container.innerHTML = `
                     <div class="bg-white/90 backdrop-blur-md rounded-2xl p-12 text-center border border-white/20 shadow-lg">
                         <i class="ph-duotone ph-calendar-x text-5xl text-cocoa/20 mb-4"></i>
-                        <p class="text-cocoa/60 font-medium">No hay clases en esta fecha</p>
-                        <button onclick="limpiarFiltroFecha()" class="mt-4 text-olive hover:underline text-sm font-bold">Ver todas</button>
+                        <p class="text-cocoa/60 font-medium">No hay clases que coincidan con los filtros</p>
+                        <button onclick="limpiarTodosLosFiltrosClases()" class="mt-4 text-olive hover:underline text-sm font-bold">Restablecer filtros</button>
                     </div>`;
         return;
     }
@@ -2568,16 +2808,13 @@ function renderSaldoBadgeAdmin(u) {
 
 function renderActionsAdmin(u) {
     const indButtons = `
-        <div class="flex items-center gap-1">
+        <div class="flex items-center gap-1.5">
             <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wide w-14 text-right">Bonos Ind:</span>
-            <button onclick="sumarSaldo('${u.id}', 'yoga', -1)" class="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition" title="Restar 1 Bono Individual">
-                <i class="ph-bold ph-minus text-xs"></i>
+            <button onclick="sumarSaldo('${u.id}', 'yoga', -1)" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition font-bold" title="Restar 1 Bono">
+                -1
             </button>
-            <button onclick="sumarSaldo('${u.id}', 'yoga', 1)" class="px-2 h-7 flex items-center gap-0.5 rounded-lg bg-gray-900 text-white text-[11px] font-bold hover:bg-black transition shadow-sm" title="Añadir 1 Bono Individual">
-                <i class="ph-bold ph-plus text-xs"></i> 1
-            </button>
-            <button onclick="sumarSaldo('${u.id}', 'yoga', 5)" class="px-2.5 h-7 flex items-center gap-0.5 rounded-lg bg-gold-500 text-white text-[11px] font-bold hover:bg-gold-600 transition shadow-sm" title="Añadir 5 Bonos Individuales">
-                <i class="ph-bold ph-ticket text-xs"></i> +5
+            <button onclick="sumarSaldo('${u.id}', 'yoga', 1)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-900 text-white hover:bg-black transition font-bold shadow-sm" title="Añadir 1 Bono">
+                +1
             </button>
         </div>`;
 
@@ -2678,7 +2915,23 @@ function renderStaffTable(users) {
     }
     if (noRes) noRes.classList.add('hidden');
 
-    users.forEach(u => {
+    // Ordenar: primero los profesionales/profesores y al final los admins
+    const sortedUsers = [...users].sort((a, b) => {
+        const rolA = (a.rol || '').toLowerCase().trim();
+        const rolB = (b.rol || '').toLowerCase().trim();
+        const isAAdmin = rolA === 'admin';
+        const isBAdmin = rolB === 'admin';
+        
+        if (isAAdmin && !isBAdmin) return 1;  // Admin va al final
+        if (!isAAdmin && isBAdmin) return -1; // Profesional va primero
+        
+        // Si tienen el mismo rol, ordenar alfabéticamente por email
+        const emailA = (a.email || '').toLowerCase();
+        const emailB = (b.email || '').toLowerCase();
+        return emailA.localeCompare(emailB);
+    });
+
+    sortedUsers.forEach(u => {
         const rolUsuario = (u.rol || '').toLowerCase().trim();
         const isAdminRow = rolUsuario === 'admin';
         const row = document.createElement('tr');
@@ -2697,6 +2950,23 @@ function renderStaffTable(users) {
                 <i class="ph-bold ph-trash text-xs"></i>
             </button>`;
 
+        let publicoToggle = '';
+        if (STAFF_ROLES.includes(rolUsuario)) {
+            const profRecord = allProfesionalesCache.find(p => (p.email || '').toLowerCase() === (u.email || '').toLowerCase());
+            const isVisible = profRecord ? (profRecord.visible_publico !== false) : true;
+            
+            publicoToggle = `
+                <div class="flex justify-center">
+                    <select onchange="toggleVisibilidadPublica('${u.email}', this.value === 'si')" class="bg-ivory border border-cocoa/20 rounded-xl px-2.5 py-1 text-xs text-cocoa focus:outline-none focus:border-cocoa font-bold transition cursor-pointer">
+                        <option value="si" ${isVisible ? 'selected' : ''}>Sí (Público)</option>
+                        <option value="no" ${!isVisible ? 'selected' : ''}>No (Oculto)</option>
+                    </select>
+                </div>
+            `;
+        } else {
+            publicoToggle = '<div class="text-center text-gray-300 text-xs">-</div>';
+        }
+
         row.innerHTML = `
             <td class="px-6 py-4">
                 <div class="flex items-center gap-3">
@@ -2710,6 +2980,7 @@ function renderStaffTable(users) {
                 </div>
             </td>
             <td class="px-6 py-4 text-center">${roleBadge}</td>
+            <td class="px-6 py-4 text-center">${publicoToggle}</td>
             <td class="px-6 py-4 text-right">
                 <div class="flex justify-end items-center mt-1">
                     ${deleteUserButton}
@@ -2717,6 +2988,84 @@ function renderStaffTable(users) {
             </td>
         `;
         tbody.appendChild(row);
+    });
+}
+
+async function toggleVisibilidadPublica(email, visible) {
+    if (!isAdmin) return;
+
+    // Buscar si existe en la caché
+    const profRecord = allProfesionalesCache.find(p => (p.email || '').toLowerCase() === email.toLowerCase());
+    
+    if (!profRecord) {
+        // Auto-crear ficha si no existe
+        const user = allUsersCache.find(u => (u.email || '').toLowerCase() === email.toLowerCase());
+        const nombre = user ? (user.nombre || 'Profesional') : 'Profesional';
+        const apellidos = user ? (user.apellidos || '') : '';
+        
+        let { error: insertErr } = await client.from('profesionales').insert([{
+            nombre,
+            apellidos,
+            email,
+            especialidad: "Yoga | clases",
+            color: "#9B7B37",
+            color_bg: "bg-olive",
+            foto_url: "",
+            descripcion: "Ficha de profesional.",
+            visible_publico: visible
+        }]);
+
+        if (insertErr) {
+            console.error('Error al crear ficha de profesional:', insertErr);
+            if (insertErr.message && insertErr.message.includes('visible_publico')) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Falta columna en base de datos',
+                    text: 'Debes ejecutar la consulta SQL: "ALTER TABLE profesionales ADD COLUMN visible_publico BOOLEAN DEFAULT TRUE;" en el panel de Supabase SQL Editor.',
+                    confirmButtonColor: '#9B7B37'
+                });
+            } else {
+                Swal.fire('Error', 'No se pudo crear la ficha: ' + insertErr.message, 'error');
+            }
+            return;
+        }
+    } else {
+        // Actualizar visibilidad pública
+        let { error: updateErr } = await client
+            .from('profesionales')
+            .update({ visible_publico: visible })
+            .eq('email', email);
+
+        if (updateErr) {
+            console.error('Error al actualizar visibilidad pública:', updateErr);
+            if (updateErr.message && updateErr.message.includes('visible_publico')) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Falta columna en base de datos',
+                    text: 'Debes ejecutar la consulta SQL: "ALTER TABLE profesionales ADD COLUMN visible_publico BOOLEAN DEFAULT TRUE;" en el panel de Supabase SQL Editor.',
+                    confirmButtonColor: '#9B7B37'
+                });
+            } else {
+                Swal.fire('Error', 'No se pudo actualizar la visibilidad: ' + updateErr.message, 'error');
+            }
+            return;
+        }
+    }
+
+    // Recargar la caché y refrescar vistas
+    await cargarProfesionalesCache();
+    cargarProfesoresAdmin();
+    
+    const toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 1500,
+        timerProgressBar: true
+    });
+    toast.fire({
+        icon: 'success',
+        title: visible ? 'Visible en público' : 'Ocultado de público'
     });
 }
 
@@ -4462,19 +4811,27 @@ function renderProfesoresPublic(filtro = 'todos') {
         filtersDiv.style.display = 'flex';
     }
 
-    let filtrados = allProfesionalesCache;
+    const isTestUser = (currentUser?.email || '').toLowerCase() === 'profesor@profesor.com';
+    const showTestProfesor = isAdmin || isTestUser;
+    
+    let baseProfs = allProfesionalesCache;
+    if (!showTestProfesor) {
+        baseProfs = baseProfs.filter(p => p.visible_publico !== false);
+    }
+
+    let filtrados = baseProfs;
 
     if (filtro === 'todos') {
-        filtrados = allProfesionalesCache.filter(p => {
+        filtrados = baseProfs.filter(p => {
             const cats = getEspecialidadCategorias(p);
             return cats.includes('clases') || cats.includes('consultas') || cats.includes('talleres');
         });
     } else if (filtro === 'yoga') {
-        filtrados = allProfesionalesCache.filter(p => getEspecialidadCategorias(p).includes('clases'));
+        filtrados = baseProfs.filter(p => getEspecialidadCategorias(p).includes('clases'));
     } else if (filtro === 'psicologia') {
-        filtrados = allProfesionalesCache.filter(p => getEspecialidadCategorias(p).includes('consultas'));
+        filtrados = baseProfs.filter(p => getEspecialidadCategorias(p).includes('consultas'));
     } else if (filtro === 'nutricion') {
-        filtrados = allProfesionalesCache.filter(p => getEspecialidadCategorias(p).includes('talleres'));
+        filtrados = baseProfs.filter(p => getEspecialidadCategorias(p).includes('talleres'));
     }
 
     if (filtrados.length === 0) {
@@ -4716,6 +5073,7 @@ async function cargarPsicologia() {
     allPsicologiaCache = clases;
     renderizarCalendarioPsicologia();
     renderizarPsicologia();
+    refrescarInicioSiActivo();
 }
 
 async function cargarNutricion() {
@@ -4780,6 +5138,7 @@ async function cargarNutricion() {
     allNutricionCache = clases;
     renderizarCalendarioNutricion();
     renderizarNutricion();
+    refrescarInicioSiActivo();
 }
 
 function renderizarPsicologia() {
@@ -5411,6 +5770,45 @@ function limpiarFiltroFechaNutricion() {
     renderizarNutricion();
 }
 
+function getReservasInicioPorFecha(dateKey) {
+    const bookings = [];
+
+    allClasesCache.forEach(c => {
+        if (c.miReserva && formatDateLocal(new Date(c.fecha_inicio)) === dateKey) {
+            bookings.push({
+                tipo: 'yoga',
+                tipoLabel: 'Clase',
+                nombre: c.nombre || 'Clase',
+                fecha: new Date(c.fecha_inicio)
+            });
+        }
+    });
+
+    allPsicologiaCache.forEach(c => {
+        if (c.miReserva && formatDateLocal(new Date(c.fecha_inicio)) === dateKey) {
+            bookings.push({
+                tipo: 'psicologia',
+                tipoLabel: 'Psicología',
+                nombre: c.nombre || 'Consulta',
+                fecha: new Date(c.fecha_inicio)
+            });
+        }
+    });
+
+    allNutricionCache.forEach(c => {
+        if (c.miReserva && formatDateLocal(new Date(c.fecha_inicio)) === dateKey) {
+            bookings.push({
+                tipo: 'nutricion',
+                tipoLabel: 'Nutrición',
+                nombre: c.nombre || 'Consulta Nutrición',
+                fecha: new Date(c.fecha_inicio)
+            });
+        }
+    });
+
+    return bookings.sort((a, b) => a.fecha - b.fecha);
+}
+
 function renderizarCalendarioInicio() {
     const year = currentCalendarMonthInicio.getFullYear();
     const month = currentCalendarMonthInicio.getMonth();
@@ -5448,36 +5846,41 @@ function renderizarCalendarioInicio() {
         const isPast = dateObj < today;
         const isSelected = selectedDateInicio === dateKey;
 
-        const hasYoga = allClasesCache.some(c => !!c.miReserva && formatDateLocal(new Date(c.fecha_inicio)) === dateKey);
-        const hasPsico = allPsicologiaCache.some(c => !!c.miReserva && formatDateLocal(new Date(c.fecha_inicio)) === dateKey);
-        const hasNutri = allNutricionCache.some(c => !!c.miReserva && formatDateLocal(new Date(c.fecha_inicio)) === dateKey);
+        const reservasDia = getReservasInicioPorFecha(dateKey);
 
         const div = document.createElement('div');
-        div.className = 'calendar-day rounded-lg text-sm font-medium text-cocoa bg-white/60 backdrop-blur-sm border border-white/20 relative';
-        div.textContent = day;
+        div.className = 'calendar-day inicio-calendar-day rounded-lg text-sm font-medium text-cocoa bg-white/60 backdrop-blur-sm border border-white/20 relative';
+
+        const dayNumber = document.createElement('span');
+        dayNumber.className = 'calendar-day-number';
+        dayNumber.textContent = day;
+        div.appendChild(dayNumber);
 
         if (isToday) div.classList.add('today');
         if (isSelected) div.classList.add('selected');
 
-        if (hasYoga || hasPsico || hasNutri) {
-            const dotsContainer = document.createElement('div');
-            dotsContainer.className = 'calendar-dots';
-            if (hasYoga) {
-                const dot = document.createElement('div');
-                dot.className = 'calendar-dot yoga';
-                dotsContainer.appendChild(dot);
+        if (reservasDia.length > 0) {
+            div.classList.add('has-reservations');
+            const reservasContainer = document.createElement('div');
+            reservasContainer.className = 'calendar-reservation-list';
+
+            reservasDia.slice(0, 2).forEach(b => {
+                const hora = b.fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                const pill = document.createElement('div');
+                pill.className = `calendar-reservation-pill ${b.tipo}`;
+                pill.title = `${b.tipoLabel}: ${b.nombre} · ${hora}`;
+                pill.textContent = `${hora} ${b.nombre}`;
+                reservasContainer.appendChild(pill);
+            });
+
+            if (reservasDia.length > 2) {
+                const more = document.createElement('div');
+                more.className = 'calendar-reservation-more';
+                more.textContent = `+${reservasDia.length - 2} más`;
+                reservasContainer.appendChild(more);
             }
-            if (hasPsico) {
-                const dot = document.createElement('div');
-                dot.className = 'calendar-dot psicologia';
-                dotsContainer.appendChild(dot);
-            }
-            if (hasNutri) {
-                const dot = document.createElement('div');
-                dot.className = 'calendar-dot nutricion';
-                dotsContainer.appendChild(dot);
-            }
-            div.appendChild(dotsContainer);
+
+            div.appendChild(reservasContainer);
         }
 
         div.onclick = () => {
@@ -5506,6 +5909,12 @@ function cambiarMesInicio(delta) {
 
 function limpiarFiltroFechaInicio() {
     selectedDateInicio = null;
+    renderizarCalendarioInicio();
+    renderizarConsolidadoDia();
+}
+
+function refrescarInicioSiActivo() {
+    if (activePublicView !== 'inicio') return;
     renderizarCalendarioInicio();
     renderizarConsolidadoDia();
 }
@@ -5545,7 +5954,7 @@ function renderizarConsolidadoDia() {
                 profesional: c.profesionales ? c.profesionales.nombre : 'Staff GEN',
                 profesionalFoto: c.profesionales ? c.profesionales.foto_url : null,
                 colorClass: 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/20',
-                tipoLabel: 'Consultas',
+                tipoLabel: 'Psicología',
                 descripcion: c.descripcion || ''
             });
         }
@@ -5629,46 +6038,41 @@ function renderizarConsolidadoDia() {
             }
 
             const pAvatar = b.profesionalFoto
-                ? `<img src="${b.profesionalFoto}" class="w-full h-full object-cover">`
-                : `<div class="w-full h-full bg-olive/5 flex items-center justify-center text-olive text-[10px] font-bold">${b.profesional.charAt(0)}</div>`;
+                ? `<img src="${escapeHtml(b.profesionalFoto)}" class="w-full h-full object-cover" alt="">`
+                : `<div class="w-full h-full bg-olive/5 flex items-center justify-center text-olive text-[10px] font-bold">${escapeHtml(b.profesional.charAt(0))}</div>`;
+            const fechaLarga = b.fecha.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
 
             const row = document.createElement('div');
-            row.className = 'p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-sand/5 transition duration-300 group';
+            row.className = `inicio-booking-card inicio-booking-${b.tipo}`;
 
             row.innerHTML = `
-                <div class="flex items-start gap-4 w-full">
-                    <div class="flex flex-col items-center justify-center w-14 h-14 rounded-xl ${b.colorClass} border shadow-sm flex-shrink-0">
-                        <span class="text-[9px] font-bold opacity-80 uppercase pb-0.5">${b.tipoLabel}</span>
-                        <span class="text-base font-black tracking-tight leading-none">${hora}</span>
+                <div class="inicio-booking-main">
+                    <div class="inicio-booking-time ${b.tipo}">
+                        <span>${escapeHtml(b.tipoLabel)}</span>
+                        <strong>${hora}</strong>
                     </div>
-                    
-                    <div class="flex-grow">
-                        <div class="flex flex-col gap-1">
-                            <div class="flex flex-wrap items-center gap-3">
-                                <h4 class="brand-font font-bold text-lg text-cocoa leading-tight">
-                                    ${b.nombre}
-                                </h4>
-                                <div class="flex items-center gap-2 bg-sand/10 px-2.5 py-1 rounded-full border border-cocoa/10 shadow-sm order-last sm:order-none" title="Profesional">
-                                    <div class="w-6 h-6 rounded-full overflow-hidden border border-cocoa/10 shadow-sm flex-shrink-0">
-                                        ${pAvatar}
-                                    </div>
-                                    <span class="text-xs sm:text-sm font-bold text-cocoa/70 truncate max-w-[150px]">${b.profesional}</span>
+
+                    <div class="inicio-booking-content">
+                        <span class="inicio-booking-date">${escapeHtml(fechaLarga)}</span>
+                        <h4 class="brand-font inicio-booking-title">${escapeHtml(b.nombre)}</h4>
+
+                        <div class="inicio-booking-meta">
+                            <div class="inicio-booking-professional" title="Profesional">
+                                <div class="inicio-booking-avatar">
+                                    ${pAvatar}
                                 </div>
+                                <span>${escapeHtml(b.profesional)}</span>
                             </div>
-
-                            <div class="flex items-center gap-2 mt-1">
-                                ${b.descripcion ? `<span class="text-xs text-cocoa/50"><i class="ph-bold ph-info"></i> ${b.descripcion}</span>` : ''}
-                                <span class="text-[10px] font-bold text-olive bg-olive/10 border border-olive/20 px-2 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-fill ph-check-circle"></i> Confirmada</span>
-                            </div>
+                            <span class="inicio-booking-status"><i class="ph-fill ph-check-circle"></i> Confirmada</span>
                         </div>
+
+                        ${b.descripcion ? `<p class="inicio-booking-description"><i class="ph-bold ph-info"></i> ${escapeHtml(b.descripcion)}</p>` : ''}
                     </div>
                 </div>
 
-                <div class="flex items-center justify-end sm:min-w-[120px]">
-                    <button ${cancelAction} class="group flex items-center gap-2 text-[11px] font-bold text-cocoa/40 hover:text-red-500 border border-cocoa/10 hover:border-red-200 bg-ivory px-4 py-2 rounded-full transition shadow-sm">
-                        <i class="ph-bold ph-x group-hover:scale-110 transition"></i> CANCELAR
-                    </button>
-                </div>
+                <button ${cancelAction} class="inicio-booking-cancel">
+                    <i class="ph-bold ph-x"></i> Cancelar reserva
+                </button>
             `;
             grid.appendChild(row);
         });
@@ -5686,7 +6090,15 @@ function filtrarProfesionalesVista(especialidad) {
 }
 
 function getProfesionalesConsultaDisponibles(tipo) {
-    let filteredProfs = allProfesionalesCache.filter(p => getEspecialidadCategorias(p).includes('consultas'));
+    const isTestUser = (currentUser?.email || '').toLowerCase() === 'profesor@profesor.com';
+    const showTestProfesor = isAdmin || isTestUser;
+    
+    let base = allProfesionalesCache;
+    if (!showTestProfesor) {
+        base = base.filter(p => p.visible_publico !== false);
+    }
+    
+    let filteredProfs = base.filter(p => getEspecialidadCategorias(p).includes('consultas'));
     
     if (tipo === 'psicologia') {
         filteredProfs = filteredProfs.filter(p => {
@@ -5700,7 +6112,7 @@ function getProfesionalesConsultaDisponibles(tipo) {
         });
     }
 
-    if (filteredProfs.length === 0) filteredProfs = allProfesionalesCache;
+    if (filteredProfs.length === 0) filteredProfs = base;
 
     if (!isAdmin && esTrabajador() && currentUser?.email) {
         const email = currentUser.email.toLowerCase();

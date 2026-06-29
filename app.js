@@ -461,7 +461,9 @@ async function fetchProfesionalesLanding() {
         return;
     }
 
-    if (!profesionales || profesionales.length === 0) {
+    const activeProfesionales = (profesionales || []).filter(p => (p.email || '').toLowerCase() !== 'profesor@profesor.com');
+
+    if (!activeProfesionales || activeProfesionales.length === 0) {
         container.innerHTML = `<div class="col-span-full flex flex-col items-center justify-center py-10 gap-2 opacity-60">
             <i data-lucide="users" class="w-8 h-8 text-cocoa"></i>
              <p class="text-center text-cocoa text-sm">No hay profesionales registrados en este momento.</p>
@@ -470,7 +472,7 @@ async function fetchProfesionalesLanding() {
         return;
     }
 
-    allProfesionalesLanding = profesionales.map(p => {
+    allProfesionalesLanding = activeProfesionales.map(p => {
         if ((p.email || '').toLowerCase() === 'angel@genyoga.es' || (p.nombre || '').toLowerCase() === 'ángel') {
             const updated = { ...p };
             if (!updated.nombre.includes('Javier')) {

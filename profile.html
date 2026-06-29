@@ -461,10 +461,6 @@
                         <div class="flex-1">
                             <!-- Client Header -->
                             <div class="is-admin-hidden">
-                                <span
-                                    class="inline-block py-1 px-3 rounded-full bg-cocoa/10 text-cocoa font-bold tracking-widest text-[10px] uppercase mb-3 border border-cocoa/20">
-                                    Calendario Semanal
-                                </span>
                                 <h2 class="text-4xl md:text-5xl brand-font font-bold text-cocoa mb-3">
                                     Reserva tu práctica
                                 </h2>
@@ -497,6 +493,49 @@
                                         <i class="ph-bold ph-plus-circle text-lg"></i> Crear Clase
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filtros de Clases -->
+                    <div id="clases-filtros-container" class="bg-white/80 backdrop-blur-md rounded-2xl p-5 mb-8 border border-cocoa/10 shadow-sm">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <!-- Filtro por Profesor -->
+                            <div class="flex flex-col gap-1.5">
+                                <label for="filtro-profesor" class="text-xs font-bold text-cocoa/60 uppercase tracking-wider">Profesor</label>
+                                <select id="filtro-profesor" onchange="aplicarFiltrosClases()" class="w-full bg-ivory border border-cocoa/20 rounded-xl px-3 py-2.5 text-sm text-cocoa focus:outline-none focus:border-cocoa transition">
+                                    <option value="todos">Todos los profesores</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Filtro por Tipo de Yoga -->
+                            <div class="flex flex-col gap-1.5">
+                                <label for="filtro-tipo-yoga" class="text-xs font-bold text-cocoa/60 uppercase tracking-wider">Tipo de Yoga</label>
+                                <select id="filtro-tipo-yoga" onchange="aplicarFiltrosClases()" class="w-full bg-ivory border border-cocoa/20 rounded-xl px-3 py-2.5 text-sm text-cocoa focus:outline-none focus:border-cocoa transition">
+                                    <option value="todos">Todos los tipos</option>
+                                </select>
+                            </div>
+
+                            <!-- Filtro por Rango de Horas -->
+                            <div class="flex flex-col gap-1.5">
+                                <label for="filtro-horario" class="text-xs font-bold text-cocoa/60 uppercase tracking-wider">Horario</label>
+                                <select id="filtro-horario" onchange="aplicarFiltrosClases()" class="w-full bg-ivory border border-cocoa/20 rounded-xl px-3 py-2.5 text-sm text-cocoa focus:outline-none focus:border-cocoa transition">
+                                    <option value="todos">Cualquier hora</option>
+                                    <option value="manana">Mañana (07:00 - 12:00)</option>
+                                    <option value="mediodia">Mediodía (12:00 - 16:00)</option>
+                                    <option value="tarde">Tarde (16:00 - 20:00)</option>
+                                    <option value="noche">Noche (20:00 - 23:00)</option>
+                                </select>
+                            </div>
+
+                            <!-- Filtro por Disponibilidad (Ocupadas / Huecos) -->
+                            <div class="flex flex-col gap-1.5">
+                                <label for="filtro-disponibilidad" class="text-xs font-bold text-cocoa/60 uppercase tracking-wider">Disponibilidad</label>
+                                <select id="filtro-disponibilidad" onchange="aplicarFiltrosClases()" class="w-full bg-ivory border border-cocoa/20 rounded-xl px-3 py-2.5 text-sm text-cocoa focus:outline-none focus:border-cocoa transition">
+                                    <option value="todos">Todas las clases</option>
+                                    <option value="huecos">Con plazas libres</option>
+                                    <option value="completas">Clases completas</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -835,18 +874,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Sección de Grupos de Alumnos por Profesional -->
-                    <div class="mb-10 bg-white/80 rounded-2xl p-6 border border-cocoa/10 shadow-sm">
-                        <h3 class="brand-font text-lg font-bold text-cocoa mb-4 flex items-center gap-2">
-                            <i class="ph-fill ph-users-three text-olive"></i> Grupos de Alumnos por Profesional
-                        </h3>
-                        <div id="grupos-profesionales-container"
-                            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <!-- Se rellenará dinámicamente en JS -->
-                        </div>
-                    </div>
-
                     <div class="bg-white/80 rounded-2xl shadow-sm border border-cocoa/10 overflow-hidden">
                         <table class="w-full text-left border-separate border-spacing-y-2">
                             <thead
@@ -865,6 +892,17 @@
                             resultados.</div>
                     </div>
 
+                    <!-- Sección de Grupos de Alumnos por Profesional -->
+                    <div class="mt-10 mb-10 bg-white/80 rounded-2xl p-6 border border-cocoa/10 shadow-sm">
+                        <h3 class="brand-font text-lg font-bold text-cocoa mb-4 flex items-center gap-2">
+                            <i class="ph-fill ph-users-three text-olive"></i> Grupos de Alumnos por Profesional
+                        </h3>
+                        <div id="grupos-profesionales-container"
+                            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Se rellenará dinámicamente en JS -->
+                        </div>
+                    </div>
+
                     <!-- Sección de Personal y Administradores -->
                     <div class="mt-10">
                         <h3 class="brand-font text-lg font-bold text-cocoa mb-4 flex items-center gap-2">
@@ -877,6 +915,7 @@
                                     <tr>
                                         <th class="px-6 py-4">Usuario</th>
                                         <th class="px-6 py-4 text-center">Rol</th>
+                                        <th class="px-6 py-4 text-center">Público</th>
                                         <th class="px-6 py-4 text-right">Acciones</th>
                                     </tr>
                                 </thead>
