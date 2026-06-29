@@ -482,10 +482,14 @@ body.platform-android select {
         }
 
         .animate-marquee {
-            animation: marquee 90s linear infinite;
+            animation: marquee 55s linear infinite;
             /* width needs to encompass double the text length so we only scroll to -50% to seamlessly loop */
             display: flex;
             width: max-content;
+        }
+
+        #symbols-container.hover-active .symbol-stack {
+            display: none !important;
         }
 
         /* ======================================================= */

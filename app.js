@@ -159,6 +159,7 @@ if (modalOverlay) {
 window.showHoverImage = function (side, imgName) {
     const container = document.getElementById('center-hover-image-container');
     const symbolsContent = document.getElementById('central-symbols');
+    const symbolsParent = document.getElementById('symbols-container');
     
     if (container && symbolsContent) {
         const images = container.querySelectorAll('img');
@@ -173,6 +174,10 @@ window.showHoverImage = function (side, imgName) {
         // Add active class to image container to trigger animation
         container.classList.add('active');
         
+        if (symbolsParent) {
+            symbolsParent.classList.add('hover-active');
+        }
+        
         // Fade out symbols
         symbolsContent.classList.remove('opacity-100', 'scale-100');
         symbolsContent.classList.add('opacity-0', 'scale-95');
@@ -182,9 +187,17 @@ window.showHoverImage = function (side, imgName) {
 window.hideHoverImage = function (side) {
     const container = document.getElementById('center-hover-image-container');
     const symbolsContent = document.getElementById('central-symbols');
+    const symbolsParent = document.getElementById('symbols-container');
     
     if (container && symbolsContent) {
         container.classList.remove('active');
+        
+        const images = container.querySelectorAll('img');
+        images.forEach(img => img.classList.add('hidden'));
+        
+        if (symbolsParent) {
+            symbolsParent.classList.remove('hover-active');
+        }
         
         symbolsContent.classList.remove('opacity-0', 'scale-95');
         symbolsContent.classList.add('opacity-100', 'scale-100');

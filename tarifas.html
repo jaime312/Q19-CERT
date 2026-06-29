@@ -1,281 +1,352 @@
-<!doctype html>
-<html lang="es">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>GEN Yoga | Tarifas</title>
-        <meta name="description" content="Consulta las tarifas y bonos de GEN Yoga: clases de yoga, consultas personalizadas de psicología y nutrición, y talleres especiales." />
-        <link rel="stylesheet" href="tailwind-compiled.css" />
-        <link rel="stylesheet" href="profile.css" />
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEN Yoga | Tarifas</title>
+    <meta name="description" content="Consulta las tarifas y bonos de GEN Yoga: clases de yoga, consultas personalizadas de psicología y nutrición, y talleres especiales." />
+    
+    <!-- Tailwind and Custom Fonts -->
+    <link rel="stylesheet" href="tailwind-compiled.css">
+    
+    <!-- Lucide & Phosphor Icons & SweetAlert -->
+    <script src="https://unpkg.com/lucide@latest" defer></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        /* Force Solid plain background (removes dot pattern from styles.css) */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f8f6f2 !important;
+            background-image: none !important;
+        }
 
-        <script src="https://unpkg.com/lucide@latest" defer></script>
-        <script src="https://unpkg.com/@phosphor-icons/web"></script>
-        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    </head>
-    <body
-        class="subpixel-antialiased min-h-screen w-screen overflow-x-hidden relative selection:bg-mutedgold selection:text-cocoa font-sans"
-    >
-        <!-- Light Background -->
-        <div class="fixed inset-0 z-0 bg-[#f8f6f2]"></div>
+        /* Fixed Presentation Layer */
+        .fixed-viewport {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100dvh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 2.5rem 1.5rem 1.5rem 1.5rem;
+            box-sizing: border-box;
+            z-index: 10;
+        }
 
-        <!-- Inner Glow/Highlight to mimic the center spotlight effect -->
-        <div
-            class="fixed inset-0 z-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.03)_0%,transparent_50%)] pointer-events-none"
-        ></div>
+        @media (min-width: 768px) {
+            .fixed-viewport {
+                padding: 4rem 4rem 2rem 4rem;
+            }
+        }
 
-        <!-- Ambient background shapes (ZEN & FRESH) -->
-        <div
-            id="parallax-bg"
-            class="fixed inset-0 z-0 pointer-events-none overflow-hidden transition-transform duration-1000 ease-out"
-        >
-            <div class="ambient-shape shape-1"></div>
-            <div class="ambient-shape shape-2"></div>
-            <div class="ambient-shape shape-3"></div>
-            <div class="ambient-shape shape-4"></div>
-        </div>
+        /* Outline Card Styling based on Canva mockups */
+        .tariff-card {
+            background-color: #ffffff;
+            border: 1px solid #795244;
+            border-radius: 2.25rem;
+            padding: 2rem;
+            box-shadow: 0 10px 30px -10px rgba(121, 82, 68, 0.05);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
 
-        <div
-            class="min-h-screen flex flex-col items-center p-4 md:p-8 pt-20 md:pt-24 relative z-10 w-full max-w-6xl mx-auto"
-        >
-            <a
-                href="index.html"
-                class="absolute top-6 left-6 z-20 bg-terracotta backdrop-blur-md border border-terracotta text-white px-6 py-3 rounded-xl font-bold text-[10px] md:text-xs uppercase tracking-widest hover:bg-cocoa transition shadow-lg hover:scale-105 active:scale-95 flex items-center gap-2 group"
-            >
-                <i
-                    class="ph-bold ph-arrow-left group-hover:-translate-x-1 transition"
-                ></i>
-                Volver a inicio
-            </a>
+        .tariff-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px -15px rgba(121, 82, 68, 0.12);
+        }
 
-            <div
-                class="w-full bg-[#E2DDD5] border border-cocoa/10 rounded-3xl p-6 md:p-12 shadow-sm mt-12 md:mt-8 text-cocoa"
-            >
-                <h2
-                    class="brand-font text-3xl md:text-5xl lg:text-7xl text-center text-cocoa mb-8 md:mb-12 drop-shadow-sm"
-                >
-                    Tarifas
-                </h2>
+        /* CSS Color Filters to tint white SVGs/PNGs into solid colors */
+        .filter-terracotta {
+            filter: brightness(0) saturate(100%) invert(43%) sepia(50%) saturate(1470%) hue-rotate(336deg) brightness(87%) contrast(85%) !important;
+        }
+        
+        .filter-gold {
+            filter: brightness(0) saturate(100%) invert(45%) sepia(35%) saturate(1312%) hue-rotate(18deg) brightness(91%) contrast(86%) !important;
+        }
 
-                <!-- Sub-pestañas de filtrado de tarifas -->
-                <div class="flex justify-center gap-2 mb-12 flex-wrap">
-                    <button
-                        id="btn-tarifa-yoga"
-                        onclick="switchTarifas('yoga')"
-                        class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-terracotta text-white transition shadow-sm hover:scale-105 active:scale-95"
-                    >
-                        Yoga
-                    </button>
-                    <button
-                        id="btn-tarifa-psicologia"
-                        onclick="switchTarifas('psicologia')"
-                        class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-cocoa/5 text-cocoa hover:bg-cocoa/10 transition border border-cocoa/10 hover:scale-105 active:scale-95"
-                    >
-                        Consultas
-                    </button>
-                    <button
-                        id="btn-tarifa-talleres"
-                        onclick="switchTarifas('talleres')"
-                        class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-cocoa/5 text-cocoa hover:bg-cocoa/10 transition border border-cocoa/10 hover:scale-105 active:scale-95"
-                    >
-                        Talleres
-                    </button>
-                </div>
+        .filter-olive {
+            filter: brightness(0) saturate(100%) invert(39%) sepia(21%) saturate(913%) hue-rotate(30deg) brightness(96%) contrast(87%) !important;
+        }
+    </style>
+</head>
+<body class="subpixel-antialiased selection:bg-mutedgold selection:text-cocoa font-sans overflow-hidden">
 
-                <!-- 1. YOGA (Grid vertical de tarjetas) -->
-                <div
-                    id="tarifas-yoga"
-                    class="grid md:grid-cols-2 max-w-4xl mx-auto gap-8 px-4 items-stretch"
-                >
-                    <!-- Bono individual -->
-                    <div
-                        class="bg-white border border-cocoa/10 rounded-3xl p-8 shadow-sm flex flex-col justify-between hover:scale-[1.02] transition duration-300 text-cocoa"
-                    >
-                        <div>
-                            <div class="w-12 h-12 rounded-2xl bg-cocoa/5 flex items-center justify-center mb-6 text-cocoa shadow-inner">
-                                <i class="ph-fill ph-ticket text-2xl"></i>
-                            </div>
-                            <h3 class="text-2xl font-serif text-cocoa font-bold mb-2">Bono Individual</h3>
-                            <p class="text-[10px] text-cocoa/60 mb-6 font-light uppercase tracking-wider">Yoga</p>
-                            <ul class="space-y-3 text-sm text-cocoa/80 pl-1 text-left">
-                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-olive"></i> 1 clase de yoga</li>
-                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-olive"></i> Reserva desde tu perfil o desde recepción</li>
-                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-olive"></i> <span id="cancelacion-horas-text">Cancelación permitida hasta 12h antes de la hora de inicio de la clase</span></li>
-                            </ul>
-                        </div>
-                        <div class="mt-8">
-                            <div class="text-4xl font-serif font-bold text-cocoa mb-4">15€</div>
-                            <a href="profile.html" class="block w-full py-3 bg-cocoa text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-black transition shadow-sm">Comprar Bono</a>
-                        </div>
-                    </div>
-                    <!-- CENTRAL CARD — Bono Mensual -->
-                    <div
-                        class="relative bg-white rounded-3xl p-8 border border-cocoa/15 shadow-md flex flex-col justify-between hover:scale-[1.03] transition duration-300 text-cocoa"
-                    >
-                        <div
-                            class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-terracotta text-white text-[9px] font-bold uppercase tracking-[0.25em] px-4 py-1.5 rounded-full shadow-md"
-                        >
-                            ★ Especial
-                        </div>
-                        <div>
-                            <div class="w-12 h-12 rounded-2xl bg-terracotta/5 flex items-center justify-center mb-6 text-terracotta shadow-md">
-                                <i class="ph-fill ph-calendar-blank text-2xl"></i>
-                            </div>
-                            <h3 class="text-3xl font-serif text-cocoa font-bold mb-2">Bono Mensual</h3>
-                            <p class="text-[10px] text-terracotta font-semibold mb-6 uppercase tracking-wider">Plan Flexible</p>
-                            <ul class="space-y-3 text-sm text-cocoa pl-1 text-left">
-                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-terracotta"></i> 2 clases cada semana (Lunes-Domingo)</li>
-                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-terracotta"></i> Hasta 8 clases al mes en total</li>
-                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-terracotta"></i> Reserva desde tu perfil o desde recepción</li>
-                                <li class="flex items-center gap-2"><i class="ph-bold ph-check text-terracotta"></i> Opción de usar bonos individuales si superas el límite semanal</li>
-                            </ul>
-                        </div>
-                        <div class="mt-8">
-                            <div class="text-5xl font-serif font-bold text-cocoa mb-4">90€<span class="text-xs font-sans font-normal text-cocoa/60">/mes</span></div>
-                            <a href="profile.html" class="block w-full py-3.5 bg-terracotta text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-cocoa transition shadow-md">Adquirir Plan</a>
-                        </div>
-                    </div>
-                </div>
+    <!-- Fixed Presentation Layer -->
+    <div class="fixed-viewport">
+        
+        <!-- Button completely loose on the left (matches classes.html) -->
+        <a href="index.html" id="btn-inicio"
+            class="absolute left-4 md:left-12 top-4 md:top-8 bg-[#a69c6a] border border-[#a69c6a] text-white px-6 py-2.5 rounded-full font-bold text-[10px] md:text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 shadow-md group z-40">
+            <svg class="w-4 h-4 text-current" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19.5 12c-3 0.5-9 0.5-13.5 0M9 6c-1.5 2-3.5 4.5-5 6 1.5 1.5 3.5 4 5 6"></path>
+            </svg>
+            Inicio
+        </a>
 
-                <!-- 2. CONSULTAS -->
-                <div
-                    id="tarifas-psicologia"
-                    class="grid md:grid-cols-2 gap-8 px-4 hidden"
-                >
-                    <div class="bg-white rounded-3xl p-8 border border-cocoa/10 shadow-sm flex flex-col justify-between hover:shadow-md transition duration-300 text-cocoa">
-                        <div>
-                            <div class="flex items-center gap-4 mb-6">
-                                <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-inner">
-                                    <i class="ph-fill ph-brain text-2xl"></i>
-                                </div>
-                                <div class="text-left">
-                                    <h3 class="text-2xl font-serif text-cocoa font-bold">Psicología</h3>
-                                    <p class="text-xs text-cocoa/50 font-medium">Bienestar y salud mental</p>
-                                </div>
-                            </div>
-                            <div class="p-5 bg-cocoa/5 rounded-2xl border border-cocoa/10 flex flex-col sm:flex-row justify-between items-start gap-4 mt-8">
-                                <div class="text-left pr-4">
-                                    <p class="font-bold text-cocoa text-sm">Sesión individual</p>
-                                    <p class="text-xs text-cocoa/60 mt-1 font-light leading-relaxed">Consulta personalizada para cuidar tu bienestar y salud mental. Gestión y asignación por administración.</p>
-                                </div>
-                                <span class="text-xs font-bold text-cocoa bg-white border border-cocoa/10 px-3 py-2 rounded-lg shrink-0 mt-1 sm:mt-0 text-center">Consultar con recepción las tarifas</span>
-                            </div>
-                        </div>
-                        <div class="mt-8">
-                            <button onclick="Swal.fire('Información', 'Contacta con el centro o administrador para programar y abonar tu consulta.', 'info')" class="block w-full py-3 bg-cocoa text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-black transition shadow-sm">Contactar con Admin</button>
-                        </div>
-                    </div>
+        <!-- Dynamic Decorative Symbols (Toggled & colored using CSS filters) -->
+        <!-- Clases Symbol (Bottom Left Terracotta) -->
+        <img id="symbol-clases" src="img/clases.png" alt="Yoga Clases" 
+            class="filter-terracotta absolute bottom-6 left-6 w-32 md:w-52 opacity-95 pointer-events-none select-none z-0 transition-all duration-500 transform translate-y-0">
+        
+        <!-- Consultas Symbol (Top Right Gold Runner) -->
+        <img id="symbol-consultas" src="img/tarifas.png" alt="Yoga Consultas" 
+            class="filter-gold absolute top-6 right-6 w-28 md:w-44 opacity-0 pointer-events-none select-none z-0 transition-all duration-500 transform translate-y-[20px]">
 
-                    <div class="bg-white rounded-3xl p-8 border border-cocoa/10 shadow-sm flex flex-col justify-between hover:shadow-md transition duration-300 text-cocoa">
-                        <div>
-                            <div class="flex items-center gap-4 mb-6">
-                                <div class="w-12 h-12 rounded-xl bg-green-50 text-green-700 flex items-center justify-center shadow-inner">
-                                    <i class="ph-fill ph-apple text-2xl"></i>
-                                </div>
-                                <div class="text-left">
-                                    <h3 class="text-2xl font-serif text-cocoa font-bold">Nutrición</h3>
-                                    <p class="text-xs text-cocoa/50 font-medium">Alimentación y salud física</p>
-                                </div>
-                            </div>
-                            <div class="space-y-4">
-                                <div class="p-5 bg-cocoa/5 rounded-2xl border border-cocoa/10 flex flex-col sm:flex-row justify-between items-start gap-4 mt-6">
-                                    <div class="text-left pr-4">
-                                        <p class="font-bold text-cocoa text-sm">Primera Consulta (Evaluación Inicial)</p>
-                                        <p class="text-xs text-cocoa/60 mt-1 font-light leading-relaxed">Comienza tu transformación. Una sesión integral y profunda donde analizamos tu punto de partida, objetivos e historial de hábitos para diseñar tu estrategia de alimentación y bienestar personalizada. Gestión y asignación por administración.</p>
-                                    </div>
-                                    <span class="text-xs font-bold text-cocoa bg-white border border-cocoa/10 px-3 py-2 rounded-lg shrink-0 mt-1 sm:mt-0 text-center">Consultar con recepción las tarifas</span>
-                                </div>
-                                <div class="p-5 bg-cocoa/5 rounded-2xl border border-cocoa/10 flex flex-col sm:flex-row justify-between items-start gap-4">
-                                    <div class="text-left pr-4">
-                                        <p class="font-bold text-cocoa text-sm">Sesión de Seguimiento</p>
-                                        <p class="text-xs text-cocoa/60 mt-1 font-light leading-relaxed">Tu acompañamiento en el camino. Evaluamos tus progresos cotidianos, resolvemos dudas y adaptamos tus pautas nutricionales para consolidar hábitos saludables que duren para siempre. Gestión y asignación por administración.</p>
-                                    </div>
-                                    <span class="text-xs font-bold text-cocoa bg-white border border-cocoa/10 px-3 py-2 rounded-lg shrink-0 mt-1 sm:mt-0 text-center">Consultar con recepción las tarifas</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-8">
-                            <button onclick="Swal.fire('Información', 'Contacta con el centro o administrador para programar y abonar tu consulta.', 'info')" class="block w-full py-3 bg-cocoa text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-black transition shadow-sm">Contactar con Admin</button>
-                        </div>
-                    </div>
-                </div>
+        <!-- Talleres Symbol (Bottom Right Poses) -->
+        <img id="symbol-talleres" src="img/maestros.png" alt="Yoga Talleres" 
+            class="filter-olive absolute bottom-6 right-6 w-28 md:w-44 opacity-0 pointer-events-none select-none z-0 transition-all duration-500 transform translate-y-[20px]">
 
-                <!-- 3. TALLERES -->
-                <div
-                    id="tarifas-talleres"
-                    class="space-y-6 px-4 hidden text-cocoa"
-                >
-                    <div class="bg-white rounded-3xl p-6 md:p-8 border border-cocoa/10 shadow-sm hover:scale-[1.005] hover:shadow-md transition duration-300 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                        <div class="flex items-start md:items-center gap-4 text-left">
-                            <div class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center shadow-inner shrink-0 mt-1 md:mt-0">
-                                <i class="ph-fill ph-sketch-logo text-3xl"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-serif text-cocoa font-bold">Talleres temáticos (Próximamente)</h3>
-                                <p class="text-sm text-cocoa/80 mt-1">Sesiones especiales para profundizar en diferentes estilos y prácticas de yoga, meditación y bienestar holístico. Las temáticas, fechas e inscripciones se anunciarán muy pronto en recepción.</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto border-t md:border-t-0 pt-4 md:pt-0 border-cocoa/10">
-                            <span class="text-xs font-bold text-cocoa bg-white border border-cocoa/10 px-4 py-3 rounded-xl shadow-sm shrink-0 text-center">Consultar tarifas</span>
-                            <button onclick="Swal.fire('Próximamente', 'Los próximos talleres y eventos especiales se anunciarán muy pronto. Para cualquier consulta, ponte en contacto con recepción.', 'info')" class="px-6 py-3.5 bg-terracotta text-white text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-cocoa transition shadow-md text-center shrink-0">Saber Más</button>
-                        </div>
-                    </div>
-                </div>
+        <!-- Sticky Header (Title + Tabs Navigation) -->
+        <div class="w-full flex flex-col items-center z-30 select-none pb-4">
+            <h1 class="brand-font font-black text-[#a69c6a] text-4xl md:text-6xl lg:text-7xl uppercase tracking-[0.15em] text-center mb-6">
+                Tarifas
+            </h1>
+
+            <!-- Sub-pestañas de filtrado (Matches layout & colors of Canva screen) -->
+            <div class="flex justify-center gap-3 flex-wrap">
+                <button id="tab-yoga" onclick="switchCategory('yoga')"
+                    class="px-8 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#795244] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95">
+                    Clases
+                </button>
+                <button id="tab-psicologia" onclick="switchCategory('psicologia')"
+                    class="px-8 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95">
+                    Consultas
+                </button>
+                <button id="tab-talleres" onclick="switchCategory('talleres')"
+                    class="px-8 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95">
+                    Talleres
+                </button>
             </div>
         </div>
 
-        <script src="app.js" defer></script>
-        <script>
-            function mostrarFuncionEnPruebas() {
-                alert("Esta función está en periodo de pruebas y aún no está disponible.");
-            }
+        <!-- Central Tariff Cards Layout -->
+        <div class="flex-grow w-full max-w-5xl mx-auto flex items-center justify-center relative z-20 pb-12 mt-4">
+            
+            <!-- 1. CATEGORY: YOGA (CLASES) -->
+            <div id="section-yoga" class="grid md:grid-cols-2 max-w-4xl mx-auto gap-8 w-full px-4 items-stretch transition-all duration-500">
+                <!-- Bono Individual -->
+                <div class="tariff-card flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl bg-cocoa/5 flex items-center justify-center mb-6 text-cocoa shadow-inner">
+                            <i class="ph-fill ph-ticket text-2xl text-[#795244]"></i>
+                        </div>
+                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2">Bono Individual</h3>
+                        <p class="text-[10px] text-cocoa/60 mb-6 font-light uppercase tracking-wider">Yoga</p>
+                        <ul class="space-y-3.5 text-sm text-cocoa/80 pl-1 text-left">
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-[#a69c6a] text-lg"></i> 1 clase de yoga</li>
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-[#a69c6a] text-lg"></i> Reserva desde tu perfil o recepción</li>
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-[#a69c6a] text-lg"></i> Cancelación hasta 12h antes de la clase</li>
+                        </ul>
+                    </div>
+                    <div class="mt-8">
+                        <div class="text-4xl font-serif font-bold text-cocoa mb-5">15€</div>
+                        <a href="profile.html" class="block w-full py-3.5 bg-[#795244] hover:bg-[#26160c] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md">Comprar Bono</a>
+                    </div>
+                </div>
 
-            function switchTarifas(category) {
-                const sections = {
-                    yoga: document.getElementById("tarifas-yoga"),
-                    psicologia: document.getElementById("tarifas-psicologia"),
-                    talleres: document.getElementById("tarifas-talleres"),
-                };
-                const buttons = {
-                    yoga: document.getElementById("btn-tarifa-yoga"),
-                    psicologia: document.getElementById("btn-tarifa-psicologia"),
-                    talleres: document.getElementById("btn-tarifa-talleres"),
-                };
+                <!-- Bono Mensual -->
+                <div class="tariff-card flex flex-col justify-between relative">
+                    <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-terracotta text-white text-[9px] font-bold uppercase tracking-[0.25em] px-4 py-1.5 rounded-full shadow-md">
+                        ★ Especial
+                    </div>
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl bg-terracotta/5 flex items-center justify-center mb-6 text-terracotta shadow-md">
+                            <i class="ph-fill ph-calendar-blank text-2xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2">Bono Mensual</h3>
+                        <p class="text-[10px] text-terracotta font-semibold mb-6 uppercase tracking-wider">Plan Flexible</p>
+                        <ul class="space-y-3.5 text-sm text-cocoa/80 pl-1 text-left">
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-terracotta text-lg"></i> 2 clases cada semana (Lunes-Domingo)</li>
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-terracotta text-lg"></i> Hasta 8 clases al mes en total</li>
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-terracotta text-lg"></i> Reserva desde tu perfil o recepción</li>
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-terracotta text-lg"></i> Bonos individuales para clases extra</li>
+                        </ul>
+                    </div>
+                    <div class="mt-8">
+                        <div class="text-4xl font-serif font-bold text-cocoa mb-5">90€<span class="text-xs font-sans font-normal text-cocoa/60">/mes</span></div>
+                        <a href="profile.html" class="block w-full py-3.5 bg-terracotta hover:bg-[#26160c] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md">Adquirir Plan</a>
+                    </div>
+                </div>
+            </div>
 
-                // Switch visibility
-                Object.keys(sections).forEach((key) => {
-                    const el = sections[key];
-                    if (!el) return;
-                    if (key === category) {
-                        el.classList.remove("hidden");
-                        if (key === "talleres") {
-                            el.classList.add("space-y-6");
-                        } else {
-                            el.classList.add("grid");
-                        }
-                    } else {
-                        el.classList.add("hidden");
-                        if (key === "talleres") {
-                            el.classList.remove("space-y-6");
-                        } else {
-                            el.classList.remove("grid");
-                        }
-                    }
-                });
+            <!-- 2. CATEGORY: CONSULTAS -->
+            <div id="section-psicologia" class="grid md:grid-cols-2 max-w-4xl mx-auto gap-8 w-full px-4 items-stretch transition-all duration-500 hidden opacity-0 transform translate-y-[20px]">
+                <!-- Psicología -->
+                <div class="tariff-card flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl bg-cocoa/5 flex items-center justify-center mb-6 text-cocoa shadow-inner">
+                            <i class="ph-fill ph-brain text-2xl text-[#8f6b2d]"></i>
+                        </div>
+                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2">Psicología</h3>
+                        <p class="text-[10px] text-cocoa/60 mb-6 font-light uppercase tracking-wider">Bienestar y salud mental</p>
+                        
+                        <div class="p-4 bg-cocoa/5 rounded-2xl border border-cocoa/5 text-left mb-6">
+                            <p class="font-bold text-cocoa text-sm">Sesión individual</p>
+                            <p class="text-xs text-cocoa/70 mt-1 font-light leading-relaxed">
+                                Consulta personalizada para cuidar tu bienestar y salud mental. Asignación directa por administración.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="text-xs font-bold text-[#8f6b2d] border border-[#8f6b2d]/20 bg-[#8f6b2d]/5 px-4 py-3 rounded-xl mb-4 text-center">
+                            Consultar con recepción las tarifas
+                        </div>
+                        <button onclick="Swal.fire('Información', 'Contacta con el centro o administrador para programar y abonar tu consulta.', 'info')" 
+                            class="block w-full py-3.5 bg-[#8f6b2d] hover:bg-[#26160c] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md">
+                            Contactar con Admin
+                        </button>
+                    </div>
+                </div>
 
-                // Switch button classes
-                Object.keys(buttons).forEach((key) => {
-                    const btn = buttons[key];
-                    if (!btn) return;
-                    if (key === category) {
-                        btn.className =
-                            "px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-terracotta text-white transition shadow-sm hover:scale-105 active:scale-95";
-                    } else {
-                        btn.className =
-                            "px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-cocoa/5 text-cocoa hover:bg-cocoa/10 transition border border-cocoa/10 hover:scale-105 active:scale-95";
-                    }
-                });
-            }
-        </script>
-    </body>
+                <!-- Nutrición -->
+                <div class="tariff-card flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl bg-cocoa/5 flex items-center justify-center mb-6 text-cocoa shadow-inner">
+                            <i class="ph-fill ph-leaf text-2xl text-[#8f6b2d]"></i>
+                        </div>
+                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2">Nutrición</h3>
+                        <p class="text-[10px] text-cocoa/60 mb-6 font-light uppercase tracking-wider">Alimentación y salud física</p>
+                        
+                        <div class="space-y-3.5 max-h-[190px] overflow-y-auto pr-1 hide-scrollbar">
+                            <div class="p-4 bg-cocoa/5 rounded-2xl border border-cocoa/5 text-left">
+                                <p class="font-bold text-cocoa text-xs">Evaluación Inicial</p>
+                                <p class="text-[11px] text-cocoa/70 mt-0.5 font-light leading-relaxed">
+                                    Analizamos tu punto de partida, objetivos e historial de hábitos para diseñar tu estrategia de nutrición.
+                                </p>
+                            </div>
+                            <div class="p-4 bg-cocoa/5 rounded-2xl border border-cocoa/5 text-left">
+                                <p class="font-bold text-cocoa text-xs">Sesión de Seguimiento</p>
+                                <p class="text-[11px] text-cocoa/70 mt-0.5 font-light leading-relaxed">
+                                    Evaluamos tus progresos diarios y adaptamos tus pautas para consolidar hábitos saludables duraderos.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="text-xs font-bold text-[#8f6b2d] border border-[#8f6b2d]/20 bg-[#8f6b2d]/5 px-4 py-3 rounded-xl mb-4 text-center">
+                            Consultar con recepción las tarifas
+                        </div>
+                        <button onclick="Swal.fire('Información', 'Contacta con el centro o administrador para programar y abonar tu consulta.', 'info')" 
+                            class="block w-full py-3.5 bg-[#8f6b2d] hover:bg-[#26160c] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md">
+                            Contactar con Admin
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. CATEGORY: TALLERES -->
+            <div id="section-talleres" class="max-w-xl mx-auto w-full px-4 transition-all duration-500 hidden opacity-0 transform translate-y-[20px]">
+                <!-- Talleres Especiales -->
+                <div class="tariff-card flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl bg-cocoa/5 flex items-center justify-center mb-6 text-cocoa shadow-inner">
+                            <i class="ph-fill ph-sketch-logo text-2xl text-[#6a6540]"></i>
+                        </div>
+                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2">Talleres Temáticos</h3>
+                        <p class="text-[10px] text-cocoa/60 mb-6 font-light uppercase tracking-wider">Próximamente</p>
+                        
+                        <p class="text-sm text-cocoa/80 leading-relaxed font-light text-left mb-6">
+                            Sesiones especiales para profundizar en diferentes estilos y prácticas de yoga, meditación y bienestar holístico. Las temáticas, fechas e inscripciones se anunciarán muy pronto en recepción.
+                        </p>
+                    </div>
+                    <div class="mt-8">
+                        <div class="text-xs font-bold text-[#6a6540] border border-[#6a6540]/20 bg-[#6a6540]/5 px-4 py-3 rounded-xl mb-4 text-center">
+                            Consultar tarifas
+                        </div>
+                        <button onclick="Swal.fire('Próximamente', 'Los próximos talleres y eventos especiales se anunciarán muy pronto. Para cualquier consulta, ponte en contacto con recepción.', 'info')" 
+                            class="block w-full py-3.5 bg-[#6a6540] hover:bg-[#26160c] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md">
+                            Saber Más
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer spacing (Matches classes.html layout) -->
+        <div class="w-full flex items-center justify-center z-15 pb-4 select-none pointer-events-none">
+            <span class="text-[9px] uppercase tracking-[0.2em] font-bold text-[#795244]/40">&copy; 2026 Gen Yoga</span>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="app.js" defer></script>
+    <script>
+        function switchCategory(category) {
+            const tabs = {
+                yoga: document.getElementById('tab-yoga'),
+                psicologia: document.getElementById('tab-psicologia'),
+                talleres: document.getElementById('tab-talleres')
+            };
+
+            const sections = {
+                yoga: document.getElementById('section-yoga'),
+                psicologia: document.getElementById('section-psicologia'),
+                talleres: document.getElementById('section-talleres')
+            };
+
+            const symbols = {
+                yoga: document.getElementById('symbol-clases'),
+                psicologia: document.getElementById('symbol-consultas'),
+                talleres: document.getElementById('symbol-talleres')
+            };
+
+            // Theme colors for active states: Terracotta/brown, Gold/brown, Olive/green
+            const activeColors = {
+                yoga: '#795244',
+                psicologia: '#8f6b2d',
+                talleres: '#6a6540'
+            };
+
+            // 1. Toggle Tab Active Classes with dynamic color matching
+            Object.keys(tabs).forEach(key => {
+                const btn = tabs[key];
+                if (!btn) return;
+                if (key === category) {
+                    btn.style.backgroundColor = activeColors[key];
+                    btn.className = "px-8 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95";
+                } else {
+                    btn.style.backgroundColor = '#c3b89a';
+                    btn.className = "px-8 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95";
+                }
+            });
+
+            // 2. Toggle Section Visibilities with clean CSS transition entries
+            Object.keys(sections).forEach(key => {
+                const sec = sections[key];
+                if (!sec) return;
+                if (key === category) {
+                    sec.classList.remove('hidden');
+                    // Force reflow
+                    sec.offsetHeight;
+                    sec.style.opacity = '1';
+                    sec.style.transform = 'translateY(0)';
+                } else {
+                    sec.style.opacity = '0';
+                    sec.style.transform = 'translateY(20px)';
+                    sec.classList.add('hidden');
+                }
+            });
+
+            // 3. Toggle Decorative Symbol Poses
+            Object.keys(symbols).forEach(key => {
+                const sym = symbols[key];
+                if (!sym) return;
+                if (key === category) {
+                    sym.style.opacity = '0.95';
+                    sym.style.transform = 'translateY(0)';
+                } else {
+                    sym.style.opacity = '0';
+                    sym.style.transform = 'translateY(20px)';
+                }
+            });
+        }
+    </script>
+</body>
 </html>

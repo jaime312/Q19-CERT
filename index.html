@@ -6,95 +6,13 @@
         <title>GEN Yoga | Studio</title>
 
         <script src="https://unpkg.com/lucide@latest" defer></script>
-        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
         <link rel="stylesheet" href="tailwind-compiled.css" />
 
-        <script>
-            tailwind.config = {
-                theme: {
-                    extend: {
-                        colors: {
-                            cocoa: "#26160C",
-                            golden: "#9B7B37",
-                            terracotta: "#E1654E",
-                            mutedbrown: "#7F5040",
-                            mutedgold: "#A69C6A",
-                            beige: "#D3CAB4",
-                            ivory: "#F8F6F2",
-                            slate: "#708090",
-                            sand: "#D3CAB4" /* Alias for beige */,
-                            olive: "#9B7B37" /* Alias for golden */,
-                        },
-                        spacing: {
-                            100: "25rem",
-                            120: "30rem",
-                            140: "35rem",
-                            160: "40rem",
-                            180: "45rem",
-                            200: "50rem",
-                        },
-                        fontFamily: {
-                            serif: ["Ubuntu", "sans-serif"],
-                            sans: [
-                                '"Montserrat Arabic"',
-                                "Montserrat",
-                                "sans-serif",
-                            ],
-                            ubuntu: ["Ubuntu", "sans-serif"],
-                        },
-                    },
-                },
-            };
-        </script>
-
         <style>
-            @media (max-height: 850px) {
-                #logo-img {
-                    height: clamp(100px, 15vh, 180px) !important;
-                }
-                #symbols-container {
-                    width: 14rem !important;
-                    height: 14rem !important;
-                }
-            }
-
             @media (max-height: 820px) {
                 .hide-on-short {
                     display: none !important;
-                }
-            }
-
-            @media (max-height: 700px) {
-                #logo-img {
-                    height: clamp(80px, 12vh, 130px) !important;
-                }
-                #symbols-container {
-                    width: 12rem !important;
-                    height: 12rem !important;
-                }
-                #central-text-content {
-                    margin-top: 0.5vh !important;
-                }
-            }
-
-            @media (max-height: 580px) {
-                /* Gently scale down only on extremely short viewports to prevent collisions */
-                #logo-img {
-                    height: 100px !important;
-                }
-
-                #symbols-container {
-                    width: 10rem !important;
-                    height: 10rem !important;
-                }
-
-                #central-text-content > :not([hidden]) ~ :not([hidden]) {
-                    margin-top: 1vh !important;
-                }
-
-                footer {
-                    gap: 0.25rem !important;
                 }
             }
 
@@ -389,7 +307,7 @@
                         <a href="politica-privacidad.html" class="hover:underline">
                             Política de privacidad
                         </a>
-                        <span class="opacity-60 text-[10px]">@2026 Gen Yoga</span>
+                        <span class="opacity-60 text-[10px]">v4.0 | @2026 Gen Yoga</span>
                     </div>
                 </div>
             </div>
@@ -512,7 +430,7 @@
                             class="hover:text-sand transition underline decoration-transparent hover:decoration-sand"
                             >Política de privacidad</a
                         >
-                        <span class="opacity-60 text-[10px]">@2026 Gen Yoga</span>
+                        <span class="opacity-60 text-[10px]">v4.0 | @2026 Gen Yoga</span>
                     </div>
                 </div>
             </footer>
