@@ -130,6 +130,64 @@ function escapeHtml(value) {
     }[char]));
 }
 
+function generarUuidLocal() {
+    if (window.crypto?.randomUUID) {
+        return window.crypto.randomUUID();
+    }
+
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
+        const random = window.crypto?.getRandomValues
+            ? window.crypto.getRandomValues(new Uint8Array(1))[0] % 16
+            : Math.floor(Math.random() * 16);
+        const value = char === 'x' ? random : (random & 0x3) | 0x8;
+        return value.toString(16);
+    });
+}
+
+function normalizarSlugTexto(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .substring(0, 32) || 'cliente';
+}
+
+function generarEmailMostrador(nombre, apellidos) {
+    const base = normalizarSlugTexto(`${nombre} ${apellidos}`.trim());
+    const suffix = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+    return `mostrador+${base}-${suffix}@genyoga.studio`;
+}
+
+function esClienteMostrador(profileOrEmail) {
+    const email = typeof profileOrEmail === 'string'
+        ? profileOrEmail
+        : profileOrEmail?.email;
+    return /^mostrador\+.+@genyoga\.studio$/i.test(String(email || ''));
+}
+
+function getNombreCompletoPerfil(profile, fallback = 'Cliente') {
+    const nombreCompleto = `${profile?.nombre || ''} ${profile?.apellidos || ''}`.trim();
+    return nombreCompleto || profile?.email || fallback;
+}
+
+function getIdentificadorPerfil(profile) {
+    if (esClienteMostrador(profile)) {
+        return 'Mostrador · sin acceso online';
+    }
+    return profile?.email || 'Sin email';
+}
+
+function getTextoBusquedaPerfil(profile) {
+    return [
+        profile?.nombre,
+        profile?.apellidos,
+        profile?.email,
+        esClienteMostrador(profile) ? 'mostrador sin acceso online' : ''
+    ].filter(Boolean).join(' ').toLowerCase();
+}
+
 // --- 2. AUTHENTICATION ---
 
 // --- 1. DETECCIÓN DE PLATAFORMA (TRINIDAD) ---
@@ -582,11 +640,14 @@ async function renderSaldosCliente() {
             </div>`;
     } else {
         bonoMensualHtml = `
-            <div class="bg-white/40 px-3 py-2 rounded-2xl border border-dashed border-gray-300 shadow-sm hover:border-gray-400 transition cursor-default min-w-[120px]"
+            <div class="bg-white/40 px-3 py-2 rounded-2xl border border-dashed border-terracotta/20 shadow-sm hover:border-gray-400 transition min-w-[160px]"
                 title="Bono Mensual Inactivo">
-                <span class="block text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-none">Bono Mensual</span>
-                <div class="flex items-center justify-end gap-2 mt-1.5">
-                    <span class="bg-gray-100 text-gray-400 text-[9px] font-bold px-2 py-0.5 rounded border border-gray-200 uppercase tracking-wider">Inactivo</span>
+                <span class="block text-[9px] text-terracotta font-bold uppercase tracking-widest leading-none">Bono Mensual</span>
+                <div class="flex items-center justify-between gap-2 mt-1.5">
+                    <span class="bg-terracotta/10 text-terracotta text-[9px] font-bold px-2 py-0.5 rounded border border-terracotta/20 uppercase tracking-wider">Inactivo</span>
+                    <button onclick="solicitarActivacionBonoMensual()" class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider btn-solicitar-mensual rounded transition shadow-sm">
+                        Solicitar
+                    </button>
                 </div>
             </div>`;
     }
@@ -612,7 +673,7 @@ async function renderSaldosCliente() {
             const stats = await getBonoMensualStats();
             const fechaFin = userBonoMensualFin ? new Date(userBonoMensualFin).toLocaleDateString('es-ES') : '--/--/----';
             profileHtml += `
-                <div class="bg-white/90 px-4 py-3 rounded-2xl border border-[#10B981] text-center min-w-[160px] flex flex-col justify-between items-center">
+                <div class="bg-white/90 px-4 py-3 rounded-2xl border border-[#10B981] text-center min-w-[160px] flex flex-col justify-center items-center">
                     <div>
                         <span class="block text-[9px] text-emerald-600 font-bold uppercase tracking-widest leading-none">Bono Mensual Activo</span>
                         <div class="flex justify-center items-center gap-3 mt-2 text-sm text-cocoa font-bold">
@@ -627,22 +688,19 @@ async function renderSaldosCliente() {
                         </div>
                         <span class="block text-[8px] text-gray-400 mt-1 uppercase tracking-wider font-light">Vence: ${fechaFin}</span>
                     </div>
-                    <button onclick="cambiarBonoMensual('${currentUser.id}', false)" class="mt-3 w-full py-1.5 text-[10px] font-bold uppercase tracking-wider btn-desactivar-mensual rounded-lg transition shadow-sm flex items-center justify-center gap-1">
-                        <i class="ph-bold ph-x-circle text-xs"></i> Desactivar
-                    </button>
                 </div>
             `;
         } else {
             profileHtml += `
-                <div class="bg-white/60 px-4 py-3 rounded-2xl border border-dashed border-gray-300 text-center min-w-[110px] opacity-70 flex flex-col justify-between items-center">
+                <div class="bg-white/90 px-4 py-3 rounded-2xl border border-dashed border-terracotta/40 text-center min-w-[190px] flex flex-col justify-between items-center shadow-sm">
                     <div>
-                        <span class="block text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-none">Bono Mensual</span>
+                        <span class="block text-[9px] text-terracotta font-bold uppercase tracking-widest leading-none">Bono Mensual Inactivo</span>
                         <div class="flex items-center justify-center gap-1.5 mt-2">
-                            <span class="bg-gray-100 text-gray-400 text-[10px] font-bold px-2.5 py-1 rounded border border-gray-200 uppercase tracking-wide">Inactivo</span>
+                            <span class="bg-terracotta/10 text-terracotta text-[10px] font-bold px-2.5 py-1 rounded border border-terracotta/20 uppercase tracking-wide">Inactivo</span>
                         </div>
                     </div>
-                    <button onclick="cambiarBonoMensual('${currentUser.id}', true)" class="mt-3 w-full py-1.5 text-[10px] font-bold uppercase tracking-wider btn-activar-mensual rounded-lg transition shadow-sm flex items-center justify-center gap-1">
-                        <i class="ph-bold ph-check-circle text-xs"></i> Activar
+                    <button onclick="solicitarActivacionBonoMensual()" class="mt-3 w-full py-2 text-[10px] font-bold uppercase tracking-wider btn-solicitar-mensual rounded-lg transition shadow-sm flex items-center justify-center gap-1.5">
+                        <i class="ph-bold ph-paper-plane-tilt text-xs"></i> Solicitar activación
                     </button>
                 </div>
             `;
@@ -1324,6 +1382,83 @@ async function enviarEmailReserva(clase, usarBonoMensual) {
     }
 }
 
+async function solicitarActivacionBonoMensual() {
+    if (!currentUser?.id) return;
+
+    const res = await Swal.fire({
+        title: 'Solicitar activación',
+        text: 'Enviaremos una solicitud a GEN Yoga para revisar y activar tu bono mensual.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Enviar solicitud',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#E1654E'
+    });
+
+    if (!res.isConfirmed) return;
+
+    Swal.fire({
+        title: 'Enviando solicitud...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+
+    try {
+        const { data: perfil, error: errPerfil } = await client
+            .from('profiles')
+            .select('nombre, apellidos, email')
+            .eq('id', currentUser.id)
+            .single();
+
+        if (errPerfil) {
+            throw errPerfil;
+        }
+
+        const nombreCompleto = `${perfil?.nombre || ''} ${perfil?.apellidos || ''}`.trim() || 'Alumno';
+        const userEmail = perfil?.email || currentUser.email || '';
+        const fechaSolicitud = new Date().toLocaleString('es-ES', {
+            dateStyle: 'full',
+            timeStyle: 'short'
+        });
+
+        const emailBody = `
+            <h3>Solicitud de activación de bono mensual</h3>
+            <p>El/la alumno/a <strong>${escapeHtml(nombreCompleto)}</strong> ha solicitado activar su bono mensual desde su perfil.</p>
+            <ul>
+                <li><strong>Email:</strong> ${escapeHtml(userEmail)}</li>
+                <li><strong>ID de usuario:</strong> ${escapeHtml(currentUser.id)}</li>
+                <li><strong>Fecha de solicitud:</strong> ${escapeHtml(fechaSolicitud)}</li>
+            </ul>
+            <p>Revisar y activar manualmente desde el panel de gestión de bonos.</p>
+        `;
+
+        const { error } = await client.functions.invoke('send-email', {
+            body: {
+                to: 'hola@genyoga.studio',
+                subject: `Solicitud bono mensual: ${nombreCompleto}`,
+                html: emailBody
+            }
+        });
+
+        if (error) throw error;
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Solicitud enviada',
+            text: 'GEN Yoga revisará tu solicitud y contactará contigo.',
+            confirmButtonColor: '#9B7B37'
+        });
+    } catch (e) {
+        console.error('Error al solicitar activación de bono mensual:', e);
+        Swal.fire({
+            icon: 'error',
+            title: 'No se pudo enviar',
+            text: 'Escríbenos a hola@genyoga.studio para solicitar la activación.',
+            confirmButtonColor: '#E1654E'
+        });
+    }
+}
+
 async function cancelar(reservaId) {
     const res = await Swal.fire({
         title: '¿Cancelar reserva?',
@@ -1863,12 +1998,13 @@ async function cargarMiGrupoProfesor() {
         }
 
         container.innerHTML = alumnosGrupo.map(al => {
-            const nombreCompleto = `${al.nombre || ''} ${al.apellidos || ''}`.trim() || al.email || 'Alumno';
+            const nombreCompleto = getNombreCompletoPerfil(al, 'Alumno');
+            const identificador = getIdentificadorPerfil(al);
             return `
                 <div class="flex items-center justify-between bg-sand/5 border border-cocoa/5 rounded-xl px-3 py-1.5 shadow-sm text-xs">
                     <div class="flex flex-col min-w-0">
-                        <span class="font-semibold text-cocoa truncate" title="${nombreCompleto}">${nombreCompleto}</span>
-                        <span class="text-[9px] text-cocoa/40 truncate">${al.email || ''}</span>
+                        <span class="font-semibold text-cocoa truncate" title="${escapeHtml(nombreCompleto)}">${escapeHtml(nombreCompleto)}</span>
+                        <span class="text-[9px] text-cocoa/40 truncate">${escapeHtml(identificador)}</span>
                     </div>
                 </div>
             `;
@@ -2123,12 +2259,13 @@ async function cargarGruposProfesionalesAdmin() {
         } else {
             alumnosHtml = `<div class="space-y-1.5 max-h-40 overflow-y-auto pr-1">
                 ${alumnosGrupo.map(al => {
-                    const nombreCompleto = `${al.nombre || ''} ${al.apellidos || ''}`.trim() || al.email || 'Alumno';
+                    const nombreCompleto = getNombreCompletoPerfil(al, 'Alumno');
+                    const identificador = getIdentificadorPerfil(al);
                     return `
                         <div class="flex items-center justify-between bg-sand/5 border border-cocoa/5 rounded-xl px-3 py-1.5 shadow-sm text-xs group/item">
                             <div class="flex flex-col min-w-0">
-                                <span class="font-semibold text-cocoa truncate" title="${nombreCompleto}">${nombreCompleto}</span>
-                                <span class="text-[9px] text-cocoa/40 truncate">${al.email || ''}</span>
+                                <span class="font-semibold text-cocoa truncate" title="${escapeHtml(nombreCompleto)}">${escapeHtml(nombreCompleto)}</span>
+                                <span class="text-[9px] text-cocoa/40 truncate">${escapeHtml(identificador)}</span>
                             </div>
                             <button onclick="eliminarAlumnoDeGrupo(${p.id}, '${al.id}')"
                                 class="w-6 h-6 rounded-lg text-cocoa/30 hover:text-red-500 hover:bg-red-50 transition flex items-center justify-center"
@@ -2142,8 +2279,8 @@ async function cargarGruposProfesionalesAdmin() {
         }
 
         const optionsHtml = candidatos.map(cand => {
-            const nombreCompleto = `${cand.nombre || ''} ${cand.apellidos || ''}`.trim() || cand.email || 'Alumno';
-            return `<option value="${cand.id}">${escapeHtml(nombreCompleto)} (${escapeHtml(cand.email || '')})</option>`;
+            const nombreCompleto = getNombreCompletoPerfil(cand, 'Alumno');
+            return `<option value="${cand.id}">${escapeHtml(nombreCompleto)} (${escapeHtml(getIdentificadorPerfil(cand))})</option>`;
         }).join('');
 
         const card = document.createElement('div');
@@ -2252,6 +2389,136 @@ async function cargarUsuariosAdmin() {
     renderStaffTable(staff);
 }
 
+async function insertarPerfilMostradorDirecto(payload) {
+    const perfilCompleto = {
+        id: payload.id,
+        email: payload.email,
+        nombre: payload.nombre,
+        apellidos: payload.apellidos,
+        rol: 'cliente',
+        bonos: payload.bonos,
+        saldo_psicologia: 0,
+        saldo_nutricion: 0,
+        bono_mensual_activo: false,
+        bono_mensual_inicio: null,
+        bono_mensual_fin: null
+    };
+
+    let result = await client.from('profiles').insert(perfilCompleto).select().single();
+    if (result.error && /saldo_psicologia|saldo_nutricion|bono_mensual/i.test(result.error.message || '')) {
+        const perfilBasico = {
+            id: payload.id,
+            email: payload.email,
+            nombre: payload.nombre,
+            apellidos: payload.apellidos,
+            rol: 'cliente',
+            bonos: payload.bonos
+        };
+        result = await client.from('profiles').insert(perfilBasico).select().single();
+    }
+
+    return result;
+}
+
+async function crearPerfilMostradorEnServidor(payload) {
+    return client.functions.invoke('create-kiosk-user', {
+        body: {
+            nombre: payload.nombre,
+            apellidos: payload.apellidos,
+            email: payload.email,
+            bonos: payload.bonos
+        }
+    });
+}
+
+async function abrirCrearClienteMostrador() {
+    if (!isAdmin) return;
+
+    const { value: formValues } = await Swal.fire({
+        title: 'Crear cliente de mostrador',
+        html: `
+            <div class="space-y-4 text-left">
+                <p class="text-xs text-gray-500 leading-relaxed">
+                    Crea un perfil interno para personas que reservan y pagan desde el mostrador. No tendrá contraseña ni acceso online.
+                </p>
+                <div>
+                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Nombre</label>
+                    <input id="swal-kiosk-nombre" class="w-full px-3 py-2 border rounded-lg outline-none" placeholder="Nombre">
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Apellidos</label>
+                    <input id="swal-kiosk-apellidos" class="w-full px-3 py-2 border rounded-lg outline-none" placeholder="Apellidos">
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Bonos individuales iniciales</label>
+                    <input id="swal-kiosk-bonos" type="number" min="0" step="1" class="w-full px-3 py-2 border rounded-lg outline-none" value="0">
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Crear cliente',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#26160C',
+        focusConfirm: false,
+        preConfirm: () => {
+            const nombre = document.getElementById('swal-kiosk-nombre').value.trim();
+            const apellidos = document.getElementById('swal-kiosk-apellidos').value.trim();
+            const bonos = Math.max(0, parseInt(document.getElementById('swal-kiosk-bonos').value, 10) || 0);
+
+            if (!nombre) {
+                Swal.showValidationMessage('El nombre es obligatorio');
+                return false;
+            }
+
+            return { nombre, apellidos, bonos };
+        }
+    });
+
+    if (!formValues) return;
+
+    const payload = {
+        id: generarUuidLocal(),
+        email: generarEmailMostrador(formValues.nombre, formValues.apellidos),
+        nombre: formValues.nombre,
+        apellidos: formValues.apellidos,
+        bonos: formValues.bonos
+    };
+
+    Swal.fire({
+        title: 'Creando cliente...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+
+    let result = await crearPerfilMostradorEnServidor(payload);
+    let creadoPorServidor = !result.error;
+
+    if (result.error) {
+        const serverError = result.error;
+        result = await insertarPerfilMostradorDirecto(payload);
+
+        if (result.error) {
+            console.error('Error al crear cliente de mostrador:', { serverError, directError: result.error });
+            Swal.fire({
+                icon: 'error',
+                title: 'No se pudo crear',
+                text: 'La base de datos no permitió crear el perfil. Revisa que la función create-kiosk-user esté desplegada.',
+                confirmButtonColor: '#E1654E'
+            });
+            return;
+        }
+    }
+
+    await cargarUsuariosAdmin();
+    const nombreCompleto = `${payload.nombre} ${payload.apellidos}`.trim();
+    Swal.fire({
+        icon: 'success',
+        title: 'Cliente creado',
+        text: `${nombreCompleto} ya aparece en gestión de bonos${creadoPorServidor ? ' como usuario sin contraseña' : ' como perfil de mostrador'}.`,
+        confirmButtonColor: '#9B7B37'
+    });
+}
+
 function getSaldoConfig(tipo) {
     return SALDOS_CONFIG[tipo] || SALDOS_CONFIG.yoga;
 }
@@ -2357,6 +2624,10 @@ function renderUsersTable(users) {
     users.forEach(u => {
         const rolUsuario = (u.rol || '').toLowerCase().trim();
         const isAdminRow = rolUsuario === 'admin';
+        const isMostrador = esClienteMostrador(u);
+        const nombreCompleto = getNombreCompletoPerfil(u, 'Cliente');
+        const identificador = getIdentificadorPerfil(u);
+        const inicial = nombreCompleto.charAt(0).toUpperCase() || '?';
         const row = document.createElement('tr');
         row.className = 'bg-white/90 hover:bg-white transition shadow-sm border border-gray-100';
 
@@ -2366,17 +2637,19 @@ function renderUsersTable(users) {
             roleBadge = '<span class="bg-gray-900 text-white text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest border border-gray-800">Admin</span>';
         } else if (STAFF_ROLES.includes(rolUsuario)) {
             roleBadge = '<span class="bg-slate-200 text-slate-600 text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest border border-slate-300">Profesional</span>';
+        } else if (isMostrador) {
+            roleBadge = '<span class="bg-olive/10 text-olive text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest border border-olive/20">Mostrador</span>';
         }
 
         row.innerHTML = `
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
                             <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${isAdminRow ? 'bg-gold-100 text-gold-700' : 'bg-gray-200 text-gray-500'}">
-                                ${u.email ? u.email.charAt(0).toUpperCase() : '?'}
+                                ${escapeHtml(inicial)}
                             </div>
                             <div class="flex flex-col">
-                                <span class="font-medium text-gray-700 truncate max-w-[140px] sm:max-w-none">${u.email || 'Anon'}</span>
-                                <span class="text-[10px] text-gray-400">${u.nombre || ''} ${u.apellidos || ''}</span>
+                                <span class="font-medium text-gray-700 truncate max-w-[140px] sm:max-w-none">${escapeHtml(nombreCompleto)}</span>
+                                <span class="text-[10px] ${isMostrador ? 'text-olive font-semibold' : 'text-gray-400'}">${escapeHtml(identificador)}</span>
                             </div>
                         </div>
                     </td>
@@ -2448,6 +2721,16 @@ function renderStaffTable(users) {
 }
 
 async function cambiarBonoMensual(userId, activar) {
+    if (!isAdmin) {
+        Swal.fire({
+            icon: 'info',
+            title: 'Activación gestionada por GEN Yoga',
+            text: 'El bono mensual solo puede activarlo o desactivarlo el equipo de GEN Yoga.',
+            confirmButtonColor: '#9B7B37'
+        });
+        return;
+    }
+
     if (activar) {
         const hoy = new Date().toISOString().split('T')[0];
         const enUnMes = new Date();
@@ -2970,7 +3253,7 @@ async function borrarProfesor(id) {
 
 function filtrarUsuarios() {
     const term = document.getElementById('user-search').value.toLowerCase();
-    const filtered = allUsersCache.filter(u => u.email && u.email.toLowerCase().includes(term));
+    const filtered = allUsersCache.filter(u => getTextoBusquedaPerfil(u).includes(term));
     
     const clients = filtered.filter(u => !['admin', ...STAFF_ROLES].includes((u.rol || '').toLowerCase().trim()));
     const staff = filtered.filter(u => ['admin', ...STAFF_ROLES].includes((u.rol || '').toLowerCase().trim()));
@@ -3858,18 +4141,21 @@ async function agregarConfiguracion() {
 // ================= PERFIL =================
 function renderProfileCard(profile) {
     const wrapper = document.getElementById('profile-card');
-    if (!wrapper) return;
-    if (!profile) { wrapper.classList.add('hidden'); return; }
+    const fullNameEl = document.getElementById('profile-nombre-full');
+    if (!profile) {
+        if (fullNameEl) fullNameEl.textContent = '--';
+        if (wrapper) wrapper.classList.add('hidden');
+        return;
+    }
 
     const nombre = profile.nombre ?? '';
     const apellidos = profile.apellidos ?? '';
-    const fullNameEl = document.getElementById('profile-nombre-full');
-    if (fullNameEl) fullNameEl.textContent = `${nombre} ${apellidos}`.trim();
+    if (fullNameEl) fullNameEl.textContent = `${nombre} ${apellidos}`.trim() || currentUser?.email || '--';
 
     animateBalance("profile-bonos-count", userBonos);
     animateBalance("profile-saldo-psicologia-count", userSaldoPsicologia);
     animateBalance("profile-saldo-nutricion-count", userSaldoNutricion);
-    wrapper.classList.remove('hidden');
+    if (wrapper) wrapper.classList.remove('hidden');
 }
 
 async function loadProfileCard() {
@@ -3881,7 +4167,7 @@ async function loadProfileCard() {
 }
 
 async function abrirEditarPerfil() {
-    const fullName = document.getElementById('profile-nombre-full').textContent.trim();
+    const fullName = document.getElementById('profile-nombre-full')?.textContent.trim() || '';
     const parts = fullName.split(' ');
     const currentNombre = parts[0] || '';
     const currentApellidos = parts.slice(1).join(' ') || '';
@@ -5510,12 +5796,11 @@ async function abrirModalAsignarClaseYoga(claseId) {
     }
 
     const options = clientes.map(cliente => {
-        const nombreCompleto = `${cliente.nombre || ''} ${cliente.apellidos || ''}`.trim();
-        const label = nombreCompleto || cliente.email || 'Cliente sin email';
+        const label = getNombreCompletoPerfil(cliente, 'Cliente');
         const saldo = toSafeNumber(cliente.bonos);
         const tieneBonoMensual = 'bono_mensual_activo' in cliente ? !!cliente.bono_mensual_activo : false;
         const mensual = tieneBonoMensual ? 'Mensual Activo' : 'Mensual Inactivo';
-        return `<option value="${cliente.id}">${escapeHtml(label)} · ${escapeHtml(cliente.email || '')} · bonos ind: ${saldo} · ${mensual}</option>`;
+        return `<option value="${cliente.id}">${escapeHtml(label)} · ${escapeHtml(getIdentificadorPerfil(cliente))} · bonos ind: ${saldo} · ${mensual}</option>`;
     }).join('');
 
     let grupoBtnHtml = '';
@@ -5732,9 +6017,8 @@ async function abrirModalAsignarConsulta(tipo, claseId) {
     }
 
     const options = clientes.map(cliente => {
-        const nombreCompleto = `${cliente.nombre || ''} ${cliente.apellidos || ''}`.trim();
-        const label = nombreCompleto || cliente.email || 'Cliente sin email';
-        return `<option value="${cliente.id}">${escapeHtml(label)} · ${escapeHtml(cliente.email || '')}</option>`;
+        const label = getNombreCompletoPerfil(cliente, 'Cliente');
+        return `<option value="${cliente.id}">${escapeHtml(label)} · ${escapeHtml(getIdentificadorPerfil(cliente))}</option>`;
     }).join('');
 
     const result = await Swal.fire({
@@ -6227,9 +6511,8 @@ async function abrirModalAsignarTaller(claseId) {
     }
 
     const options = clientes.map(cliente => {
-        const nombreCompleto = `${cliente.nombre || ''} ${cliente.apellidos || ''}`.trim();
-        const label = nombreCompleto || cliente.email || 'Cliente sin email';
-        return `<option value="${cliente.id}">${escapeHtml(label)} · ${escapeHtml(cliente.email || '')}</option>`;
+        const label = getNombreCompletoPerfil(cliente, 'Cliente');
+        return `<option value="${cliente.id}">${escapeHtml(label)} · ${escapeHtml(getIdentificadorPerfil(cliente))}</option>`;
     }).join('');
 
     const result = await Swal.fire({

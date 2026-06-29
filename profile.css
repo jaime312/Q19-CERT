@@ -91,6 +91,62 @@ h6,
     display: none !important;
 }
 
+.profile-header-actions {
+    gap: 0.75rem;
+}
+
+.profile-header-avatar {
+    display: none;
+}
+
+.profile-header-meta {
+    text-align: right;
+}
+
+.profile-header-name {
+    max-width: 7.5rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+}
+
+.profile-main-content {
+    padding-top: 1rem;
+    padding-bottom: 2rem;
+}
+
+@media (min-width: 640px) {
+    .profile-header-actions {
+        gap: 1.5rem;
+    }
+
+    .profile-header-avatar {
+        display: flex;
+    }
+
+    .profile-header-meta {
+        text-align: left;
+    }
+
+    .profile-header-name {
+        max-width: 11.25rem;
+        font-size: 1rem;
+        line-height: 1.5rem;
+    }
+}
+
+@media (min-width: 768px) {
+    .profile-header-name {
+        max-width: 14.375rem;
+        font-size: 1.125rem;
+        line-height: 1.75rem;
+    }
+
+    .profile-main-content {
+        padding-top: 1.5rem;
+        padding-bottom: 3rem;
+    }
+}
+
 /* Animaciones */
 .fade-in {
     animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -489,4 +545,13 @@ body.platform-web .mobile-only {
     background-color: #dc2626 !important;
 }
 
+.btn-solicitar-mensual {
+    background-color: #e1654e !important;
+    color: #ffffff !important;
+    transition: all 0.2s ease;
+}
 
+.btn-solicitar-mensual:hover {
+    background-color: #26160c !important;
+    transform: translateY(-1px);
+}
