@@ -327,6 +327,14 @@ const CONFIG_INFO = {
         unidad: 'horas',
         categoria: 'Reservas'
     },
+    'horas_limite_reserva': {
+        nombre: 'Tiempo límite para reservar',
+        descripcion: 'Horas mínimas de anticipación requeridas para reservar una clase',
+        icono: 'ph-clock-countdown',
+        tipo: 'numero',
+        unidad: 'horas',
+        categoria: 'Reservas'
+    },
     'permitir_cancelacion_admin_siempre': {
         nombre: 'Admins cancelan siempre',
         descripcion: 'Permitir que administradores cancelen reservas sin límite de tiempo',
@@ -352,6 +360,51 @@ const CONFIG_INFO = {
     }
 };
 
+let configuracionesApp = {};
+
+async function cargarConfiguracionesApp() {
+    try {
+        const { data, error } = await client.from('configuracion').select('*');
+        if (error) {
+            console.error("Error al cargar configuraciones:", error);
+            return;
+        }
+
+        configuracionesApp = {};
+        if (data) {
+            data.forEach(c => {
+                configuracionesApp[c.clave] = c.valor;
+            });
+
+            // 1. Migrar limite de cancelacion de 12 a 24 si corresponde
+            if (configuracionesApp['horas_limite_cancelacion'] === '12') {
+                console.log("Migrando horas_limite_cancelacion de 12 a 24...");
+                const cancelConfig = data.find(c => c.clave === 'horas_limite_cancelacion');
+                if (cancelConfig) {
+                    await client.from('configuracion').update({ valor: '24' }).eq('id', cancelConfig.id);
+                    configuracionesApp['horas_limite_cancelacion'] = '24';
+                }
+            }
+
+            // 2. Inicializar horas_limite_reserva si falta
+            if (configuracionesApp['horas_limite_reserva'] === undefined) {
+                console.log("Creando horas_limite_reserva en la base de datos...");
+                const { data: newConfig, error: errNew } = await client.from('configuracion').insert([{
+                    clave: 'horas_limite_reserva',
+                    valor: '12',
+                    descripcion: 'Horas mínimas de anticipación requeridas para realizar una reserva',
+                    tipo: 'integer'
+                }]).select();
+                if (newConfig && !errNew) {
+                    configuracionesApp['horas_limite_reserva'] = '12';
+                }
+            }
+        }
+    } catch (err) {
+        console.error("Excepción al cargar configuraciones:", err);
+    }
+}
+
 // --- 3. APP INIT & PROFILE ---
 
 function formatDateLocal(date) {
@@ -361,13 +414,69 @@ function formatDateLocal(date) {
     return `${year}-${month}-${day}`;
 }
 
+function getCurrentLang() {
+    try {
+        return window.currentLang || localStorage.getItem('yoga-lang') || 'es';
+    } catch (e) {
+        return window.currentLang || 'es';
+    }
+}
+
+function getCurrentLocale() {
+    return getCurrentLang() === 'en' ? 'en-GB' : 'es-ES';
+}
+
+function profileT(key, fallback = '') {
+    if (typeof window.t === 'function') {
+        const translated = window.t(key);
+        if (translated && translated !== key) return translated;
+    }
+    return fallback || key;
+}
+
+function formatDisplayTime(date) {
+    return new Date(date).toLocaleTimeString(getCurrentLocale(), { hour: '2-digit', minute: '2-digit', hour12: false });
+}
+
+function formatDisplayWeekday(date) {
+    return new Date(date).toLocaleDateString(getCurrentLocale(), { weekday: 'long' });
+}
+
+function formatDisplayMonth(date) {
+    return new Date(date).toLocaleDateString(getCurrentLocale(), { month: 'long' });
+}
+
+function formatDisplayShortDate(date) {
+    return new Date(date).toLocaleDateString(getCurrentLocale(), { day: '2-digit', month: 'short' });
+}
+
+function formatDisplayLongDate(date, includeYear = false) {
+    const options = includeYear
+        ? { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }
+        : { weekday: 'long', day: 'numeric', month: 'long' };
+    return new Date(date).toLocaleDateString(getCurrentLocale(), options);
+}
+
+function formatDisplayDateTime(date) {
+    return new Date(date).toLocaleString(getCurrentLocale(), { dateStyle: 'full', timeStyle: 'short', hour12: false });
+}
+
+function syncFlatpickrLocales() {
+    const locale = getCurrentLang() === 'es' ? 'es' : 'default';
+    [datePickerInstance, datePickerConsultaInstance, datePickerTallerInstance].forEach(instance => {
+        if (instance && typeof instance.set === 'function') {
+            instance.set('locale', locale);
+        }
+    });
+}
+
 async function initApp() {
     document.getElementById('auth-container').classList.add('hidden');
     document.getElementById('app-view').classList.remove('hidden');
 
     // Init Flatpickr for Classes
     datePickerInstance = flatpickr("#clase-fecha", {
-        locale: "es",
+        locale: getCurrentLang() === 'es' ? "es" : "default",
         dateFormat: "Y-m-d",
         firstDayOfWeek: 1,
         disableMobile: "true"
@@ -428,7 +537,7 @@ async function initApp() {
 
     // Init Flatpickr for Consultations (Admin modal)
     datePickerConsultaInstance = flatpickr("#consulta-fecha", {
-        locale: "es",
+        locale: getCurrentLang() === 'es' ? "es" : "default",
         dateFormat: "Y-m-d",
         firstDayOfWeek: 1,
         disableMobile: "true"
@@ -436,7 +545,7 @@ async function initApp() {
 
     // Init Flatpickr for Workshops (Admin modal)
     datePickerTallerInstance = flatpickr("#taller-fecha", {
-        locale: "es",
+        locale: getCurrentLang() === 'es' ? "es" : "default",
         dateFormat: "Y-m-d",
         firstDayOfWeek: 1,
         disableMobile: "true"
@@ -705,11 +814,22 @@ async function renderSaldosCliente() {
     const profileWrapper = document.getElementById('profile-saldos-wrapper');
 
     let html = '';
+    const singleClass = profileT('common_single_class', 'Clase suelta');
+    const singleClasses = profileT('common_single_classes', 'Clases sueltas');
+    const monthlyPlan = profileT('common_monthly_plan', 'Bono Mensual');
+    const monthlyActive = profileT('common_monthly_plan_active', 'Bono Mensual Activo');
+    const monthlyInactive = profileT('common_monthly_plan_inactive', 'Bono Mensual Inactivo');
+    const inactive = profileT('common_inactive', 'Inactivo');
+    const request = profileT('profile_request', 'Solicitar');
+    const requestActivation = profileT('profile_request_activation', 'Solicitar activación');
+    const weekShort = profileT('profile_week_short', 'Sem');
+    const monthShort = profileT('profile_month_short', 'Mes');
+    const expires = profileT('profile_expires', 'Vence');
     
     const bonoIndividualHtml = `
         <div class="bg-white px-3 py-2 rounded-2xl border border-gray-200 shadow-sm hover:border-olive transition cursor-default min-w-[120px]"
-            title="Bonos Individuales">
-            <span class="block text-[9px] text-cocoa/50 font-bold uppercase tracking-widest leading-none">Bono Individual</span>
+            title="${escapeHtml(singleClasses)}">
+            <span class="block text-[9px] text-cocoa/50 font-bold uppercase tracking-widest leading-none">${escapeHtml(singleClass)}</span>
             <div class="flex items-center justify-end gap-2 mt-1">
                 <i class="ph-fill ph-ticket text-olive text-lg"></i>
                 <span id="bonos-count" class="font-black text-cocoa text-xl leading-none">${userBonos}</span>
@@ -719,31 +839,31 @@ async function renderSaldosCliente() {
     let bonoMensualHtml = '';
     if (userBonoMensualActivo) {
         const stats = await getBonoMensualStats();
-        const fechaFin = userBonoMensualFin ? new Date(userBonoMensualFin).toLocaleDateString('es-ES') : '--/--/----';
+        const fechaFin = userBonoMensualFin ? new Date(userBonoMensualFin).toLocaleDateString(getCurrentLocale()) : '--/--/----';
         bonoMensualHtml = `
             <div class="bg-white px-3 py-2 rounded-2xl border border-[#10B981] shadow-sm hover:border-emerald-600 transition cursor-default min-w-[160px]"
-                title="Bono Mensual Activo (Vence: ${fechaFin})">
-                <span class="block text-[9px] text-[#10B981] font-bold uppercase tracking-widest leading-none">Bono Mensual Activo</span>
+                title="${escapeHtml(monthlyActive)} (${escapeHtml(expires)}: ${escapeHtml(fechaFin)})">
+                <span class="block text-[9px] text-[#10B981] font-bold uppercase tracking-widest leading-none">${escapeHtml(monthlyActive)}</span>
                 <div class="flex items-center justify-between gap-2 mt-1.5 text-xs text-cocoa font-semibold">
                     <div class="flex items-center gap-1">
                         <i class="ph-fill ph-flower-lotus text-[#10B981]"></i>
-                        <span>Sem: <b class="text-emerald-700">${stats.semana}</b>/2</span>
+                        <span>${escapeHtml(weekShort)}: <b class="text-emerald-700">${stats.semana}</b>/2</span>
                     </div>
                     <div class="w-px h-3.5 bg-gray-200"></div>
                     <div>
-                        <span>Mes: <b class="text-emerald-700">${stats.mes}</b>/8</span>
+                        <span>${escapeHtml(monthShort)}: <b class="text-emerald-700">${stats.mes}</b>/8</span>
                     </div>
                 </div>
             </div>`;
     } else {
         bonoMensualHtml = `
             <div class="bg-white/40 px-3 py-2 rounded-2xl border border-dashed border-terracotta/20 shadow-sm hover:border-gray-400 transition min-w-[160px]"
-                title="Bono Mensual Inactivo">
-                <span class="block text-[9px] text-terracotta font-bold uppercase tracking-widest leading-none">Bono Mensual</span>
+                title="${escapeHtml(monthlyInactive)}">
+                <span class="block text-[9px] text-terracotta font-bold uppercase tracking-widest leading-none">${escapeHtml(monthlyPlan)}</span>
                 <div class="flex items-center justify-between gap-2 mt-1.5">
-                    <span class="bg-terracotta/10 text-terracotta text-[9px] font-bold px-2 py-0.5 rounded border border-terracotta/20 uppercase tracking-wider">Inactivo</span>
+                    <span class="bg-terracotta/10 text-terracotta text-[9px] font-bold px-2 py-0.5 rounded border border-terracotta/20 uppercase tracking-wider">${escapeHtml(inactive)}</span>
                     <button onclick="solicitarActivacionBonoMensual()" class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider btn-solicitar-mensual rounded transition shadow-sm">
-                        Solicitar
+                        ${escapeHtml(request)}
                     </button>
                 </div>
             </div>`;
@@ -758,7 +878,7 @@ async function renderSaldosCliente() {
     if (profileWrapper) {
         let profileHtml = `
             <div class="bg-white/80 px-4 py-3 rounded-2xl border border-cocoa/10 text-center min-w-[110px]">
-                <span class="block text-[9px] text-cocoa/45 font-bold uppercase tracking-widest leading-none">Bonos Individuales</span>
+                <span class="block text-[9px] text-cocoa/45 font-bold uppercase tracking-widest leading-none">${escapeHtml(singleClasses)}</span>
                 <div class="flex items-center justify-center gap-1.5 mt-2">
                     <i class="ph-fill ph-ticket text-olive text-lg"></i>
                     <span class="font-black text-cocoa text-2xl leading-none">${userBonos}</span>
@@ -768,22 +888,22 @@ async function renderSaldosCliente() {
 
         if (userBonoMensualActivo) {
             const stats = await getBonoMensualStats();
-            const fechaFin = userBonoMensualFin ? new Date(userBonoMensualFin).toLocaleDateString('es-ES') : '--/--/----';
+            const fechaFin = userBonoMensualFin ? new Date(userBonoMensualFin).toLocaleDateString(getCurrentLocale()) : '--/--/----';
             profileHtml += `
                 <div class="bg-white/90 px-4 py-3 rounded-2xl border border-[#10B981] text-center min-w-[160px] flex flex-col justify-center items-center">
                     <div>
-                        <span class="block text-[9px] text-emerald-600 font-bold uppercase tracking-widest leading-none">Bono Mensual Activo</span>
+                        <span class="block text-[9px] text-emerald-600 font-bold uppercase tracking-widest leading-none">${escapeHtml(monthlyActive)}</span>
                         <div class="flex justify-center items-center gap-3 mt-2 text-sm text-cocoa font-bold">
                             <div class="flex items-center gap-1">
                                 <i class="ph-fill ph-flower-lotus text-[#10B981]"></i>
-                                <span>Sem: <b class="text-emerald-700 text-lg">${stats.semana}</b>/2</span>
+                                <span>${escapeHtml(weekShort)}: <b class="text-emerald-700 text-lg">${stats.semana}</b>/2</span>
                             </div>
                             <div class="w-px h-4 bg-gray-200"></div>
                             <div>
-                                <span>Mes: <b class="text-emerald-700 text-lg">${stats.mes}</b>/8</span>
+                                <span>${escapeHtml(monthShort)}: <b class="text-emerald-700 text-lg">${stats.mes}</b>/8</span>
                             </div>
                         </div>
-                        <span class="block text-[8px] text-gray-400 mt-1 uppercase tracking-wider font-light">Vence: ${fechaFin}</span>
+                        <span class="block text-[8px] text-gray-400 mt-1 uppercase tracking-wider font-light">${escapeHtml(expires)}: ${escapeHtml(fechaFin)}</span>
                     </div>
                 </div>
             `;
@@ -791,13 +911,13 @@ async function renderSaldosCliente() {
             profileHtml += `
                 <div class="bg-white/90 px-4 py-3 rounded-2xl border border-dashed border-terracotta/40 text-center min-w-[190px] flex flex-col justify-between items-center shadow-sm">
                     <div>
-                        <span class="block text-[9px] text-terracotta font-bold uppercase tracking-widest leading-none">Bono Mensual Inactivo</span>
+                        <span class="block text-[9px] text-terracotta font-bold uppercase tracking-widest leading-none">${escapeHtml(monthlyInactive)}</span>
                         <div class="flex items-center justify-center gap-1.5 mt-2">
-                            <span class="bg-terracotta/10 text-terracotta text-[10px] font-bold px-2.5 py-1 rounded border border-terracotta/20 uppercase tracking-wide">Inactivo</span>
+                            <span class="bg-terracotta/10 text-terracotta text-[10px] font-bold px-2.5 py-1 rounded border border-terracotta/20 uppercase tracking-wide">${escapeHtml(inactive)}</span>
                         </div>
                     </div>
                     <button onclick="solicitarActivacionBonoMensual()" class="mt-3 w-full py-2 text-[10px] font-bold uppercase tracking-wider btn-solicitar-mensual rounded-lg transition shadow-sm flex items-center justify-center gap-1.5">
-                        <i class="ph-bold ph-paper-plane-tilt text-xs"></i> Solicitar activación
+                        <i class="ph-bold ph-paper-plane-tilt text-xs"></i> ${escapeHtml(requestActivation)}
                     </button>
                 </div>
             `;
@@ -931,6 +1051,7 @@ async function checkProfile() {
             else alertBox.classList.add('hidden');
         }
     }
+    await cargarConfiguracionesApp();
 }
 
 function animateValue(id, start, end, duration) {
@@ -952,8 +1073,11 @@ function renderizarCalendario() {
     const month = currentCalendarMonth.getMonth();
 
     // Header
-    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const monthNames = [
+        window.t('month_0'), window.t('month_1'), window.t('month_2'), window.t('month_3'),
+        window.t('month_4'), window.t('month_5'), window.t('month_6'), window.t('month_7'),
+        window.t('month_8'), window.t('month_9'), window.t('month_10'), window.t('month_11')
+    ];
     document.getElementById('calendar-month-year').textContent = `${monthNames[month]} ${year}`;
 
     // Grid
@@ -1095,7 +1219,7 @@ function actualizarOpcionesFiltrosClases() {
     });
 
     // Rellenar Profesor
-    selectProfesor.innerHTML = '<option value="todos">Todos los profesores</option>';
+    selectProfesor.innerHTML = `<option value="todos">${escapeHtml(profileT('profile_filter_all_teachers', 'Todos los profesores'))}</option>`;
     profesoresMap.forEach((nombre, id) => {
         const opt = document.createElement('option');
         opt.value = id;
@@ -1104,7 +1228,7 @@ function actualizarOpcionesFiltrosClases() {
     });
 
     // Rellenar Tipo de Yoga
-    selectTipoYoga.innerHTML = '<option value="todos">Todos los tipos</option>';
+    selectTipoYoga.innerHTML = `<option value="todos">${escapeHtml(profileT('profile_filter_all_types', 'Todos los tipos'))}</option>`;
     Array.from(tiposYogaSet).sort().forEach(tipo => {
         const opt = document.createElement('option');
         opt.value = tipo;
@@ -1132,7 +1256,7 @@ async function cargarHorarios() {
     container.innerHTML = `
     <div class="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
       <i class="ph-duotone ph-spinner animate-spin text-4xl text-olive"></i>
-      <span class="text-xs uppercase tracking-widest font-bold text-gray-500">Cargando clases...</span>
+      <span class="text-xs uppercase tracking-widest font-bold text-gray-500">${escapeHtml(profileT('profile_loading_classes', 'Cargando clases...'))}</span>
     </div>`;
 
     // Solo traer clases futuras (desde hoy - 2 horas para permitir ver la actual)
@@ -1273,8 +1397,8 @@ function renderizarClases() {
         container.innerHTML = `
                     <div class="bg-white/90 backdrop-blur-md rounded-2xl p-12 text-center border border-white/20 shadow-lg">
                         <i class="ph-duotone ph-calendar-x text-5xl text-cocoa/20 mb-4"></i>
-                        <p class="text-cocoa/60 font-medium">No hay clases que coincidan con los filtros</p>
-                        <button onclick="limpiarTodosLosFiltrosClases()" class="mt-4 text-olive hover:underline text-sm font-bold">Restablecer filtros</button>
+                        <p class="text-cocoa/60 font-medium">${escapeHtml(profileT('profile_no_matching_classes', 'No hay clases que coincidan con los filtros'))}</p>
+                        <button onclick="limpiarTodosLosFiltrosClases()" class="mt-4 text-olive hover:underline text-sm font-bold">${escapeHtml(profileT('profile_reset_filters', 'Restablecer filtros'))}</button>
                     </div>`;
         return;
     }
@@ -1290,9 +1414,9 @@ function renderizarClases() {
 
     Object.keys(grupos).sort().forEach(dateKey => {
         const dateObj = new Date(dateKey);
-        const diaNombre = dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
+        const diaNombre = formatDisplayWeekday(dateObj);
         const diaNumero = dateObj.getDate();
-        const mes = dateObj.toLocaleDateString('es-ES', { month: 'long' });
+        const mes = formatDisplayMonth(dateObj);
 
         const section = document.createElement('div');
         section.className = 'bg-white/90 backdrop-blur-md rounded-3xl border border-white/20 shadow-lg overflow-hidden';
@@ -1311,7 +1435,7 @@ function renderizarClases() {
         const grid = section.querySelector(`#grid-${dateKey}`);
 
         grupos[dateKey].forEach(c => {
-            const hora = new Date(c.fecha_inicio).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            const hora = formatDisplayTime(c.fecha_inicio);
 
             const isHot = c.nombre.toLowerCase().includes('hot') || c.nombre.toLowerCase().includes('bikram');
 
@@ -1330,28 +1454,28 @@ function renderizarClases() {
             if (isAdmin) {
                 btnAction = `
                             <button onclick="abrirModalAsignarPlazaAdmin('yoga', ${c.id})" class="bg-gradient-to-r from-cocoa to-olive text-white text-[11px] font-bold px-5 py-2 rounded-full shadow-md hover:shadow-lg transition active:scale-95 flex items-center gap-1">
-                                <i class="ph-bold ph-user-plus"></i> ASIGNAR
+                                <i class="ph-bold ph-user-plus"></i> ${escapeHtml(profileT('profile_assign', 'ASIGNAR'))}
                             </button>`;
             } else if (reservada) {
                 btnAction = `
                             <button onclick="cancelar(${c.miReserva.id})" class="group flex items-center gap-2 text-[11px] font-bold text-cocoa/40 hover:text-red-500 border border-cocoa/10 hover:border-red-200 bg-ivory px-4 py-2 rounded-full transition shadow-sm">
-                                <i class="ph-bold ph-x group-hover:scale-110 transition"></i> CANCELAR
+                                <i class="ph-bold ph-x group-hover:scale-110 transition"></i> ${escapeHtml(profileT('profile_cancel', 'CANCELAR'))}
                             </button>`;
             } else if (llena) {
-                btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">Completa</span>`;
+                btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">${escapeHtml(profileT('profile_full', 'Completa'))}</span>`;
             } else {
                 const esAlumno = !isAdmin && !STAFF_ROLES.includes(currentUserRole);
                 if (!esAlumno) {
-                    btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">No Disponible</span>`;
+                    btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">${escapeHtml(profileT('profile_unavailable', 'No Disponible'))}</span>`;
                 } else {
                     const tieneBonoMensual = userBonoMensualActivo && userBonoMensualInicio && userBonoMensualFin;
                     const canBook = (userBonos >= 1 || tieneBonoMensual);
                     const disabledClass = (!canBook) ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:shadow-lg hover:brightness-110 active:scale-95';
-                    const btnText = (!canBook) ? '0 Bonos' : 'RESERVAR';
+                    const btnText = (!canBook) ? profileT('profile_no_balance', 'Sin Saldo') : profileT('profile_book', 'RESERVAR');
 
                     btnAction = `
                                 <button onclick="reservar(${c.id})" class="bg-gradient-to-r from-terracotta to-golden text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform ${disabledClass}">
-                                    ${btnText}
+                                    ${escapeHtml(btnText)}
                                 </button>`;
                 }
             }
@@ -1378,7 +1502,7 @@ function renderizarClases() {
                                         <h4 class="brand-font font-bold text-lg text-cocoa group-hover:text-olive transition leading-tight">
                                             ${c.nombre}
                                         </h4>
-                                        <div class="flex items-center gap-2 bg-sand/10 px-2.5 py-1 rounded-full border border-cocoa/10 shadow-sm order-last sm:order-none" title="Instructor">
+                                        <div class="flex items-center gap-2 bg-sand/10 px-2.5 py-1 rounded-full border border-cocoa/10 shadow-sm order-last sm:order-none" title="${escapeHtml(profileT('common_instructor', 'Instructor'))}">
                                             <div class="w-6 h-6 rounded-full overflow-hidden border border-cocoa/10 shadow-sm flex-shrink-0">
                                                 ${profesorAvatar}
                                             </div>
@@ -1388,12 +1512,12 @@ function renderizarClases() {
                                     </div>
 
                                     <div class="flex items-center gap-2 mt-1">
-                                         <div class="flex items-center gap-1.5 text-xs text-cocoa/50 bg-ivory border border-cocoa/10 px-2 py-0.5 rounded-md shadow-sm" title="Aforo">
+                                         <div class="flex items-center gap-1.5 text-xs text-cocoa/50 bg-ivory border border-cocoa/10 px-2 py-0.5 rounded-md shadow-sm" title="${escapeHtml(profileT('profile_capacity', 'Aforo'))}">
                                             <i class="ph-bold ph-users text-cocoa/20 text-sm"></i>
                                             <span class="font-bold text-cocoa/70">${c.ocupadas}</span>
                                             <span class="text-cocoa/30 text-[10px]">/ ${c.capacidad_max}</span>
                                         </div>
-                                        ${reservada ? '<span class="text-[10px] font-bold text-olive bg-olive/10 border border-olive/20 px-2 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-fill ph-check-circle"></i> Tu Plaza</span>' : ''}
+                                        ${reservada ? `<span class="text-[10px] font-bold text-olive bg-olive/10 border border-olive/20 px-2 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-fill ph-check-circle"></i> ${escapeHtml(profileT('profile_your_spot', 'Tu Plaza'))}</span>` : ''}
                                     </div>
                                 </div>
                             </div>
@@ -1429,6 +1553,26 @@ async function reservar(claseId) {
     // Validación preliminar con datos en caché
     const clase = allClasesCache.find(c => c.id === claseId);
     if (!clase) return;
+
+    // Validación de límite de tiempo para reservar (modificable por el admin, por defecto 12h)
+    const isUserAdminOrStaff = isAdmin || esTrabajador();
+    if (!isUserAdminOrStaff) {
+        const classDate = new Date(clase.fecha_inicio);
+        const now = new Date();
+        const diffMs = classDate - now;
+        const diffHours = diffMs / (1000 * 60 * 60);
+        
+        const limitReservaHours = parseInt(configuracionesApp['horas_limite_reserva'] || '12', 10);
+        
+        if (diffHours <= limitReservaHours) {
+            return Swal.fire({
+                icon: 'error',
+                title: 'No se puede reservar',
+                text: 'La clase está demasiado cerca y no puedes reservar.',
+                confirmButtonColor: '#D27D60'
+            });
+        }
+    }
 
     if (clase.miReserva) {
         return Swal.fire({
@@ -1498,27 +1642,27 @@ async function reservar(claseId) {
                     usarBonoMensual = true;
                     mensajeConfirmacion = `¿Quieres reservar esta clase usando tu <b>Bono Mensual</b>?<br><span class="text-xs text-gray-500">(Reservas esta semana: ${semanaCount}/2, este mes: ${mesCount}/8)</span>`;
                 } else if (semanaCount >= 2) {
-                    mensajeConfirmacion = `Has alcanzado el límite semanal de <b>2 clases</b> de tu bono mensual para esta semana. ¿Quieres reservar usando <b>1 bono individual</b> (15€)?`;
+                    mensajeConfirmacion = `Has alcanzado el límite semanal de <b>2 clases</b> de tu bono mensual para esta semana. ¿Quieres reservar usando <b>1 clase suelta</b> (15€)?`;
                 } else {
-                    mensajeConfirmacion = `Has agotado las <b>8 clases</b> de tu bono mensual para este periodo. ¿Quieres reservar usando <b>1 bono individual</b> (15€)?`;
+                    mensajeConfirmacion = `Has agotado las <b>8 clases</b> de tu bono mensual para este periodo. ¿Quieres reservar usando <b>1 clase suelta</b> (15€)?`;
                 }
             }
         }
     }
 
     if (!usarBonoMensual) {
-        // Requiere bono individual
+        // Requiere clase suelta
         if (userBonos < 1 && !isAdmin) {
             return Swal.fire({
                 icon: 'warning',
-                title: 'Sin bonos individuales',
-                text: 'Has alcanzado los límites de tu bono mensual (o no lo tienes activo) y no te quedan bonos individuales (15€). Adquiere bonos para reservar.',
+                title: 'Sin clases sueltas',
+                text: 'Has alcanzado los límites de tu bono mensual (o no lo tienes activo) y no te quedan clases sueltas (15€). Adquiere clases sueltas para reservar.',
                 confirmButtonText: 'Entendido',
                 confirmButtonColor: '#D27D60'
             });
         }
         if (mensajeConfirmacion === '¿Quieres reservar esta clase?') {
-            mensajeConfirmacion = '¿Quieres reservar esta clase usando <b>1 bono individual</b>?';
+            mensajeConfirmacion = '¿Quieres reservar esta clase usando <b>1 clase suelta</b>?';
         }
     }
 
@@ -1595,8 +1739,8 @@ async function enviarEmailReserva(clase, usarBonoMensual) {
         const userEmail = perfil.email || currentUser.email || '';
 
         const profesorName = clase.profesionales ? clase.profesionales.nombre : 'Staff GEN Yoga';
-        const fechaClase = new Date(clase.fecha_inicio).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-        const horaClase = new Date(clase.fecha_inicio).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        const fechaClase = formatDisplayLongDate(clase.fecha_inicio, true);
+        const horaClase = formatDisplayTime(clase.fecha_inicio);
 
         const emailBody = `
             <h3>Nueva Reserva de Clase</h3>
@@ -1606,7 +1750,7 @@ async function enviarEmailReserva(clase, usarBonoMensual) {
                 <li><strong>Instructor:</strong> ${profesorName}</li>
                 <li><strong>Fecha:</strong> ${fechaClase}</li>
                 <li><strong>Hora:</strong> ${horaClase}</li>
-                <li><strong>Método:</strong> ${usarBonoMensual ? 'Bono Mensual' : 'Bono Individual'}</li>
+                <li><strong>Método:</strong> ${usarBonoMensual ? 'Bono Mensual' : 'Clase suelta'}</li>
             </ul>
         `;
 
@@ -1656,10 +1800,7 @@ async function solicitarActivacionBonoMensual() {
 
         const nombreCompleto = `${perfil?.nombre || ''} ${perfil?.apellidos || ''}`.trim() || 'Alumno';
         const userEmail = perfil?.email || currentUser.email || '';
-        const fechaSolicitud = new Date().toLocaleString('es-ES', {
-            dateStyle: 'full',
-            timeStyle: 'short'
-        });
+        const fechaSolicitud = formatDisplayDateTime(new Date());
 
         const emailBody = `
             <h3>Solicitud de activación de bono mensual</h3>
@@ -1700,6 +1841,56 @@ async function solicitarActivacionBonoMensual() {
 }
 
 async function cancelar(reservaId) {
+    // 1. Validar límite de tiempo para cancelar (modificable por el admin, por defecto 24h)
+    let claseFechaInicio = null;
+    const isUserAdminOrStaff = isAdmin || esTrabajador();
+    const permitirCancelacionAdminSiempre = configuracionesApp['permitir_cancelacion_admin_siempre'] === 'true' || configuracionesApp['permitir_cancelacion_admin_siempre'] === true;
+
+    if (!(isUserAdminOrStaff && permitirCancelacionAdminSiempre)) {
+        Swal.fire({
+            title: 'Verificando reserva...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        // Consultar el clase_id de la reserva
+        const { data: resYoga, error: errYoga } = await client
+            .from('reservas_yoga')
+            .select('clase_id')
+            .eq('id', reservaId)
+            .single();
+
+        if (resYoga && resYoga.clase_id) {
+            const { data: claseData } = await client
+                .from('clases')
+                .select('fecha_inicio')
+                .eq('id', resYoga.clase_id)
+                .single();
+            if (claseData) {
+                claseFechaInicio = claseData.fecha_inicio;
+            }
+        }
+        Swal.close();
+
+        if (claseFechaInicio) {
+            const classDate = new Date(claseFechaInicio);
+            const now = new Date();
+            const diffMs = classDate - now;
+            const diffHours = diffMs / (1000 * 60 * 60);
+
+            const limitCancelHours = parseInt(configuracionesApp['horas_limite_cancelacion'] || '24', 10);
+
+            if (diffHours <= limitCancelHours) {
+                return Swal.fire({
+                    icon: 'error',
+                    title: 'No se puede cancelar',
+                    text: `ya no se puede cancelar debido a que la clase es en menos de ${limitCancelHours} horas.`,
+                    confirmButtonColor: '#D27D60'
+                });
+            }
+        }
+    }
+
     const res = await Swal.fire({
         title: '¿Cancelar reserva?',
         text: "Se te devolverá el bono a tu cuenta.",
@@ -1716,7 +1907,7 @@ async function cancelar(reservaId) {
         if (error) Swal.fire('Error', error.message, 'error');
         else {
             const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
-            Toast.fire({ icon: 'info', title: 'Reserva cancelada. Bono devuelto.' });
+            Toast.fire({ icon: 'info', title: 'Reserva cancelada. Clase devuelta.' });
             await checkProfile();
             await cargarHorarios();
             if (isAdmin) await cargarAsistenciasPorClase();
@@ -1957,7 +2148,7 @@ async function cargarAsistenciasPorClase() {
             const fecha = new Date(c.fecha_inicio);
             const tipoMeta = getTipoClaseMeta(c.tipo_clase);
             option.value = String(c.id);
-            option.textContent = `${fecha.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })} · ${fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} · ${tipoMeta.label} · ${c.nombre || 'Clase'}`;
+            option.textContent = `${formatDisplayShortDate(fecha)} · ${formatDisplayTime(fecha)} · ${tipoMeta.label} · ${c.nombre || profileT('common_class', 'Clase')}`;
             filtro.appendChild(option);
         });
 
@@ -2003,9 +2194,9 @@ function renderizarAsistenciasPorClase() {
 
     Object.keys(grupos).sort().forEach(dateKey => {
         const dateObj = new Date(dateKey);
-        const diaNombre = dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
+        const diaNombre = formatDisplayWeekday(dateObj);
         const diaNumero = dateObj.getDate();
-        const mes = dateObj.toLocaleDateString('es-ES', { month: 'long' });
+        const mes = formatDisplayMonth(dateObj);
 
         const card = document.createElement('div');
         card.className = 'bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden';
@@ -2025,7 +2216,7 @@ function renderizarAsistenciasPorClase() {
         const grid = card.querySelector(`#asistencias-grid-${dateKey}`);
 
         grupos[dateKey].forEach(c => {
-            const hora = new Date(c.fecha_inicio).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            const hora = formatDisplayTime(c.fecha_inicio);
             const p = c.profesionales;
             const profesorName = p ? p.nombre : 'Staff GEN';
             const profesorFoto = p && p.foto_url ? p.foto_url : null;
@@ -2259,8 +2450,11 @@ async function cargarMiGrupoProfesor() {
 function renderizarCalendarioProfesor() {
     const year = currentCalendarMonthProfesor.getFullYear();
     const month = currentCalendarMonthProfesor.getMonth();
-    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const monthNames = [
+        window.t('month_0'), window.t('month_1'), window.t('month_2'), window.t('month_3'),
+        window.t('month_4'), window.t('month_5'), window.t('month_6'), window.t('month_7'),
+        window.t('month_8'), window.t('month_9'), window.t('month_10'), window.t('month_11')
+    ];
 
     const label = document.getElementById('profesor-calendar-month-year');
     if (label) label.textContent = `${monthNames[month]} ${year}`;
@@ -2356,9 +2550,9 @@ function renderizarAgendaProfesor() {
 
     Object.keys(grupos).sort().forEach(dateKey => {
         const dateObj = new Date(dateKey);
-        const diaNombre = dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
+        const diaNombre = formatDisplayWeekday(dateObj);
         const diaNumero = dateObj.getDate();
-        const mes = dateObj.toLocaleDateString('es-ES', { month: 'long' });
+        const mes = formatDisplayMonth(dateObj);
         const section = document.createElement('div');
         section.className = 'bg-white/90 backdrop-blur-md rounded-3xl border border-white/20 shadow-lg overflow-hidden';
         section.innerHTML = `
@@ -2376,8 +2570,8 @@ function renderizarAgendaProfesor() {
         grupos[dateKey].forEach(c => {
             const inicio = new Date(c.fecha_inicio);
             const fin = c.fecha_fin ? new Date(c.fecha_fin) : null;
-            const hora = inicio.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-            const horaFin = fin ? fin.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : null;
+            const hora = formatDisplayTime(inicio);
+            const horaFin = fin ? formatDisplayTime(fin) : null;
             const tipoMeta = getTipoClaseMeta(c.tipo_clase);
             const ocupadas = toSafeNumber(c.reservasCount);
 
@@ -2690,7 +2884,7 @@ async function abrirCrearClienteMostrador() {
                     <input id="swal-kiosk-apellidos" class="w-full px-3 py-2 border rounded-lg outline-none" placeholder="Apellidos">
                 </div>
                 <div>
-                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Bonos individuales iniciales</label>
+                    <label class="text-xs font-bold uppercase text-gray-500 block mb-1">Clases sueltas iniciales</label>
                     <input id="swal-kiosk-bonos" type="number" min="0" step="1" class="w-full px-3 py-2 border rounded-lg outline-none" value="0">
                 </div>
             </div>
@@ -2777,7 +2971,7 @@ function renderSaldoBadgeAdmin(u) {
     const indHtml = `
         <div class="flex items-center justify-between gap-3 rounded-xl border ${indBadge} px-3 py-1.5 bg-opacity-80">
             <span class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide">
-                <i class="ph-bold ph-ticket"></i> Bonos Ind.
+                <i class="ph-bold ph-ticket"></i> Clases Sueltas
             </span>
             <span class="${indClass}">${indValue}</span>
         </div>`;
@@ -2785,7 +2979,7 @@ function renderSaldoBadgeAdmin(u) {
     // Bono Mensual
     let mensualHtml = '';
     if (u.bono_mensual_activo) {
-        const fechaFin = u.bono_mensual_fin ? new Date(u.bono_mensual_fin).toLocaleDateString('es-ES') : '--/--/----';
+        const fechaFin = u.bono_mensual_fin ? new Date(u.bono_mensual_fin).toLocaleDateString(getCurrentLocale()) : '--/--/----';
         mensualHtml = `
             <div class="flex items-center justify-between gap-3 rounded-xl border border-emerald-200 px-3 py-1.5 bg-emerald-50 bg-opacity-80">
                 <span class="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 uppercase tracking-wide">
@@ -2809,11 +3003,11 @@ function renderSaldoBadgeAdmin(u) {
 function renderActionsAdmin(u) {
     const indButtons = `
         <div class="flex items-center gap-1.5">
-            <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wide w-14 text-right">Bonos Ind:</span>
-            <button onclick="sumarSaldo('${u.id}', 'yoga', -1)" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition font-bold" title="Restar 1 Bono">
+            <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wide w-14 text-right">Clases Sueltas:</span>
+            <button onclick="sumarSaldo('${u.id}', 'yoga', -1)" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition font-bold" title="Restar 1 clase suelta">
                 -1
             </button>
-            <button onclick="sumarSaldo('${u.id}', 'yoga', 1)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-900 text-white hover:bg-black transition font-bold shadow-sm" title="Añadir 1 Bono">
+            <button onclick="sumarSaldo('${u.id}', 'yoga', 1)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-900 text-white hover:bg-black transition font-bold shadow-sm" title="Añadir 1 clase suelta">
                 +1
             </button>
         </div>`;
@@ -3146,7 +3340,7 @@ async function cambiarBonoMensual(userId, activar) {
     } else {
         const res = await Swal.fire({
             title: '¿Desactivar Bono Mensual?',
-            text: "El usuario perderá el acceso a las clases reservadas bajo este bono y volverá a usar bonos individuales.",
+            text: "El usuario perderá el acceso a las clases reservadas bajo este bono y volverá a usar clases sueltas.",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
@@ -3856,6 +4050,16 @@ document.getElementById('form-crear-clase').addEventListener('submit', async (e)
         }
     }
 
+    // Validar que las clases regulares solo se programen de Lunes a Viernes
+    for (const item of inserts) {
+        const d = new Date(item.fecha_inicio);
+        const day = d.getDay(); // 0 is Sunday, 6 is Saturday
+        if (day === 0 || day === 6) {
+            Swal.fire('Día no permitido', 'Las clases regulares solo se pueden programar de Lunes a Viernes. Por favor, selecciona un día laborable.', 'error');
+            return;
+        }
+    }
+
     Swal.fire({
         title: 'Creando clase...',
         didOpen: () => Swal.showLoading()
@@ -3904,7 +4108,7 @@ document.getElementById('form-crear-clase').addEventListener('submit', async (e)
                     if (errRes) {
                         failedReservations.push({
                             clase: cls.nombre,
-                            fecha: new Date(cls.fecha_inicio).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }),
+                            fecha: new Date(cls.fecha_inicio).toLocaleDateString(getCurrentLocale(), { day: '2-digit', month: '2-digit' }),
                             alumno: studentId,
                             error: errRes.message
                         });
@@ -4024,6 +4228,7 @@ async function cargarConfiguracion() {
     allConfigCache = configs || [];
 
     const targetConfig = configs.find(c => c.clave === 'horas_limite_cancelacion');
+    const targetConfigReserva = configs.find(c => c.clave === 'horas_limite_reserva');
 
     if (!targetConfig) {
         container.innerHTML = `
@@ -4078,34 +4283,58 @@ async function cargarConfiguracion() {
                         <div class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden group hover:shadow-xl transition flex flex-col h-full">
                             <div class="w-full h-1.5 bg-gradient-to-r from-emerald-400 to-emerald-600"></div>
                             
-                            <div class="p-6 md:p-8 flex flex-col items-center text-center">
-                                <div class="flex flex-col sm:flex-row items-center gap-6 mb-6 w-full">
-                                    <div class="w-16 h-16 shrink-0 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm group-hover:scale-110 transition duration-300">
-                                        <i class="ph-bold ph-clock-countdown text-3xl"></i>
-                                    </div>
-                                    <div class="text-left flex-1">
-                                        <h3 class="font-bold text-gray-900 text-lg leading-tight mb-1">Tiempo Límite</h3>
-                                        <p class="text-xs text-gray-500 mb-3">Antelación mínima para cancelar reservas.</p>
-                                        
-                                        <div class="flex items-center gap-3 bg-gray-50 p-1.5 rounded-xl border border-gray-200 w-fit">
-                                            <button onclick="ajustarValor(-1)" class="w-8 h-8 rounded-lg bg-white text-gray-600 shadow-sm border border-gray-100 hover:bg-emerald-600 hover:text-white transition flex items-center justify-center active:scale-95">
+                            <div class="p-6 md:p-8 flex flex-col h-full justify-between">
+                                <h3 class="font-bold text-gray-900 text-lg leading-tight mb-6 text-left flex items-center gap-2">
+                                    <i class="ph-bold ph-clock-countdown text-emerald-600 text-2xl"></i> Límites de Tiempo
+                                </h3>
+                                
+                                <div class="space-y-6 flex-grow">
+                                    <!-- Cancelación -->
+                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-50 pb-4">
+                                        <div class="text-left">
+                                            <h4 class="font-bold text-gray-800 text-sm">Cancelar reserva</h4>
+                                            <p class="text-xs text-gray-500">Antelación mínima para cancelar.</p>
+                                        </div>
+                                        <div class="flex items-center gap-3 bg-gray-50 p-1.5 rounded-xl border border-gray-200 w-fit self-start sm:self-auto">
+                                            <button onclick="ajustarValorCancelacion(-1)" class="w-8 h-8 rounded-lg bg-white text-gray-600 shadow-sm border border-gray-100 hover:bg-emerald-600 hover:text-white transition flex items-center justify-center active:scale-95">
                                                 <i class="ph-bold ph-minus"></i>
                                             </button>
-                                            
                                             <div class="flex items-center gap-1 px-2">
                                                 <input type="number" id="input-horas-cancelacion" value="${targetConfig.valor}" 
                                                        onchange="actualizarConfigRapido('${targetConfig.id}', this.value)"
                                                        class="w-10 bg-transparent text-center font-black text-xl text-gray-800 outline-none p-0 remove-arrow">
                                                 <span class="text-gray-400 font-bold text-[10px] uppercase tracking-wide pt-1">H</span>
                                             </div>
-                                            
-                                            <button onclick="ajustarValor(1)" class="w-8 h-8 rounded-lg bg-white text-gray-600 shadow-sm border border-gray-100 hover:bg-emerald-600 hover:text-white transition flex items-center justify-center active:scale-95">
+                                            <button onclick="ajustarValorCancelacion(1)" class="w-8 h-8 rounded-lg bg-white text-gray-600 shadow-sm border border-gray-100 hover:bg-emerald-600 hover:text-white transition flex items-center justify-center active:scale-95">
+                                                <i class="ph-bold ph-plus"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Reserva -->
+                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                        <div class="text-left">
+                                            <h4 class="font-bold text-gray-800 text-sm">Reservar clase</h4>
+                                            <p class="text-xs text-gray-500">Antelación mínima para reservar.</p>
+                                        </div>
+                                        <div class="flex items-center gap-3 bg-gray-50 p-1.5 rounded-xl border border-gray-200 w-fit self-start sm:self-auto">
+                                            <button onclick="ajustarValorReserva(-1)" class="w-8 h-8 rounded-lg bg-white text-gray-600 shadow-sm border border-gray-100 hover:bg-emerald-600 hover:text-white transition flex items-center justify-center active:scale-95">
+                                                <i class="ph-bold ph-minus"></i>
+                                            </button>
+                                            <div class="flex items-center gap-1 px-2">
+                                                <input type="number" id="input-horas-reserva" value="${targetConfigReserva ? targetConfigReserva.valor : 12}" 
+                                                       onchange="actualizarConfigRapido('${targetConfigReserva ? targetConfigReserva.id : ''}', this.value)"
+                                                       class="w-10 bg-transparent text-center font-black text-xl text-gray-800 outline-none p-0 remove-arrow">
+                                                <span class="text-gray-400 font-bold text-[10px] uppercase tracking-wide pt-1">H</span>
+                                            </div>
+                                            <button onclick="ajustarValorReserva(1)" class="w-8 h-8 rounded-lg bg-white text-gray-600 shadow-sm border border-gray-100 hover:bg-emerald-600 hover:text-white transition flex items-center justify-center active:scale-95">
                                                 <i class="ph-bold ph-plus"></i>
                                             </button>
                                         </div>
                                     </div>
                                 </div>
-                                <p class="text-[10px] text-emerald-600/80 font-bold uppercase tracking-wider flex items-center gap-1 self-end sm:self-auto">
+                                
+                                <p class="text-[10px] text-emerald-600/80 font-bold uppercase tracking-wider flex items-center gap-1 self-end mt-4">
                                     <i class="ph-bold ph-check-circle"></i> Guardado Auto
                                 </p>
                             </div>
@@ -4339,13 +4568,31 @@ async function cargarConfiguracion() {
         }
     };
 
-    window.ajustarValor = async (delta) => {
+    window.ajustarValorCancelacion = async (delta) => {
         const input = document.getElementById('input-horas-cancelacion');
         let val = parseInt(input.value) || 0;
         val += delta;
         if (val < 0) val = 0;
         input.value = val;
         await actualizarConfigRapido(targetConfig.id, val.toString());
+        configuracionesApp['horas_limite_cancelacion'] = val.toString();
+    };
+
+    window.ajustarValorReserva = async (delta) => {
+        const input = document.getElementById('input-horas-reserva');
+        let val = parseInt(input.value) || 0;
+        val += delta;
+        if (val < 0) val = 0;
+        input.value = val;
+        if (targetConfigReserva) {
+            await actualizarConfigRapido(targetConfigReserva.id, val.toString());
+        } else {
+            const { data } = await client.from('configuracion').select('id').eq('clave', 'horas_limite_reserva').single();
+            if (data) {
+                await actualizarConfigRapido(data.id, val.toString());
+            }
+        }
+        configuracionesApp['horas_limite_reserva'] = val.toString();
     };
 
     window.buscarUsuariosPromocion = async () => {
@@ -4437,6 +4684,11 @@ async function actualizarConfigRapido(id, nuevoValor) {
         Swal.fire('Error', error.message, 'error');
         cargarConfiguracion();
     } else {
+        // Actualizar caché local
+        const { data: configItem } = await client.from('configuracion').select('clave').eq('id', id).single();
+        if (configItem) {
+            configuracionesApp[configItem.clave] = nuevoValor;
+        }
         const Toast = Swal.mixin({ toast: true, position: 'bottom-end', showConfirmButton: false, timer: 1500 });
         Toast.fire({ icon: 'success', title: 'Configuración actualizada' });
     }
@@ -4781,14 +5033,14 @@ window.toggleProfesorDetalle = function(cardId) {
         const isHidden = detailsDiv.classList.contains('hidden');
         if (isHidden) {
             detailsDiv.classList.remove('hidden');
-            if (btnSpan) btnSpan.textContent = 'Saber menos';
+            if (btnSpan) btnSpan.textContent = profileT('teachers_read_less', 'Saber menos');
             if (btnIcon) {
                 btnIcon.classList.remove('ph-caret-down');
                 btnIcon.classList.add('ph-caret-up');
             }
         } else {
             detailsDiv.classList.add('hidden');
-            if (btnSpan) btnSpan.textContent = 'Saber más';
+            if (btnSpan) btnSpan.textContent = profileT('teachers_read_more', 'Saber más');
             if (btnIcon) {
                 btnIcon.classList.remove('ph-caret-up');
                 btnIcon.classList.add('ph-caret-down');
@@ -4814,7 +5066,7 @@ function renderProfesoresPublic(filtro = 'todos') {
     const isTestUser = (currentUser?.email || '').toLowerCase() === 'profesor@profesor.com';
     const showTestProfesor = isAdmin || isTestUser;
     
-    let baseProfs = allProfesionalesCache;
+    let baseProfs = allProfesionalesCache.map(p => window.translateProfessional ? window.translateProfessional(p) : p);
     if (!showTestProfesor) {
         baseProfs = baseProfs.filter(p => p.visible_publico !== false);
     }
@@ -4924,7 +5176,7 @@ function renderProfesoresPublic(filtro = 'todos') {
 
                     <!-- Toggle Button -->
                     <button onclick="toggleProfesorDetalle('${cardId}')" id="btn-toggle-${cardId}" class="mt-4 px-4 py-2.5 bg-cocoa/5 hover:bg-cocoa/10 text-cocoa text-xs font-bold uppercase tracking-widest rounded-xl transition w-full flex items-center justify-center gap-1.5">
-                        <span>Saber más</span>
+                        <span>${escapeHtml(profileT('teachers_read_more', 'Saber más'))}</span>
                         <i id="icon-toggle-${cardId}" class="ph-bold ph-caret-down"></i>
                     </button>
                 </div>
@@ -5017,7 +5269,7 @@ async function cargarPsicologia() {
     container.innerHTML = `
     <div class="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
       <i class="ph-duotone ph-spinner animate-spin text-4xl text-[#3B82F6]"></i>
-      <span class="text-xs uppercase tracking-widest font-bold text-gray-500">Cargando consultas...</span>
+      <span class="text-xs uppercase tracking-widest font-bold text-gray-500">${escapeHtml(profileT('profile_loading_consultations', 'Cargando consultas...'))}</span>
     </div>`;
 
     const now = new Date();
@@ -5082,7 +5334,7 @@ async function cargarNutricion() {
     container.innerHTML = `
     <div class="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
       <i class="ph-duotone ph-spinner animate-spin text-4xl text-[#8B5CF6]"></i>
-      <span class="text-xs uppercase tracking-widest font-bold text-gray-500">Cargando consultas de nutrición...</span>
+      <span class="text-xs uppercase tracking-widest font-bold text-gray-500">${escapeHtml(profileT('profile_loading_nutrition', 'Cargando consultas de nutrición...'))}</span>
     </div>`;
 
     const now = new Date();
@@ -5165,8 +5417,8 @@ function renderizarPsicologia() {
         container.innerHTML = `
             <div class="bg-white/90 backdrop-blur-md rounded-2xl p-12 text-center border border-white/20 shadow-lg">
                 <i class="ph-duotone ph-calendar-x text-5xl text-[#3B82F6]/30 mb-4"></i>
-                <p class="text-cocoa/60 font-medium">No hay consultas en esta fecha</p>
-                <button onclick="limpiarFiltroFechaPsicologia()" class="mt-4 text-[#3B82F6] hover:underline text-sm font-bold">Ver todas</button>
+                <p class="text-cocoa/60 font-medium">${escapeHtml(profileT('profile_no_consultations_date', 'No hay consultas en esta fecha'))}</p>
+                <button onclick="limpiarFiltroFechaPsicologia()" class="mt-4 text-[#3B82F6] hover:underline text-sm font-bold">${escapeHtml(profileT('profile_view_all', 'Ver todas'))}</button>
             </div>`;
         return;
     }
@@ -5182,9 +5434,9 @@ function renderizarPsicologia() {
 
     Object.keys(grupos).sort().forEach(dateKey => {
         const dateObj = new Date(dateKey);
-        const diaNombre = dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
+        const diaNombre = formatDisplayWeekday(dateObj);
         const diaNumero = dateObj.getDate();
-        const mes = dateObj.toLocaleDateString('es-ES', { month: 'long' });
+        const mes = formatDisplayMonth(dateObj);
 
         const section = document.createElement('div');
         section.className = 'bg-white/90 backdrop-blur-md rounded-3xl border border-white/20 shadow-lg overflow-hidden';
@@ -5203,7 +5455,7 @@ function renderizarPsicologia() {
         const grid = section.querySelector(`#psicologia-grid-${dateKey}`);
 
         grupos[dateKey].forEach(c => {
-            const hora = new Date(c.fecha_inicio).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            const hora = formatDisplayTime(c.fecha_inicio);
             const llena = c.ocupadas >= c.capacidad_max;
             const reservada = !!c.miReserva;
 
@@ -5211,26 +5463,26 @@ function renderizarPsicologia() {
             if (isAdmin) {
                 btnAction = `
                     <button onclick="abrirModalAsignarPlazaAdmin('psicologia', ${c.id})" class="bg-[#3B82F6] hover:bg-blue-600 text-white text-[11px] font-bold px-5 py-2 rounded-full shadow-md hover:shadow-lg transition active:scale-95 flex items-center gap-1">
-                        <i class="ph-bold ph-user-plus"></i> ASIGNAR
+                        <i class="ph-bold ph-user-plus"></i> ${escapeHtml(profileT('profile_assign', 'ASIGNAR'))}
                     </button>`;
             } else if (reservada) {
                 btnAction = `
                     <button onclick="cancelarConsulta('psicologia', ${c.miReserva.id})" class="group flex items-center gap-2 text-[11px] font-bold text-cocoa/40 hover:text-red-500 border border-cocoa/10 hover:border-red-200 bg-ivory px-4 py-2 rounded-full transition shadow-sm">
-                        <i class="ph-bold ph-x group-hover:scale-110 transition"></i> CANCELAR
+                        <i class="ph-bold ph-x group-hover:scale-110 transition"></i> ${escapeHtml(profileT('profile_cancel', 'CANCELAR'))}
                     </button>`;
             } else if (llena) {
-                btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">Reservado</span>`;
+                btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">${escapeHtml(profileT('profile_reserved', 'Reservado'))}</span>`;
             } else {
                 const esAlumno = !isAdmin && !STAFF_ROLES.includes(currentUserRole);
                 if (!esAlumno) {
-                    btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">No Disponible</span>`;
+                    btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">${escapeHtml(profileT('profile_unavailable', 'No Disponible'))}</span>`;
                 } else {
                     const saldo = getSaldoConsultaActual('psicologia');
                     const disabledClass = (saldo < 1) ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:shadow-lg hover:brightness-110 active:scale-95';
-                    const btnText = (saldo < 1) ? '0 Sesiones' : 'RESERVAR';
+                    const btnText = (saldo < 1) ? profileT('profile_zero_sessions', '0 Sesiones') : profileT('profile_book', 'RESERVAR');
                     btnAction = `
                         <button onclick="reservarConsulta('psicologia', ${c.id})" class="bg-[#3B82F6] text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform ${disabledClass}">
-                            ${btnText}
+                            ${escapeHtml(btnText)}
                         </button>`;
                 }
             }
@@ -5247,7 +5499,7 @@ function renderizarPsicologia() {
             row.innerHTML = `
                 <div class="flex items-start gap-4 w-full">
                     <div class="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-blue-50 text-[#3B82F6] border border-blue-100 shadow-sm flex-shrink-0">
-                        <span class="text-[9px] font-bold opacity-80 uppercase pb-0.5">Cita</span>
+                        <span class="text-[9px] font-bold opacity-80 uppercase pb-0.5">${escapeHtml(profileT('common_appointment', 'Cita'))}</span>
                         <span class="text-base font-black tracking-tight leading-none">${hora}</span>
                     </div>
                     
@@ -5255,9 +5507,9 @@ function renderizarPsicologia() {
                         <div class="flex flex-col gap-1">
                             <div class="flex flex-wrap items-center gap-3">
                                 <h4 class="brand-font font-bold text-lg text-cocoa group-hover:text-[#3B82F6] transition leading-tight">
-                                    ${c.nombre || 'Consulta Individual'}
+                                    ${escapeHtml(c.nombre || profileT('common_consultation', 'Consulta'))}
                                 </h4>
-                                <div class="flex items-center gap-2 bg-sand/10 px-2.5 py-1 rounded-full border border-cocoa/10 shadow-sm order-last sm:order-none" title="Profesional">
+                                <div class="flex items-center gap-2 bg-sand/10 px-2.5 py-1 rounded-full border border-cocoa/10 shadow-sm order-last sm:order-none" title="${escapeHtml(profileT('common_professional', 'Profesional'))}">
                                     <div class="w-6 h-6 rounded-full overflow-hidden border border-cocoa/10 shadow-sm flex-shrink-0">
                                         ${profesionalAvatar}
                                     </div>
@@ -5268,7 +5520,7 @@ function renderizarPsicologia() {
 
                             <div class="flex items-center gap-2 mt-1">
                                 ${c.descripcion ? `<span class="text-xs text-cocoa/50"><i class="ph-bold ph-info"></i> ${c.descripcion}</span>` : ''}
-                                ${reservada ? '<span class="text-[10px] font-bold text-[#3B82F6] bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-fill ph-check-circle"></i> Tu Consulta</span>' : ''}
+                                ${reservada ? `<span class="text-[10px] font-bold text-[#3B82F6] bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-fill ph-check-circle"></i> ${escapeHtml(profileT('profile_your_consultation', 'Tu Consulta'))}</span>` : ''}
                             </div>
                         </div>
                     </div>
@@ -5307,8 +5559,8 @@ function renderizarNutricion() {
         container.innerHTML = `
             <div class="bg-white/90 backdrop-blur-md rounded-2xl p-12 text-center border border-white/20 shadow-lg">
                 <i class="ph-duotone ph-calendar-x text-5xl text-[#8B5CF6]/30 mb-4"></i>
-                <p class="text-cocoa/60 font-medium">No hay consultas de nutrición en esta fecha</p>
-                <button onclick="limpiarFiltroFechaNutricion()" class="mt-4 text-[#8B5CF6] hover:underline text-sm font-bold">Ver todas</button>
+                <p class="text-cocoa/60 font-medium">${escapeHtml(profileT('profile_no_nutrition_date', 'No hay consultas de nutrición en esta fecha'))}</p>
+                <button onclick="limpiarFiltroFechaNutricion()" class="mt-4 text-[#8B5CF6] hover:underline text-sm font-bold">${escapeHtml(profileT('profile_view_all', 'Ver todas'))}</button>
             </div>`;
         return;
     }
@@ -5324,9 +5576,9 @@ function renderizarNutricion() {
 
     Object.keys(grupos).sort().forEach(dateKey => {
         const dateObj = new Date(dateKey);
-        const diaNombre = dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
+        const diaNombre = formatDisplayWeekday(dateObj);
         const diaNumero = dateObj.getDate();
-        const mes = dateObj.toLocaleDateString('es-ES', { month: 'long' });
+        const mes = formatDisplayMonth(dateObj);
 
         const section = document.createElement('div');
         section.className = 'bg-white/90 backdrop-blur-md rounded-3xl border border-white/20 shadow-lg overflow-hidden';
@@ -5345,7 +5597,7 @@ function renderizarNutricion() {
         const grid = section.querySelector(`#nutricion-grid-${dateKey}`);
 
         grupos[dateKey].forEach(c => {
-            const hora = new Date(c.fecha_inicio).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            const hora = formatDisplayTime(c.fecha_inicio);
             const llena = c.ocupadas >= c.capacidad_max;
             const reservada = !!c.miReserva;
 
@@ -5353,26 +5605,26 @@ function renderizarNutricion() {
             if (isAdmin) {
                 btnAction = `
                     <button onclick="abrirModalAsignarPlazaAdmin('nutricion', ${c.id})" class="bg-[#8B5CF6] hover:bg-purple-600 text-white text-[11px] font-bold px-5 py-2 rounded-full shadow-md hover:shadow-lg transition active:scale-95 flex items-center gap-1">
-                        <i class="ph-bold ph-user-plus"></i> ASIGNAR
+                        <i class="ph-bold ph-user-plus"></i> ${escapeHtml(profileT('profile_assign', 'ASIGNAR'))}
                     </button>`;
             } else if (reservada) {
                 btnAction = `
                     <button onclick="cancelarConsulta('nutricion', ${c.miReserva.id})" class="group flex items-center gap-2 text-[11px] font-bold text-cocoa/40 hover:text-red-500 border border-cocoa/10 hover:border-red-200 bg-ivory px-4 py-2 rounded-full transition shadow-sm">
-                        <i class="ph-bold ph-x group-hover:scale-110 transition"></i> CANCELAR
+                        <i class="ph-bold ph-x group-hover:scale-110 transition"></i> ${escapeHtml(profileT('profile_cancel', 'CANCELAR'))}
                     </button>`;
             } else if (llena) {
-                btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">Reservado</span>`;
+                btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">${escapeHtml(profileT('profile_reserved', 'Reservado'))}</span>`;
             } else {
                 const esAlumno = !isAdmin && !STAFF_ROLES.includes(currentUserRole);
                 if (!esAlumno) {
-                    btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">No Disponible</span>`;
+                    btnAction = `<span class="text-[10px] font-bold text-cocoa/40 bg-sand/10 px-3 py-2 rounded-full uppercase tracking-wide border border-cocoa/10 cursor-not-allowed">${escapeHtml(profileT('profile_unavailable', 'No Disponible'))}</span>`;
                 } else {
                     const saldo = getSaldoConsultaActual('nutricion');
                     const disabledClass = (saldo < 1) ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:shadow-lg hover:brightness-110 active:scale-95';
-                    const btnText = (saldo < 1) ? '0 Sesiones' : 'RESERVAR';
+                    const btnText = (saldo < 1) ? profileT('profile_zero_sessions', '0 Sesiones') : profileT('profile_book', 'RESERVAR');
                     btnAction = `
                         <button onclick="reservarConsulta('nutricion', ${c.id})" class="bg-[#8B5CF6] text-white text-[11px] font-bold px-6 py-2 rounded-full shadow-md transition transform ${disabledClass}">
-                            ${btnText}
+                            ${escapeHtml(btnText)}
                         </button>`;
                 }
             }
@@ -5389,7 +5641,7 @@ function renderizarNutricion() {
             row.innerHTML = `
                 <div class="flex items-start gap-4 w-full">
                     <div class="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-purple-50 text-[#8B5CF6] border border-purple-100 shadow-sm flex-shrink-0">
-                        <span class="text-[9px] font-bold opacity-80 uppercase pb-0.5">Cita</span>
+                        <span class="text-[9px] font-bold opacity-80 uppercase pb-0.5">${escapeHtml(profileT('common_appointment', 'Cita'))}</span>
                         <span class="text-base font-black tracking-tight leading-none">${hora}</span>
                     </div>
                     
@@ -5397,9 +5649,9 @@ function renderizarNutricion() {
                         <div class="flex flex-col gap-1">
                             <div class="flex flex-wrap items-center gap-3">
                                 <h4 class="brand-font font-bold text-lg text-cocoa group-hover:text-[#8B5CF6] transition leading-tight">
-                                    ${c.nombre || 'Consulta Nutrición'}
+                                    ${escapeHtml(c.nombre || profileT('profile_nutrition_title', 'Consulta Nutrición'))}
                                 </h4>
-                                <div class="flex items-center gap-2 bg-sand/10 px-2.5 py-1 rounded-full border border-cocoa/10 shadow-sm order-last sm:order-none" title="Profesional">
+                                <div class="flex items-center gap-2 bg-sand/10 px-2.5 py-1 rounded-full border border-cocoa/10 shadow-sm order-last sm:order-none" title="${escapeHtml(profileT('common_professional', 'Profesional'))}">
                                     <div class="w-6 h-6 rounded-full overflow-hidden border border-cocoa/10 shadow-sm flex-shrink-0">
                                         ${profesionalAvatar}
                                     </div>
@@ -5410,7 +5662,7 @@ function renderizarNutricion() {
 
                             <div class="flex items-center gap-2 mt-1">
                                 ${c.descripcion ? `<span class="text-xs text-cocoa/50"><i class="ph-bold ph-info"></i> ${c.descripcion}</span>` : ''}
-                                ${reservada ? '<span class="text-[10px] font-bold text-[#8B5CF6] bg-purple-50 border border-purple-100 px-2 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-fill ph-check-circle"></i> Tu Cita</span>' : ''}
+                                ${reservada ? `<span class="text-[10px] font-bold text-[#8B5CF6] bg-purple-50 border border-purple-100 px-2 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1"><i class="ph-fill ph-check-circle"></i> ${escapeHtml(profileT('profile_your_appointment', 'Tu Cita'))}</span>` : ''}
                             </div>
                         </div>
                     </div>
@@ -5613,8 +5865,11 @@ async function cancelarConsulta(tipo, reservaId) {
 function renderizarCalendarioPsicologia() {
     const year = currentCalendarMonthPsicologia.getFullYear();
     const month = currentCalendarMonthPsicologia.getMonth();
-    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const monthNames = [
+        window.t('month_0'), window.t('month_1'), window.t('month_2'), window.t('month_3'),
+        window.t('month_4'), window.t('month_5'), window.t('month_6'), window.t('month_7'),
+        window.t('month_8'), window.t('month_9'), window.t('month_10'), window.t('month_11')
+    ];
     
     const label = document.getElementById('psicologia-calendar-month-year');
     if (label) label.textContent = `${monthNames[month]} ${year}`;
@@ -5693,8 +5948,11 @@ function limpiarFiltroFechaPsicologia() {
 function renderizarCalendarioNutricion() {
     const year = currentCalendarMonthNutricion.getFullYear();
     const month = currentCalendarMonthNutricion.getMonth();
-    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const monthNames = [
+        window.t('month_0'), window.t('month_1'), window.t('month_2'), window.t('month_3'),
+        window.t('month_4'), window.t('month_5'), window.t('month_6'), window.t('month_7'),
+        window.t('month_8'), window.t('month_9'), window.t('month_10'), window.t('month_11')
+    ];
     
     const label = document.getElementById('nutricion-calendar-month-year');
     if (label) label.textContent = `${monthNames[month]} ${year}`;
@@ -5777,8 +6035,8 @@ function getReservasInicioPorFecha(dateKey) {
         if (c.miReserva && formatDateLocal(new Date(c.fecha_inicio)) === dateKey) {
             bookings.push({
                 tipo: 'yoga',
-                tipoLabel: 'Clase',
-                nombre: c.nombre || 'Clase',
+                tipoLabel: profileT('common_class', 'Clase'),
+                nombre: c.nombre || profileT('common_class', 'Clase'),
                 fecha: new Date(c.fecha_inicio)
             });
         }
@@ -5788,8 +6046,8 @@ function getReservasInicioPorFecha(dateKey) {
         if (c.miReserva && formatDateLocal(new Date(c.fecha_inicio)) === dateKey) {
             bookings.push({
                 tipo: 'psicologia',
-                tipoLabel: 'Psicología',
-                nombre: c.nombre || 'Consulta',
+                tipoLabel: profileT('common_psychology', 'Psicología'),
+                nombre: c.nombre || profileT('common_consultation', 'Consulta'),
                 fecha: new Date(c.fecha_inicio)
             });
         }
@@ -5799,8 +6057,8 @@ function getReservasInicioPorFecha(dateKey) {
         if (c.miReserva && formatDateLocal(new Date(c.fecha_inicio)) === dateKey) {
             bookings.push({
                 tipo: 'nutricion',
-                tipoLabel: 'Nutrición',
-                nombre: c.nombre || 'Consulta Nutrición',
+                tipoLabel: profileT('common_nutrition', 'Nutrición'),
+                nombre: c.nombre || profileT('profile_nutrition_title', 'Consulta Nutrición'),
                 fecha: new Date(c.fecha_inicio)
             });
         }
@@ -5812,8 +6070,11 @@ function getReservasInicioPorFecha(dateKey) {
 function renderizarCalendarioInicio() {
     const year = currentCalendarMonthInicio.getFullYear();
     const month = currentCalendarMonthInicio.getMonth();
-    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const monthNames = [
+        window.t('month_0'), window.t('month_1'), window.t('month_2'), window.t('month_3'),
+        window.t('month_4'), window.t('month_5'), window.t('month_6'), window.t('month_7'),
+        window.t('month_8'), window.t('month_9'), window.t('month_10'), window.t('month_11')
+    ];
     
     const label = document.getElementById('inicio-calendar-month-year');
     if (label) label.textContent = `${monthNames[month]} ${year}`;
@@ -5865,7 +6126,7 @@ function renderizarCalendarioInicio() {
             reservasContainer.className = 'calendar-reservation-list';
 
             reservasDia.slice(0, 2).forEach(b => {
-                const hora = b.fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                const hora = formatDisplayTime(b.fecha);
                 const pill = document.createElement('div');
                 pill.className = `calendar-reservation-pill ${b.tipo}`;
                 pill.title = `${b.tipoLabel}: ${b.nombre} · ${hora}`;
@@ -5876,7 +6137,7 @@ function renderizarCalendarioInicio() {
             if (reservasDia.length > 2) {
                 const more = document.createElement('div');
                 more.className = 'calendar-reservation-more';
-                more.textContent = `+${reservasDia.length - 2} más`;
+                more.textContent = `+${reservasDia.length - 2} ${profileT('profile_more', 'más')}`;
                 reservasContainer.appendChild(more);
             }
 
@@ -5937,7 +6198,7 @@ function renderizarConsolidadoDia() {
                 profesional: c.profesionales ? c.profesionales.nombre : 'Staff GEN Yoga',
                 profesionalFoto: c.profesionales ? c.profesionales.foto_url : null,
                 colorClass: 'bg-[#10B981]/10 text-[#10B981] border-[#10B981]/20',
-                tipoLabel: 'Clase',
+                tipoLabel: profileT('common_class', 'Clase'),
                 descripcion: c.descripcion || ''
             });
         }
@@ -5949,12 +6210,12 @@ function renderizarConsolidadoDia() {
                 id: c.id,
                 reservaId: c.miReserva.id,
                 tipo: 'psicologia',
-                nombre: c.nombre || 'Consulta',
+                nombre: c.nombre || profileT('common_consultation', 'Consulta'),
                 fecha: new Date(c.fecha_inicio),
                 profesional: c.profesionales ? c.profesionales.nombre : 'Staff GEN',
                 profesionalFoto: c.profesionales ? c.profesionales.foto_url : null,
                 colorClass: 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/20',
-                tipoLabel: 'Psicología',
+                tipoLabel: profileT('common_psychology', 'Psicología'),
                 descripcion: c.descripcion || ''
             });
         }
@@ -5966,12 +6227,12 @@ function renderizarConsolidadoDia() {
                 id: c.id,
                 reservaId: c.miReserva.id,
                 tipo: 'nutricion',
-                nombre: c.nombre || 'Consulta Nutrición',
+                nombre: c.nombre || profileT('profile_nutrition_title', 'Consulta Nutrición'),
                 fecha: new Date(c.fecha_inicio),
                 profesional: c.profesionales ? c.profesionales.nombre : 'Staff GEN',
                 profesionalFoto: c.profesionales ? c.profesionales.foto_url : null,
                 colorClass: 'bg-[#8B5CF6]/10 text-[#8B5CF6] border-[#8B5CF6]/20',
-                tipoLabel: 'Nutrición',
+                tipoLabel: profileT('common_nutrition', 'Nutrición'),
                 descripcion: c.descripcion || ''
             });
         }
@@ -6007,9 +6268,9 @@ function renderizarConsolidadoDia() {
 
     Object.keys(grupos).sort().forEach(dateKey => {
         const dateObj = new Date(dateKey);
-        const diaNombre = dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
+        const diaNombre = formatDisplayWeekday(dateObj);
         const diaNumero = dateObj.getDate();
-        const mes = dateObj.toLocaleDateString('es-ES', { month: 'long' });
+        const mes = formatDisplayMonth(dateObj);
 
         const section = document.createElement('div');
         section.className = 'bg-white/90 backdrop-blur-md rounded-3xl border border-white/20 shadow-lg overflow-hidden';
@@ -6028,7 +6289,7 @@ function renderizarConsolidadoDia() {
         const grid = section.querySelector(`#consolidado-grid-${dateKey}`);
 
         grupos[dateKey].forEach(b => {
-            const hora = b.fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            const hora = formatDisplayTime(b.fecha);
             
             let cancelAction = '';
             if (b.tipo === 'yoga') {
@@ -6040,7 +6301,7 @@ function renderizarConsolidadoDia() {
             const pAvatar = b.profesionalFoto
                 ? `<img src="${escapeHtml(b.profesionalFoto)}" class="w-full h-full object-cover" alt="">`
                 : `<div class="w-full h-full bg-olive/5 flex items-center justify-center text-olive text-[10px] font-bold">${escapeHtml(b.profesional.charAt(0))}</div>`;
-            const fechaLarga = b.fecha.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+            const fechaLarga = formatDisplayLongDate(b.fecha);
 
             const row = document.createElement('div');
             row.className = `inicio-booking-card inicio-booking-${b.tipo}`;
@@ -6057,13 +6318,13 @@ function renderizarConsolidadoDia() {
                         <h4 class="brand-font inicio-booking-title">${escapeHtml(b.nombre)}</h4>
 
                         <div class="inicio-booking-meta">
-                            <div class="inicio-booking-professional" title="Profesional">
+                            <div class="inicio-booking-professional" title="${escapeHtml(profileT('common_professional', 'Profesional'))}">
                                 <div class="inicio-booking-avatar">
                                     ${pAvatar}
                                 </div>
                                 <span>${escapeHtml(b.profesional)}</span>
                             </div>
-                            <span class="inicio-booking-status"><i class="ph-fill ph-check-circle"></i> Confirmada</span>
+                            <span class="inicio-booking-status"><i class="ph-fill ph-check-circle"></i> ${escapeHtml(profileT('profile_confirmed', 'Confirmada'))}</span>
                         </div>
 
                         ${b.descripcion ? `<p class="inicio-booking-description"><i class="ph-bold ph-info"></i> ${escapeHtml(b.descripcion)}</p>` : ''}
@@ -6071,7 +6332,7 @@ function renderizarConsolidadoDia() {
                 </div>
 
                 <button ${cancelAction} class="inicio-booking-cancel">
-                    <i class="ph-bold ph-x"></i> Cancelar reserva
+                    <i class="ph-bold ph-x"></i> ${escapeHtml(profileT('profile_cancel_booking', 'Cancelar reserva'))}
                 </button>
             `;
             grid.appendChild(row);
@@ -6236,7 +6497,7 @@ async function abrirModalAsignarClaseYoga(claseId) {
                     <option value="" disabled selected>Selecciona un usuario</option>
                     ${options}
                 </select>
-                <p class="text-xs text-gray-400">Se descontará de su bono mensual (si tiene saldo) o de sus bonos individuales al confirmar.</p>
+                <p class="text-xs text-gray-400">Se descontará de su bono mensual (si tiene saldo) o de sus clases sueltas al confirmar.</p>
                 ${grupoBtnHtml}
             </div>
         `,
@@ -6696,8 +6957,8 @@ function renderizarConsultasAdmin() {
     if (emptyState) emptyState.classList.add('hidden');
 
     filtradas.forEach(c => {
-        const hora = new Date(c.fecha_inicio).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-        const fecha = new Date(c.fecha_inicio).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+        const hora = formatDisplayTime(c.fecha_inicio);
+        const fecha = formatDisplayLongDate(c.fecha_inicio);
         const profName = c.profesionales ? c.profesionales.nombre : 'Staff Q19';
         
         const reserva = window.allConsultasAdminReservasMap[c.id];
@@ -6834,8 +7095,8 @@ async function cargarTalleresAdmin() {
     container.innerHTML = '';
 
     clases.forEach(c => {
-        const hora = new Date(c.fecha_inicio).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-        const fecha = new Date(c.fecha_inicio).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+        const hora = formatDisplayTime(c.fecha_inicio);
+        const fecha = formatDisplayLongDate(c.fecha_inicio);
         const profName = c.profesionales ? c.profesionales.nombre : 'Staff Q19';
         
         const resClase = reservasMap[c.id] || [];
@@ -7093,6 +7354,16 @@ async function guardarTallerAdmin(e) {
         });
     }
 
+    // Validar que los talleres solo se programen en fin de semana (Sábado y Domingo)
+    for (const item of inserts) {
+        const d = new Date(item.fecha_inicio);
+        const day = d.getDay(); // 0 is Sunday, 6 is Saturday
+        if (day !== 0 && day !== 6) {
+            Swal.fire('Día no permitido', 'Los talleres solo se pueden programar los fines de semana (Sábado y Domingo). Por favor, selecciona un día de fin de semana.', 'error');
+            return;
+        }
+    }
+
     const { data, error } = await client.from('clases').insert(inserts).select();
 
     Swal.close();
@@ -7140,3 +7411,52 @@ async function borrarTallerAdmin(id) {
         }
     }
 }
+
+// React to language change dynamically
+window.addEventListener('languageChanged', () => {
+    if (typeof syncFlatpickrLocales === 'function') {
+        try { syncFlatpickrLocales(); } catch(e){}
+    }
+    if (typeof renderSaldosCliente === 'function') {
+        try { renderSaldosCliente(); } catch(e){}
+    }
+    if (typeof actualizarOpcionesFiltrosClases === 'function') {
+        try { actualizarOpcionesFiltrosClases(); } catch(e){}
+    }
+    if (typeof renderizarCalendario === 'function') {
+        try { renderizarCalendario(); } catch(e){}
+    }
+    if (typeof renderizarClases === 'function') {
+        try { renderizarClases(); } catch(e){}
+    }
+    if (typeof renderizarCalendarioProfesor === 'function') {
+        try { renderizarCalendarioProfesor(); } catch(e){}
+    }
+    if (typeof renderizarAgendaProfesor === 'function') {
+        try { renderizarAgendaProfesor(); } catch(e){}
+    }
+    if (typeof renderizarCalendarioPsicologia === 'function') {
+        try { renderizarCalendarioPsicologia(); } catch(e){}
+    }
+    if (typeof renderizarPsicologia === 'function') {
+        try { renderizarPsicologia(); } catch(e){}
+    }
+    if (typeof renderizarCalendarioNutricion === 'function') {
+        try { renderizarCalendarioNutricion(); } catch(e){}
+    }
+    if (typeof renderizarNutricion === 'function') {
+        try { renderizarNutricion(); } catch(e){}
+    }
+    if (typeof renderizarCalendarioInicio === 'function') {
+        try { renderizarCalendarioInicio(); } catch(e){}
+    }
+    if (typeof renderizarConsolidadoDia === 'function') {
+        try { renderizarConsolidadoDia(); } catch(e){}
+    }
+    if (typeof renderizarAsistenciasPorClase === 'function') {
+        try { renderizarAsistenciasPorClase(); } catch(e){}
+    }
+    if (typeof renderProfesoresPublic === 'function') {
+        try { renderProfesoresPublic(); } catch(e){}
+    }
+});

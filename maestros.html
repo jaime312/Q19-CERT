@@ -8,6 +8,7 @@
 
         <script src="https://unpkg.com/@phosphor-icons/web"></script>
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script src="i18n.js"></script>
     </head>
     <body
         class="subpixel-antialiased min-h-screen w-screen overflow-x-hidden relative selection:bg-mutedgold selection:text-cocoa font-sans"
@@ -41,7 +42,7 @@
                 <i
                     class="ph-bold ph-arrow-left group-hover:-translate-x-1 transition"
                 ></i>
-                Volver a inicio
+                <span data-i18n="btn_back_home">Volver a inicio</span>
             </a>
 
             <div
@@ -49,6 +50,7 @@
             >
                 <h2
                     class="text-3xl md:text-5xl lg:text-7xl text-cocoa brand-font mb-8 md:mb-12 text-center drop-shadow-sm"
+                    data-i18n="teachers_title"
                 >
                     Maestros
                 </h2>
@@ -59,6 +61,7 @@
                         id="btn-filtro-prof-todos"
                         onclick="filtrarProfesionalesLanding('todos')"
                         class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-terracotta text-white transition shadow-sm hover:scale-105 active:scale-95"
+                        data-i18n="btn_prof_all"
                     >
                         Todos
                     </button>
@@ -66,6 +69,7 @@
                         id="btn-filtro-prof-yoga"
                         onclick="filtrarProfesionalesLanding('yoga')"
                         class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-cocoa/5 text-cocoa hover:bg-cocoa/10 transition border border-cocoa/10 hover:scale-105 active:scale-95"
+                        data-i18n="rates_tab_yoga"
                     >
                         Clases
                     </button>
@@ -73,6 +77,7 @@
                         id="btn-filtro-prof-psicologia"
                         onclick="filtrarProfesionalesLanding('psicologia')"
                         class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-cocoa/5 text-cocoa hover:bg-cocoa/10 transition border border-cocoa/10 hover:scale-105 active:scale-95"
+                        data-i18n="rates_tab_psy"
                     >
                         Consultas
                     </button>
@@ -80,6 +85,7 @@
                         id="btn-filtro-prof-talleres"
                         onclick="filtrarProfesionalesLanding('talleres')"
                         class="px-5 py-2.5 text-xs uppercase tracking-wider font-bold rounded-full bg-cocoa/5 text-cocoa hover:bg-cocoa/10 transition border border-cocoa/10 hover:scale-105 active:scale-95"
+                        data-i18n="rates_tab_workshops"
                     >
                         Talleres
                     </button>

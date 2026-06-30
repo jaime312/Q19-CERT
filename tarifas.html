@@ -13,6 +13,7 @@
     <script src="https://unpkg.com/lucide@latest" defer></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="i18n.js"></script>
     
     <style>
         /* Force Solid plain background (removes dot pattern from styles.css) */
@@ -49,7 +50,7 @@
         /* Outline Card Styling based on Canva mockups */
         .tariff-card {
             background-color: #ffffff;
-            border: 1px solid #795244;
+            border-width: 1px;
             border-radius: 2.25rem;
             padding: 2rem;
             box-shadow: 0 10px 30px -10px rgba(121, 82, 68, 0.05);
@@ -61,17 +62,49 @@
             box-shadow: 0 20px 40px -15px rgba(121, 82, 68, 0.12);
         }
 
-        /* CSS Color Filters to tint white SVGs/PNGs into solid colors */
-        .filter-terracotta {
-            filter: brightness(0) saturate(100%) invert(43%) sepia(50%) saturate(1470%) hue-rotate(336deg) brightness(87%) contrast(85%) !important;
+        /* CSS Color Filters to tint white SVGs/PNGs into solid colors matching theme active colors */
+        .filter-yoga-brown {
+            filter: brightness(0) saturate(100%) invert(34%) sepia(26%) saturate(1004%) hue-rotate(345deg) brightness(93%) contrast(84%) !important;
         }
         
-        .filter-gold {
-            filter: brightness(0) saturate(100%) invert(45%) sepia(35%) saturate(1312%) hue-rotate(18deg) brightness(91%) contrast(86%) !important;
+        .filter-psicologia-gold {
+            filter: brightness(0) saturate(100%) invert(42%) sepia(50%) saturate(1142%) hue-rotate(18deg) brightness(91%) contrast(82%) !important;
         }
 
-        .filter-olive {
+        .filter-talleres-olive {
             filter: brightness(0) saturate(100%) invert(39%) sepia(21%) saturate(913%) hue-rotate(30deg) brightness(96%) contrast(87%) !important;
+        }
+
+        /* Custom styles for Bono Mensual (#795244) */
+        .border-mensual {
+            border-color: #795244 !important;
+        }
+        .text-mensual {
+            color: #795244 !important;
+        }
+        .bg-mensual {
+            background-color: #795244 !important;
+            color: #ffffff !important;
+        }
+        .bg-mensual:hover {
+            background-color: #26160c !important;
+            color: #ffffff !important;
+        }
+
+        /* Custom styles for Clase Suelta (#956857) */
+        .border-suelta {
+            border-color: #956857 !important;
+        }
+        .text-suelta {
+            color: #956857 !important;
+        }
+        .bg-suelta {
+            background-color: #956857 !important;
+            color: #ffffff !important;
+        }
+        .bg-suelta:hover {
+            background-color: #26160c !important;
+            color: #ffffff !important;
         }
     </style>
 </head>
@@ -81,45 +114,46 @@
     <div class="fixed-viewport">
         
         <!-- Button completely loose on the left (matches classes.html) -->
+        <!-- Button completely loose on the left (matches classes.html) -->
         <a href="index.html" id="btn-inicio"
             class="absolute left-4 md:left-12 top-4 md:top-8 bg-[#a69c6a] border border-[#a69c6a] text-white px-6 py-2.5 rounded-full font-bold text-[10px] md:text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 shadow-md group z-40">
             <svg class="w-4 h-4 text-current" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path d="M19.5 12c-3 0.5-9 0.5-13.5 0M9 6c-1.5 2-3.5 4.5-5 6 1.5 1.5 3.5 4 5 6"></path>
             </svg>
-            Inicio
+            <span data-i18n="btn_back_home">Inicio</span>
         </a>
 
         <!-- Dynamic Decorative Symbols (Toggled & colored using CSS filters) -->
-        <!-- Clases Symbol (Bottom Left Terracotta) -->
+        <!-- Clases Symbol (Bottom Left Brown) -->
         <img id="symbol-clases" src="img/clases.png" alt="Yoga Clases" 
-            class="filter-terracotta absolute bottom-6 left-6 w-32 md:w-52 opacity-95 pointer-events-none select-none z-0 transition-all duration-500 transform translate-y-0">
+            class="filter-yoga-brown absolute bottom-6 left-6 w-32 md:w-52 opacity-95 pointer-events-none select-none z-0 transition-all duration-500 transform translate-y-0">
         
-        <!-- Consultas Symbol (Top Right Gold Runner) -->
+        <!-- Consultas Symbol (Top Right Gold) -->
         <img id="symbol-consultas" src="img/tarifas.png" alt="Yoga Consultas" 
-            class="filter-gold absolute top-6 right-6 w-28 md:w-44 opacity-0 pointer-events-none select-none z-0 transition-all duration-500 transform translate-y-[20px]">
+            class="filter-psicologia-gold absolute top-6 right-6 w-28 md:w-44 opacity-0 pointer-events-none select-none z-0 transition-all duration-500 transform translate-y-[20px]">
 
-        <!-- Talleres Symbol (Bottom Right Poses) -->
+        <!-- Talleres Symbol (Bottom Right Olive) -->
         <img id="symbol-talleres" src="img/maestros.png" alt="Yoga Talleres" 
-            class="filter-olive absolute bottom-6 right-6 w-28 md:w-44 opacity-0 pointer-events-none select-none z-0 transition-all duration-500 transform translate-y-[20px]">
+            class="filter-talleres-olive absolute bottom-6 right-6 w-28 md:w-44 opacity-0 pointer-events-none select-none z-0 transition-all duration-500 transform translate-y-[20px]">
 
         <!-- Sticky Header (Title + Tabs Navigation) -->
         <div class="w-full flex flex-col items-center z-30 select-none pb-4">
-            <h1 class="brand-font font-black text-[#a69c6a] text-4xl md:text-6xl lg:text-7xl uppercase tracking-[0.15em] text-center mb-6">
+            <h1 class="brand-font font-black text-[#a69c6a] text-4xl md:text-6xl lg:text-7xl uppercase tracking-[0.15em] text-center mb-6" data-i18n="rates_title">
                 Tarifas
             </h1>
 
             <!-- Sub-pestañas de filtrado (Matches layout & colors of Canva screen) -->
             <div class="flex justify-center gap-3 flex-wrap">
                 <button id="tab-yoga" onclick="switchCategory('yoga')"
-                    class="px-8 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#795244] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95">
+                    class="px-8 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#795244] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95" data-i18n="rates_tab_yoga">
                     Clases
                 </button>
                 <button id="tab-psicologia" onclick="switchCategory('psicologia')"
-                    class="px-8 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95">
+                    class="px-8 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95" data-i18n="rates_tab_psy">
                     Consultas
                 </button>
                 <button id="tab-talleres" onclick="switchCategory('talleres')"
-                    class="px-8 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95">
+                    class="px-8 py-2.5 text-xs md:text-sm uppercase tracking-widest font-extrabold rounded-full bg-[#c3b89a] text-white transition-all duration-300 shadow-sm hover:scale-105 active:scale-95" data-i18n="rates_tab_workshops">
                     Talleres
                 </button>
             </div>
@@ -130,47 +164,47 @@
             
             <!-- 1. CATEGORY: YOGA (CLASES) -->
             <div id="section-yoga" class="grid md:grid-cols-2 max-w-4xl mx-auto gap-8 w-full px-4 items-stretch transition-all duration-500">
-                <!-- Bono Individual -->
-                <div class="tariff-card flex flex-col justify-between">
+                <!-- Clase suelta -->
+                <div class="tariff-card flex flex-col justify-between border-suelta">
                     <div>
-                        <div class="w-12 h-12 rounded-2xl bg-cocoa/5 flex items-center justify-center mb-6 text-cocoa shadow-inner">
-                            <i class="ph-fill ph-ticket text-2xl text-[#795244]"></i>
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-6 text-suelta shadow-inner" style="background-color: rgba(149, 104, 87, 0.05);">
+                            <i class="ph-fill ph-ticket text-2xl"></i>
                         </div>
-                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2">Bono Individual</h3>
-                        <p class="text-[10px] text-cocoa/60 mb-6 font-light uppercase tracking-wider">Yoga</p>
+                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2" data-i18n="rates_suelta_title">Clase suelta</h3>
+                        <p class="text-[10px] text-suelta mb-6 font-semibold uppercase tracking-wider" data-i18n="rates_suelta_cat">Yoga</p>
                         <ul class="space-y-3.5 text-sm text-cocoa/80 pl-1 text-left">
-                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-[#a69c6a] text-lg"></i> 1 clase de yoga</li>
-                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-[#a69c6a] text-lg"></i> Reserva desde tu perfil o recepción</li>
-                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-[#a69c6a] text-lg"></i> Cancelación hasta 12h antes de la clase</li>
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-suelta text-lg"></i> <span data-i18n="rates_suelta_feat1">1 clase de yoga</span></li>
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-suelta text-lg"></i> <span data-i18n="rates_suelta_feat2">Reserva desde tu perfil o recepción</span></li>
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-suelta text-lg"></i> <span data-i18n="rates_suelta_feat3">Cancelación hasta 12h antes de la clase</span></li>
                         </ul>
                     </div>
                     <div class="mt-8">
                         <div class="text-4xl font-serif font-bold text-cocoa mb-5">15€</div>
-                        <a href="profile.html" class="block w-full py-3.5 bg-[#795244] hover:bg-[#26160c] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md">Comprar Bono</a>
+                        <a href="profile.html" class="block w-full py-3.5 bg-suelta text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md" data-i18n="rates_suelta_btn">Comprar clase</a>
                     </div>
                 </div>
 
                 <!-- Bono Mensual -->
-                <div class="tariff-card flex flex-col justify-between relative">
-                    <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-terracotta text-white text-[9px] font-bold uppercase tracking-[0.25em] px-4 py-1.5 rounded-full shadow-md">
-                        ★ Especial
+                <div class="tariff-card flex flex-col justify-between relative border-mensual">
+                    <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-mensual text-white text-[9px] font-bold uppercase tracking-[0.25em] px-4 py-1.5 rounded-full shadow-md" data-i18n="rates_mensual_badge">
+                        ★ Ahorra 25%
                     </div>
                     <div>
-                        <div class="w-12 h-12 rounded-2xl bg-terracotta/5 flex items-center justify-center mb-6 text-terracotta shadow-md">
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-6 text-mensual shadow-md" style="background-color: rgba(121, 82, 68, 0.05);">
                             <i class="ph-fill ph-calendar-blank text-2xl"></i>
                         </div>
-                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2">Bono Mensual</h3>
-                        <p class="text-[10px] text-terracotta font-semibold mb-6 uppercase tracking-wider">Plan Flexible</p>
+                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2" data-i18n="rates_mensual_title">Bono Mensual</h3>
+                        <p class="text-[10px] text-mensual font-semibold mb-6 uppercase tracking-wider" data-i18n="rates_mensual_cat">Plan Flexible</p>
                         <ul class="space-y-3.5 text-sm text-cocoa/80 pl-1 text-left">
-                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-terracotta text-lg"></i> 2 clases cada semana (Lunes-Domingo)</li>
-                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-terracotta text-lg"></i> Hasta 8 clases al mes en total</li>
-                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-terracotta text-lg"></i> Reserva desde tu perfil o recepción</li>
-                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-terracotta text-lg"></i> Bonos individuales para clases extra</li>
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-mensual text-lg"></i> <span data-i18n="rates_mensual_feat1">2 clases cada semana (Lunes-Viernes)</span></li>
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-mensual text-lg"></i> <span data-i18n="rates_mensual_feat2">Hasta 8 clases al mes en total</span></li>
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-mensual text-lg"></i> <span data-i18n="rates_mensual_feat3">Reserva desde tu perfil o recepción</span></li>
+                            <li class="flex items-center gap-2.5"><i class="ph-bold ph-check text-mensual text-lg"></i> <span data-i18n="rates_mensual_feat4">Clases sueltas para sesiones extra</span></li>
                         </ul>
                     </div>
                     <div class="mt-8">
-                        <div class="text-4xl font-serif font-bold text-cocoa mb-5">90€<span class="text-xs font-sans font-normal text-cocoa/60">/mes</span></div>
-                        <a href="profile.html" class="block w-full py-3.5 bg-terracotta hover:bg-[#26160c] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md">Adquirir Plan</a>
+                        <div class="text-4xl font-serif font-bold text-cocoa mb-5">90€<span class="text-xs font-sans font-normal text-cocoa/60" data-i18n="rates_per_month">/mes</span></div>
+                        <a href="profile.html" class="block w-full py-3.5 bg-mensual text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md" data-i18n="rates_mensual_btn">Adquirir Plan</a>
                     </div>
                 </div>
             </div>
@@ -183,22 +217,22 @@
                         <div class="w-12 h-12 rounded-2xl bg-cocoa/5 flex items-center justify-center mb-6 text-cocoa shadow-inner">
                             <i class="ph-fill ph-brain text-2xl text-[#8f6b2d]"></i>
                         </div>
-                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2">Psicología</h3>
-                        <p class="text-[10px] text-cocoa/60 mb-6 font-light uppercase tracking-wider">Bienestar y salud mental</p>
+                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2" data-i18n="rates_psy_title">Psicología</h3>
+                        <p class="text-[10px] text-cocoa/60 mb-6 font-light uppercase tracking-wider" data-i18n="rates_psy_cat">Bienestar y salud mental</p>
                         
                         <div class="p-4 bg-cocoa/5 rounded-2xl border border-cocoa/5 text-left mb-6">
-                            <p class="font-bold text-cocoa text-sm">Sesión individual</p>
-                            <p class="text-xs text-cocoa/70 mt-1 font-light leading-relaxed">
+                            <p class="font-bold text-cocoa text-sm" data-i18n="rates_psy_sub">Sesión individual</p>
+                            <p class="text-xs text-cocoa/70 mt-1 font-light leading-relaxed" data-i18n="rates_psy_desc">
                                 Consulta personalizada para cuidar tu bienestar y salud mental. Asignación directa por administración.
                             </p>
                         </div>
                     </div>
                     <div class="mt-4">
-                        <div class="text-xs font-bold text-[#8f6b2d] border border-[#8f6b2d]/20 bg-[#8f6b2d]/5 px-4 py-3 rounded-xl mb-4 text-center">
+                        <div class="text-xs font-bold text-[#8f6b2d] border border-[#8f6b2d]/20 bg-[#8f6b2d]/5 px-4 py-3 rounded-xl mb-4 text-center" data-i18n="rates_psy_contact_recep">
                             Consultar con recepción las tarifas
                         </div>
-                        <button onclick="Swal.fire('Información', 'Contacta con el centro o administrador para programar y abonar tu consulta.', 'info')" 
-                            class="block w-full py-3.5 bg-[#8f6b2d] hover:bg-[#26160c] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md">
+                        <button onclick="Swal.fire(t('alert_info'), t('rates_psy_desc'), 'info')" 
+                            class="block w-full py-3.5 bg-[#8f6b2d] hover:bg-[#26160c] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md" data-i18n="rates_psy_btn">
                             Contactar con Admin
                         </button>
                     </div>
@@ -210,30 +244,30 @@
                         <div class="w-12 h-12 rounded-2xl bg-cocoa/5 flex items-center justify-center mb-6 text-cocoa shadow-inner">
                             <i class="ph-fill ph-leaf text-2xl text-[#8f6b2d]"></i>
                         </div>
-                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2">Nutrición</h3>
-                        <p class="text-[10px] text-cocoa/60 mb-6 font-light uppercase tracking-wider">Alimentación y salud física</p>
+                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2" data-i18n="rates_nut_title">Nutrición</h3>
+                        <p class="text-[10px] text-cocoa/60 mb-6 font-light uppercase tracking-wider" data-i18n="rates_nut_cat">Alimentación y salud física</p>
                         
                         <div class="space-y-3.5 max-h-[190px] overflow-y-auto pr-1 hide-scrollbar">
                             <div class="p-4 bg-cocoa/5 rounded-2xl border border-cocoa/5 text-left">
-                                <p class="font-bold text-cocoa text-xs">Evaluación Inicial</p>
-                                <p class="text-[11px] text-cocoa/70 mt-0.5 font-light leading-relaxed">
+                                <p class="font-bold text-cocoa text-xs" data-i18n="rates_nut_sub1">Evaluación Inicial</p>
+                                <p class="text-[11px] text-cocoa/70 mt-0.5 font-light leading-relaxed" data-i18n="rates_nut_desc1">
                                     Analizamos tu punto de partida, objetivos e historial de hábitos para diseñar tu estrategia de nutrición.
                                 </p>
                             </div>
                             <div class="p-4 bg-cocoa/5 rounded-2xl border border-cocoa/5 text-left">
-                                <p class="font-bold text-cocoa text-xs">Sesión de Seguimiento</p>
-                                <p class="text-[11px] text-cocoa/70 mt-0.5 font-light leading-relaxed">
+                                <p class="font-bold text-cocoa text-xs" data-i18n="rates_nut_sub2">Sesión de Seguimiento</p>
+                                <p class="text-[11px] text-cocoa/70 mt-0.5 font-light leading-relaxed" data-i18n="rates_nut_desc2">
                                     Evaluamos tus progresos diarios y adaptamos tus pautas para consolidar hábitos saludables duraderos.
                                 </p>
                             </div>
                         </div>
                     </div>
                     <div class="mt-4">
-                        <div class="text-xs font-bold text-[#8f6b2d] border border-[#8f6b2d]/20 bg-[#8f6b2d]/5 px-4 py-3 rounded-xl mb-4 text-center">
+                        <div class="text-xs font-bold text-[#8f6b2d] border border-[#8f6b2d]/20 bg-[#8f6b2d]/5 px-4 py-3 rounded-xl mb-4 text-center" data-i18n="rates_psy_contact_recep">
                             Consultar con recepción las tarifas
                         </div>
-                        <button onclick="Swal.fire('Información', 'Contacta con el centro o administrador para programar y abonar tu consulta.', 'info')" 
-                            class="block w-full py-3.5 bg-[#8f6b2d] hover:bg-[#26160c] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md">
+                        <button onclick="Swal.fire(t('alert_info'), t('rates_psy_desc'), 'info')" 
+                            class="block w-full py-3.5 bg-[#8f6b2d] hover:bg-[#26160c] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md" data-i18n="rates_psy_btn">
                             Contactar con Admin
                         </button>
                     </div>
@@ -248,19 +282,19 @@
                         <div class="w-12 h-12 rounded-2xl bg-cocoa/5 flex items-center justify-center mb-6 text-cocoa shadow-inner">
                             <i class="ph-fill ph-sketch-logo text-2xl text-[#6a6540]"></i>
                         </div>
-                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2">Talleres Temáticos</h3>
-                        <p class="text-[10px] text-cocoa/60 mb-6 font-light uppercase tracking-wider">Próximamente</p>
+                        <h3 class="text-2xl font-serif text-cocoa font-bold mb-2" data-i18n="rates_talleres_title">Talleres Temáticos</h3>
+                        <p class="text-[10px] text-cocoa/60 mb-6 font-light uppercase tracking-wider" data-i18n="rates_talleres_cat">Próximamente</p>
                         
-                        <p class="text-sm text-cocoa/80 leading-relaxed font-light text-left mb-6">
+                        <p class="text-sm text-cocoa/80 leading-relaxed font-light text-left mb-6" data-i18n="rates_talleres_desc">
                             Sesiones especiales para profundizar en diferentes estilos y prácticas de yoga, meditación y bienestar holístico. Las temáticas, fechas e inscripciones se anunciarán muy pronto en recepción.
                         </p>
                     </div>
                     <div class="mt-8">
-                        <div class="text-xs font-bold text-[#6a6540] border border-[#6a6540]/20 bg-[#6a6540]/5 px-4 py-3 rounded-xl mb-4 text-center">
+                        <div class="text-xs font-bold text-[#6a6540] border border-[#6a6540]/20 bg-[#6a6540]/5 px-4 py-3 rounded-xl mb-4 text-center" data-i18n="rates_talleres_contact_recep">
                             Consultar tarifas
                         </div>
-                        <button onclick="Swal.fire('Próximamente', 'Los próximos talleres y eventos especiales se anunciarán muy pronto. Para cualquier consulta, ponte en contacto con recepción.', 'info')" 
-                            class="block w-full py-3.5 bg-[#6a6540] hover:bg-[#26160c] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md">
+                        <button onclick="Swal.fire(t('rates_talleres_cat'), t('rates_talleres_desc'), 'info')" 
+                            class="block w-full py-3.5 bg-[#6a6540] hover:bg-[#26160c] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md" data-i18n="rates_talleres_btn">
                             Saber Más
                         </button>
                     </div>
@@ -271,7 +305,7 @@
 
         <!-- Footer spacing (Matches classes.html layout) -->
         <div class="w-full flex items-center justify-center z-15 pb-4 select-none pointer-events-none">
-            <span class="text-[9px] uppercase tracking-[0.2em] font-bold text-[#795244]/40">&copy; 2026 Gen Yoga</span>
+            <span class="text-[9px] uppercase tracking-[0.2em] font-bold text-[#795244]/40">v4.3 | &copy; 2026 Gen Yoga</span>
         </div>
     </div>
 

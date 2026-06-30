@@ -46,6 +46,25 @@ function getEspecialidadCategorias(p) {
 }
 
 
+let lastCancelVal = '24';
+let lastReservaVal = '12';
+
+function updatePolicyText() {
+    const cancelTextEl = document.getElementById('cancelacion-horas-text');
+    if (cancelTextEl) {
+        const bookingLimitTxt = (window.t('policy_booking_limit') || 'Reservas permitidas hasta <b>{res}h</b> antes de la clase.').replace('{res}', lastReservaVal);
+        const cancelLimitTxt = (window.t('policy_cancel_limit') || 'Cancelación permitida hasta <b>{can}h</b> antes de la clase.').replace('{can}', lastCancelVal);
+        cancelTextEl.innerHTML = `${bookingLimitTxt}<br>${cancelLimitTxt}`;
+    }
+}
+
+window.addEventListener('languageChanged', () => {
+    updatePolicyText();
+    if (typeof fetchProfesionalesLanding === 'function') {
+        fetchProfesionalesLanding();
+    }
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     // Platform detection (simplificado)
     const ua = navigator.userAgent.toLowerCase();
@@ -97,15 +116,17 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchClasesLanding();
     fetchProfesionalesLanding();
 
-    // Cargar horas de cancelación límite de forma dinámica
+    // Cargar horas de cancelación y reserva límite de forma dinámica
     const cancelTextEl = document.getElementById('cancelacion-horas-text');
     if (cancelTextEl && client) {
-        client.from('configuracion').select('valor').eq('clave', 'horas_limite_cancelacion').single()
+        client.from('configuracion').select('clave, valor').in('clave', ['horas_limite_cancelacion', 'horas_limite_reserva'])
         .then(({ data, error }) => {
-            if (data && data.valor) {
-                cancelTextEl.textContent = `Cancelación permitida hasta ${data.valor}h antes de la hora de inicio de la clase`;
+            if (data && !error) {
+                lastCancelVal = data.find(c => c.clave === 'horas_limite_cancelacion')?.valor || '24';
+                lastReservaVal = data.find(c => c.clave === 'horas_limite_reserva')?.valor || '12';
+                updatePolicyText();
             }
-        }).catch(err => console.error("Error cargando horas de cancelación:", err));
+        }).catch(err => console.error("Error cargando horas de reserva y cancelación:", err));
     }
 });
 
@@ -437,6 +458,7 @@ function renderClassesLanding(clases) {
 }
 
 let allProfesionalesLanding = [];
+let cachedDbProfesionales = null;
 
 async function fetchProfesionalesLanding() {
     const container = document.getElementById('landing-profesores-container');
@@ -448,20 +470,23 @@ async function fetchProfesionalesLanding() {
         return;
     }
 
-    const { data: profesionales, error } = await client
-        .from('profesionales')
-        .select('*')
-        .order('nombre');
+    if (!cachedDbProfesionales) {
+        const { data: profesionales, error } = await client
+            .from('profesionales')
+            .select('*')
+            .order('nombre');
 
-    if (error) {
-        console.error('Error fetching professionals:', error);
-        container.innerHTML = `<div class="col-span-full p-4 bg-red-50 border border-red-100 rounded-lg text-red-800 text-center">
-            <p class="font-bold">No se pudieron cargar los profesionales</p>
-        </div>`;
-        return;
+        if (error) {
+            console.error('Error fetching professionals:', error);
+            container.innerHTML = `<div class="col-span-full p-4 bg-red-50 border border-red-100 rounded-lg text-red-800 text-center">
+                <p class="font-bold">No se pudieron cargar los profesionales</p>
+            </div>`;
+            return;
+        }
+        cachedDbProfesionales = profesionales || [];
     }
 
-    const activeProfesionales = (profesionales || []).filter(p => (p.email || '').toLowerCase() !== 'profesor@profesor.com');
+    const activeProfesionales = cachedDbProfesionales.filter(p => (p.email || '').toLowerCase() !== 'profesor@profesor.com');
 
     if (!activeProfesionales || activeProfesionales.length === 0) {
         container.innerHTML = `<div class="col-span-full flex flex-col items-center justify-center py-10 gap-2 opacity-60">
@@ -472,47 +497,21 @@ async function fetchProfesionalesLanding() {
         return;
     }
 
-    allProfesionalesLanding = activeProfesionales.map(p => {
-        if ((p.email || '').toLowerCase() === 'angel@genyoga.es' || (p.nombre || '').toLowerCase() === 'ángel') {
+    // Apply translations dynamically at runtime
+    const translatedProfs = activeProfesionales.map(p => window.translateProfessional ? window.translateProfessional(p) : p);
+
+    allProfesionalesLanding = translatedProfs.map(p => {
+        const emailLower = (p.email || '').toLowerCase();
+        if (emailLower.includes('angel_profesor') || emailLower.includes('angel@') || (p.nombre || '').toLowerCase() === 'ángel') {
             const updated = { ...p };
             if (!updated.nombre.includes('Javier')) {
                 updated.nombre = "Ángel Javier";
             }
-            if (!updated.descripcion || !updated.descripcion.includes('LUGAR DE NACIMIENTO')) {
-                updated.descripcion = `LUGAR DE NACIMIENTO: La Roda
-
-TITULACIONES:
-Ninguna. Baso mi aprendizaje en el autoestudio/práctica, en recibir clases e intensivos de profesores con larga trayectoria (anatomía, asana, filosofía, etc., lo necesario para mi desarrollo en el camino de Yoga). En septiembre empiezo la mentoría para la certificación como profesor de Yoga Iyengar.
-
-SOBRE MI:
-Cuento con 6 años de experiencia en la práctica de yoga, de los cuales 5 años y medio están dedicados a estudiar y practicar Iyengar Yoga en Valencia y La Roda.
-
-TE ACOMPAÑO:
-La práctica está basada en el ajuste preciso y la correcta alineación del cuerpo, adaptando la postura a las condiciones de cada alumno/a para encontrar los efectos y beneficios en asana. Trabajamos en la comprensión de las acciones, en sentir lo que hacemos y, desde la profundidad de ese trabajo físico, damos la posibilidad a una manera de relación acorde al conocimiento propio que se va dando con la práctica.
-
-ME DEFINE:
-"Dedicación y Cuidado"`;
-            }
             return updated;
         }
-        if (p.id === 14 || (p.email || '').toLowerCase() === 'yanira@genyoga.es' || (p.nombre || '').toLowerCase().includes('yanira')) {
+        if (emailLower.includes('yanira') || p.id === 14) {
             const updated = { ...p };
             updated.foto_url = 'img/yanira.jpg';
-            updated.descripcion = `TRAYECTORIA:
-Procedente de Estados Unidos, con raíces salvadoreñas, he tenido la oportunidad de conocer y vivir en varias partes del mundo y me siento afortunada de conocer a personas de diferentes lugares y de varios caminos en la vida, ya que cada experiencia y aprendizaje me han formado como la persona que ahora soy.
-
-Docente de profesión, he enseñado en las escuelas del área de Washington D.C. por veinte años. Mis estudios del Yoga son un proceso continuo, pero considero que mi yoga mat es mi mejor guía.
-
-TITULACIONES:
-• Máster en Educación Internacional (Framingham State College)
-• Máster en Liderazgo en Educación (Universidad de George Mason)
-• Instructora de Yoga certificada por Yoga Alliance (entrenamiento en DownDog en Georgetown, Washington D.C.)
-• Especializaciones en Anatomía aplicada al Yoga, Yoga Infantil, Yoga y Mindfulness
-
-TE ACOMPAÑO:
-• Vinyasa Yoga (Clases virtuales y presenciales)
-• Yoga Restaurativo y Meditación
-• Mindfulness para adultos y niños`;
             return updated;
         }
         return p;
@@ -634,14 +633,14 @@ window.toggleProfesorDetalle = function(cardId) {
         const isHidden = detailsDiv.classList.contains('hidden');
         if (isHidden) {
             detailsDiv.classList.remove('hidden');
-            if (btnSpan) btnSpan.textContent = 'Saber menos';
+            if (btnSpan) btnSpan.textContent = window.t('teachers_read_less');
             if (btnIcon) {
                 btnIcon.classList.remove('ph-caret-down');
                 btnIcon.classList.add('ph-caret-up');
             }
         } else {
             detailsDiv.classList.add('hidden');
-            if (btnSpan) btnSpan.textContent = 'Saber más';
+            if (btnSpan) btnSpan.textContent = window.t('teachers_read_more');
             if (btnIcon) {
                 btnIcon.classList.remove('ph-caret-up');
                 btnIcon.classList.add('ph-caret-down');
