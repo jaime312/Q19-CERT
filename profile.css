@@ -39,8 +39,7 @@ body {
     background-color: #f8f6f2;
     color: #26160c;
 
-    /* Configuración por defecto (WEB) */
-    cursor: none;
+
 
     /* Variables de entorno para el Notch (iOS/Android) */
     /* En web esto vale 0, en móvil se ajusta automáticamente */
@@ -394,13 +393,17 @@ h6,
     transform: translate(-50%, -50%) scale(0.8) rotate(-10deg);
 }
 
+/* Punteros de cursor nativos restablecidos para usabilidad */
 body.platform-web a,
 body.platform-web button,
-body.platform-web input,
 body.platform-web select,
-body.platform-web textarea,
-body.platform-web .cursor-pointer {
-    cursor: none !important;
+body.platform-web .cursor-pointer,
+body.platform-web [onclick] {
+    cursor: pointer !important;
+}
+body.platform-web input,
+body.platform-web textarea {
+    cursor: text !important;
 }
 
 

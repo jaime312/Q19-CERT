@@ -14,6 +14,7 @@
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="i18n.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
         /* Force Solid plain background (removes dot pattern from styles.css) */
@@ -180,7 +181,7 @@
                     </div>
                     <div class="mt-8">
                         <div class="text-4xl font-serif font-bold text-cocoa mb-5">15€</div>
-                        <a href="profile.html" class="block w-full py-3.5 bg-suelta text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md" data-i18n="rates_suelta_btn">Comprar clase</a>
+                        <button onclick="adquirirClaseSuelta(event)" class="block w-full py-3.5 bg-suelta text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md hover:scale-[1.02] active:scale-[0.98]" data-i18n="rates_suelta_btn">Comprar clase</button>
                     </div>
                 </div>
 
@@ -204,7 +205,7 @@
                     </div>
                     <div class="mt-8">
                         <div class="text-4xl font-serif font-bold text-cocoa mb-5">90€<span class="text-xs font-sans font-normal text-cocoa/60" data-i18n="rates_per_month">/mes</span></div>
-                        <a href="profile.html" class="block w-full py-3.5 bg-mensual text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md" data-i18n="rates_mensual_btn">Adquirir Plan</a>
+                        <a href="profile.html?buy=bono_mensual" class="block w-full py-3.5 bg-mensual text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md" data-i18n="rates_mensual_btn">Adquirir Plan</a>
                     </div>
                 </div>
             </div>
@@ -305,7 +306,7 @@
 
         <!-- Footer spacing (Matches classes.html layout) -->
         <div class="w-full flex items-center justify-center z-15 pb-4 select-none pointer-events-none">
-            <span class="text-[9px] uppercase tracking-[0.2em] font-bold text-[#795244]/40">v4.3 | &copy; 2026 Gen Yoga</span>
+            <span class="text-[9px] uppercase tracking-[0.2em] font-bold text-[#795244]/40">v5.0 | &copy; 2026 Gen Yoga</span>
         </div>
     </div>
 
@@ -380,6 +381,98 @@
                     sym.style.transform = 'translateY(20px)';
                 }
             });
+        }
+
+        // --- GUEST STRIPE CHECKOUT INTEGRATION ---
+        const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
+        const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
+        const supabaseClient = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
+
+        async function adquirirClaseSuelta(event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            if (!supabaseClient) {
+                Swal.fire('Error', 'El cliente de base de datos no se pudo cargar.', 'error');
+                return;
+            }
+
+            // Check if user is logged in
+            const sessionRes = await supabaseClient.auth.getSession();
+            const session = sessionRes.data?.session;
+
+            if (session) {
+                // User is logged in, redirect to checkout with their user ID
+                iniciarPagoStripe(session.user.id);
+            } else {
+                // User is not logged in, ask if they want to pay as guest or login/register
+                const result = await Swal.fire({
+                    title: 'Comprar Clase de Yoga',
+                    text: '¿Quieres comprar esta clase e iniciar sesión en tu cuenta para acumular saldo, o prefieres comprar y reservar como invitado sin registrarte?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    showDenyButton: true,
+                    confirmButtonText: 'Reservar como Invitado',
+                    denyButtonText: 'Iniciar Sesión',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#795244',
+                    denyButtonColor: '#6a6540',
+                    cancelButtonColor: '#d33',
+                    background: '#fff',
+                    color: '#333'
+                });
+
+                if (result.isConfirmed) {
+                    // Guest purchase
+                    iniciarPagoStripe('guest');
+                } else if (result.isDenied) {
+                    // Redirect to login
+                    window.location.href = 'profile.html?buy=clase_suelta';
+                }
+            }
+        }
+
+        async function iniciarPagoStripe(userId) {
+            Swal.fire({
+                title: 'Conectando con Stripe...',
+                text: 'Por favor, espera un momento.',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading(),
+                background: '#fff',
+                color: '#333'
+            });
+
+            try {
+                const { data, error } = await supabaseClient.functions.invoke('create-checkout-session', {
+                    body: {
+                        lookup_key: 'clase_suelta',
+                        user_id: userId,
+                        site_url: window.location.origin
+                    }
+                });
+
+                if (error) {
+                    let errMsg = error.message;
+                    try {
+                        if (error.context && typeof error.context.json === 'function') {
+                            const errJson = await error.context.json();
+                            if (errJson && errJson.error) errMsg = errJson.error;
+                        }
+                    } catch(e){}
+                    throw new Error(errMsg);
+                }
+
+                if (data && data.url) {
+                    window.location.href = data.url;
+                } else {
+                    throw new Error('No se recibió la URL de Stripe.');
+                }
+            } catch (e) {
+                console.error("Stripe redirection error:", e);
+                Swal.fire('Error de conexión', e.message || 'No se pudo conectar con el servidor de pagos.', 'error');
+            }
         }
     </script>
 </body>

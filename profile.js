@@ -294,9 +294,15 @@ document.getElementById('form-register').addEventListener('submit', async (e) =>
     if (error) {
         Swal.fire('Error', error.message, 'error');
     } else {
-        // Intentar asegurar que los datos estén en profiles
+        // Intentar asegurar que los datos estén en profiles usando upsert
         if (data?.user) {
-            await client.from('profiles').update({ nombre, apellidos }).eq('id', data.user.id);
+            await client.from('profiles').upsert({
+                id: data.user.id,
+                nombre,
+                apellidos,
+                email,
+                rol: 'alumno'
+            });
         }
 
         Swal.fire({
@@ -827,12 +833,17 @@ async function renderSaldosCliente() {
     const expires = profileT('profile_expires', 'Vence');
     
     const bonoIndividualHtml = `
-        <div class="bg-white px-3 py-2 rounded-2xl border border-gray-200 shadow-sm hover:border-olive transition cursor-default min-w-[120px]"
+        <div class="bg-white px-3 py-2 rounded-2xl border border-gray-200 shadow-sm hover:border-olive transition cursor-default min-w-[145px]"
             title="${escapeHtml(singleClasses)}">
             <span class="block text-[9px] text-cocoa/50 font-bold uppercase tracking-widest leading-none">${escapeHtml(singleClass)}</span>
-            <div class="flex items-center justify-end gap-2 mt-1">
-                <i class="ph-fill ph-ticket text-olive text-lg"></i>
-                <span id="bonos-count" class="font-black text-cocoa text-xl leading-none">${userBonos}</span>
+            <div class="flex items-center justify-between gap-3 mt-1.5">
+                <div class="flex items-center gap-1">
+                    <i class="ph-fill ph-ticket text-olive text-lg"></i>
+                    <span id="bonos-count" class="font-black text-cocoa text-lg leading-none">${userBonos}</span>
+                </div>
+                <button onclick="comprarClaseSuelta(event)" class="px-2 py-0.5 text-[9px] font-bold uppercase bg-olive hover:bg-black text-white rounded transition shadow-sm" title="Comprar clase suelta (15€)">
+                    + Comprar
+                </button>
             </div>
         </div>`;
 
@@ -857,13 +868,13 @@ async function renderSaldosCliente() {
             </div>`;
     } else {
         bonoMensualHtml = `
-            <div class="bg-white/40 px-3 py-2 rounded-2xl border border-dashed border-terracotta/20 shadow-sm hover:border-gray-400 transition min-w-[160px]"
+            <div class="bg-white/40 px-3 py-2 rounded-2xl border border-dashed border-terracotta/20 shadow-sm hover:border-gray-400 transition min-w-[170px]"
                 title="${escapeHtml(monthlyInactive)}">
                 <span class="block text-[9px] text-terracotta font-bold uppercase tracking-widest leading-none">${escapeHtml(monthlyPlan)}</span>
-                <div class="flex items-center justify-between gap-2 mt-1.5">
+                <div class="flex items-center justify-between gap-3 mt-1.5">
                     <span class="bg-terracotta/10 text-terracotta text-[9px] font-bold px-2 py-0.5 rounded border border-terracotta/20 uppercase tracking-wider">${escapeHtml(inactive)}</span>
-                    <button onclick="solicitarActivacionBonoMensual()" class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider btn-solicitar-mensual rounded transition shadow-sm">
-                        ${escapeHtml(request)}
+                    <button onclick="comprarBonoMensual(event)" class="px-2.5 py-1 text-[9px] font-bold uppercase text-white rounded hover:bg-black transition shadow-sm" style="background-color: #e06b53;" title="Suscribirse online (90€)">
+                        Comprar
                     </button>
                 </div>
             </div>`;
@@ -877,12 +888,17 @@ async function renderSaldosCliente() {
 
     if (profileWrapper) {
         let profileHtml = `
-            <div class="bg-white/80 px-4 py-3 rounded-2xl border border-cocoa/10 text-center min-w-[110px]">
-                <span class="block text-[9px] text-cocoa/45 font-bold uppercase tracking-widest leading-none">${escapeHtml(singleClasses)}</span>
-                <div class="flex items-center justify-center gap-1.5 mt-2">
-                    <i class="ph-fill ph-ticket text-olive text-lg"></i>
-                    <span class="font-black text-cocoa text-2xl leading-none">${userBonos}</span>
+            <div class="bg-white/95 p-4 rounded-3xl border border-cocoa/15 text-center min-w-[150px] flex flex-col justify-between items-center shadow-md">
+                <div>
+                    <span class="block text-[10px] text-cocoa/50 font-bold uppercase tracking-wider mb-2">Tus clases de Yoga</span>
+                    <div class="inline-flex items-center gap-2 bg-olive/10 text-olive px-4 py-1.5 rounded-full border border-olive/20 font-black text-lg mb-3">
+                        <i class="ph-fill ph-ticket text-base"></i>
+                        <span>${userBonos} disponibles</span>
+                    </div>
                 </div>
+                <button onclick="comprarClaseSuelta(event)" class="w-full py-2.5 bg-olive text-white hover:bg-black text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md flex items-center justify-center gap-1.5 hover:scale-[1.02] active:scale-[0.98]">
+                    <i class="ph-bold ph-plus text-xs"></i> Comprar (15€)
+                </button>
             </div>
         `;
 
@@ -890,9 +906,9 @@ async function renderSaldosCliente() {
             const stats = await getBonoMensualStats();
             const fechaFin = userBonoMensualFin ? new Date(userBonoMensualFin).toLocaleDateString(getCurrentLocale()) : '--/--/----';
             profileHtml += `
-                <div class="bg-white/90 px-4 py-3 rounded-2xl border border-[#10B981] text-center min-w-[160px] flex flex-col justify-center items-center">
+                <div class="bg-white/90 p-4 rounded-3xl border border-[#10B981] text-center min-w-[180px] flex flex-col justify-center items-center shadow-md">
                     <div>
-                        <span class="block text-[9px] text-emerald-600 font-bold uppercase tracking-widest leading-none">${escapeHtml(monthlyActive)}</span>
+                        <span class="block text-[10px] text-emerald-600 font-bold uppercase tracking-wider mb-2">${escapeHtml(monthlyActive)}</span>
                         <div class="flex justify-center items-center gap-3 mt-2 text-sm text-cocoa font-bold">
                             <div class="flex items-center gap-1">
                                 <i class="ph-fill ph-flower-lotus text-[#10B981]"></i>
@@ -903,21 +919,21 @@ async function renderSaldosCliente() {
                                 <span>${escapeHtml(monthShort)}: <b class="text-emerald-700 text-lg">${stats.mes}</b>/8</span>
                             </div>
                         </div>
-                        <span class="block text-[8px] text-gray-400 mt-1 uppercase tracking-wider font-light">${escapeHtml(expires)}: ${escapeHtml(fechaFin)}</span>
+                        <span class="block text-[9px] text-gray-400 mt-2.5 uppercase tracking-wider font-light">${escapeHtml(expires)}: ${escapeHtml(fechaFin)}</span>
                     </div>
                 </div>
             `;
         } else {
             profileHtml += `
-                <div class="bg-white/90 px-4 py-3 rounded-2xl border border-dashed border-terracotta/40 text-center min-w-[190px] flex flex-col justify-between items-center shadow-sm">
+                <div class="bg-white/95 p-4 rounded-3xl border border-dashed border-[#e06b53]/40 text-center min-w-[200px] flex flex-col justify-between items-center shadow-md">
                     <div>
-                        <span class="block text-[9px] text-terracotta font-bold uppercase tracking-widest leading-none">${escapeHtml(monthlyInactive)}</span>
-                        <div class="flex items-center justify-center gap-1.5 mt-2">
-                            <span class="bg-terracotta/10 text-terracotta text-[10px] font-bold px-2.5 py-1 rounded border border-terracotta/20 uppercase tracking-wide">${escapeHtml(inactive)}</span>
+                        <span class="block text-[10px] text-[#e06b53] font-bold uppercase tracking-wider mb-2">Bono Mensual</span>
+                        <div class="inline-flex items-center gap-1.5 bg-[#e06b53]/10 text-[#e06b53] px-3.5 py-1 rounded-full border border-[#e06b53]/20 font-bold text-xs uppercase tracking-wide">
+                            ${escapeHtml(inactive)}
                         </div>
                     </div>
-                    <button onclick="solicitarActivacionBonoMensual()" class="mt-3 w-full py-2 text-[10px] font-bold uppercase tracking-wider btn-solicitar-mensual rounded-lg transition shadow-sm flex items-center justify-center gap-1.5">
-                        <i class="ph-bold ph-paper-plane-tilt text-xs"></i> ${escapeHtml(requestActivation)}
+                    <button onclick="comprarBonoMensual(event)" class="mt-4 w-full py-2.5 text-white hover:bg-black text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md flex items-center justify-center gap-1.5 hover:scale-[1.02] active:scale-[0.98]" style="background-color: #e06b53;">
+                        <i class="ph-bold ph-credit-card text-xs"></i> Comprar (90€/mes)
                     </button>
                 </div>
             `;
@@ -947,6 +963,9 @@ async function checkProfile() {
     }
 
     if (data) {
+        console.log("=== DIAGNÓSTICO DE PERFIL ===");
+        console.log("Usuario logueado ID:", currentUser.id);
+        console.log("Datos de perfil recibidos de Supabase:", data);
         userBonos = toSafeNumber(data.bonos);
         userSaldoPsicologia = toSafeNumber(data.saldo_psicologia);
         userSaldoNutricion = toSafeNumber(data.saldo_nutricion);
@@ -1052,6 +1071,17 @@ async function checkProfile() {
         }
     }
     await cargarConfiguracionesApp();
+
+    // Check if the user reached this page with a query parameter to purchase a class or bono
+    const urlParams = new URLSearchParams(window.location.search);
+    const buyParam = urlParams.get('buy');
+    if (buyParam === 'clase_suelta') {
+        window.history.replaceState({}, document.title, window.location.pathname);
+        comprarClaseSuelta();
+    } else if (buyParam === 'bono_mensual') {
+        window.history.replaceState({}, document.title, window.location.pathname);
+        comprarBonoMensual();
+    }
 }
 
 function animateValue(id, start, end, duration) {
@@ -5193,24 +5223,7 @@ function renderProfesoresPublic(filtro = 'todos') {
 
 // --- UTILIDADES EXTRA (CURSOR & SONIDO) ---
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Platform checking here is done at the top of file via IIFE adding platform-web class
-    if (document.body.classList.contains('platform-web')) {
-        const cursor = document.createElement('div');
-        cursor.classList.add('wink-cursor');
-        cursor.innerText = '🧘🏼';
-        document.body.appendChild(cursor);
-
-        document.addEventListener('mousemove', (e) => {
-            cursor.style.left = e.clientX + 'px';
-            cursor.style.top = e.clientY + 'px';
-        });
-        document.addEventListener('mousedown', () => cursor.classList.add('clicking'));
-        document.addEventListener('mouseup', () => cursor.classList.remove('clicking'));
-        document.addEventListener('mouseout', (e) => { if (!e.relatedTarget) cursor.style.display = 'none'; });
-        document.addEventListener('mouseover', () => cursor.style.display = 'block');
-    }
-});
+// Custom cursor handles natively via styles.css for maximum performance and compatibility.
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function playYogaSound() {
@@ -7460,3 +7473,177 @@ window.addEventListener('languageChanged', () => {
         try { renderProfesoresPublic(); } catch(e){}
     }
 });
+
+// Stripe Checkout integration for purchasing a single class (clase suelta)
+async function comprarClaseSuelta(event) {
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+
+    if (!currentUser || !currentUser.id) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Inicia sesión',
+            text: 'Debes iniciar sesión para comprar una clase suelta y añadirla a tu perfil.',
+            confirmButtonColor: '#795244'
+        });
+        return;
+    }
+
+    const { isConfirmed } = await Swal.fire({
+        title: 'Comprar Clase Suelta',
+        html: 'Vas a adquirir <strong>1 clase suelta</strong> por <strong>15,00 €</strong>.<br><br>Se te redirigirá a la pasarela de pago segura de Stripe para completar la transacción.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Ir a pagar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#795244',
+        cancelButtonColor: '#d33',
+        background: '#fff',
+        color: '#333'
+    });
+
+    if (!isConfirmed) return;
+
+    Swal.fire({
+        title: 'Cargando pasarela de pago...',
+        text: 'Por favor, espera un momento.',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+        background: '#fff',
+        color: '#333'
+    });
+
+    try {
+        const { data, error } = await client.functions.invoke('create-checkout-session', {
+            body: {
+                lookup_key: 'clase_suelta',
+                user_id: currentUser.id,
+                site_url: window.location.origin
+            }
+        });
+
+        if (error) {
+            let errorMsg = error.message || 'Error al iniciar la sesión de pago desde Supabase.';
+            try {
+                // Supabase-js returns a response object in error.context if it is a FunctionsHttpError
+                if (error.context && typeof error.context.json === 'function') {
+                    const errorJson = await error.context.json();
+                    if (errorJson && errorJson.error) {
+                        errorMsg = errorJson.error;
+                    }
+                }
+            } catch (e) {
+                console.warn("No se pudo extraer el JSON de error de la función:", e);
+            }
+            throw new Error(errorMsg);
+        }
+
+        if (data && data.url) {
+            window.location.href = data.url;
+        } else {
+            throw new Error('No se recibió la URL de redirección de Stripe.');
+        }
+    } catch (error) {
+        console.error('Error en compra Stripe:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error de conexión',
+            text: error.message || 'No se pudo conectar con el servidor de pagos. Inténtalo de nuevo más tarde.',
+            confirmButtonColor: '#D27D60'
+        });
+    }
+}
+
+// Stripe Checkout integration for purchasing the Monthly Plan (Bono Mensual)
+async function comprarBonoMensual(event) {
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+
+    if (!currentUser || !currentUser.id) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Inicia sesión',
+            text: 'Debes iniciar sesión para adquirir el Bono Mensual.',
+            confirmButtonColor: '#795244'
+        });
+        return;
+    }
+
+    if (userBonoMensualActivo) {
+        Swal.fire({
+            icon: 'info',
+            title: 'Bono Mensual Activo',
+            text: 'Ya dispones de un Bono Mensual activo en tu cuenta. No es necesario comprar otro.',
+            confirmButtonColor: '#D27D60'
+        });
+        return;
+    }
+
+    const { isConfirmed } = await Swal.fire({
+        title: 'Adquirir Bono Mensual',
+        html: 'Vas a suscribirte al <strong>Bono Mensual</strong> por <strong>90,00 € al mes</strong>.<br><br>Tendrás acceso a 2 clases semanales (hasta 8 al mes). Se te redirigirá a la pasarela de pago segura de Stripe para completar la suscripción.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Suscribirse',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#795244',
+        cancelButtonColor: '#d33',
+        background: '#fff',
+        color: '#333'
+    });
+
+    if (!isConfirmed) return;
+
+    Swal.fire({
+        title: 'Cargando pasarela de suscripción...',
+        text: 'Por favor, espera un momento.',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+        background: '#fff',
+        color: '#333'
+    });
+
+    try {
+        const { data, error } = await client.functions.invoke('create-checkout-session', {
+            body: {
+                lookup_key: 'bono_mensual', // Direct generic lookup key for Bono Mensual subscription!
+                user_id: currentUser.id,
+                site_url: window.location.origin
+            }
+        });
+
+        if (error) {
+            let errorMsg = error.message || 'Error al iniciar la sesión de pago desde Supabase.';
+            try {
+                if (error.context && typeof error.context.json === 'function') {
+                    const errorJson = await error.context.json();
+                    if (errorJson && errorJson.error) {
+                        errorMsg = errorJson.error;
+                    }
+                }
+            } catch (e) {
+                console.warn("No se pudo extraer el JSON de error de la función:", e);
+            }
+            throw new Error(errorMsg);
+        }
+
+        if (data && data.url) {
+            window.location.href = data.url;
+        } else {
+            throw new Error('No se recibió la URL de redirección de Stripe.');
+        }
+    } catch (error) {
+        console.error('Error en compra Stripe:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error de conexión',
+            text: error.message || 'No se pudo conectar con el servidor de pagos. Inténtalo de nuevo más tarde.',
+            confirmButtonColor: '#D27D60'
+        });
+    }
+}
+

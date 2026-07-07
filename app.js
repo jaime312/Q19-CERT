@@ -73,43 +73,14 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.classList.add(isIOS ? 'platform-ios' : (isAndroid ? 'platform-android' : 'platform-web'));
 
     if (!isIOS && !isAndroid) {
-        const cursor = document.createElement('div');
-        cursor.classList.add('wink-cursor');
-        cursor.innerText = '🧘🏼';
-        document.body.appendChild(cursor);
-
-        const cursorGlow = document.createElement('div');
-        cursorGlow.classList.add('cursor-glow');
-        document.body.appendChild(cursorGlow);
-        
         const parallaxBg = document.getElementById('parallax-bg');
 
         document.addEventListener('mousemove', (e) => {
-            cursor.style.left = e.clientX + 'px';
-            cursor.style.top = e.clientY + 'px';
-
-            // Glow softly trails the cursor
-            cursorGlow.style.left = e.clientX + 'px';
-            cursorGlow.style.top = e.clientY + 'px';
-
             if (parallaxBg) {
                 const x = (e.clientX / window.innerWidth - 0.5) * 40;
                 const y = (e.clientY / window.innerHeight - 0.5) * 40;
                 parallaxBg.style.transform = `translate(${x}px, ${y}px)`;
             }
-        });
-
-        document.addEventListener('mousedown', () => cursor.classList.add('clicking'));
-        document.addEventListener('mouseup', () => cursor.classList.remove('clicking'));
-        document.addEventListener('mouseout', (e) => { 
-            if (!e.relatedTarget) {
-                cursor.style.display = 'none'; 
-                cursorGlow.style.display = 'none';
-            }
-        });
-        document.addEventListener('mouseover', () => {
-            cursor.style.display = 'block';
-            cursorGlow.style.display = 'block';
         });
     }
 
