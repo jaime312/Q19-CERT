@@ -260,8 +260,12 @@
             });
 
             try {
+                const siteUrl = window.location.origin + (window.location.pathname.endsWith('/') ? window.location.pathname.slice(0, -1) : (window.location.pathname.includes('.') ? window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) : window.location.pathname));
                 const { data, error } = await client.functions.invoke('create-portal-session', {
-                    body: { session_id: stripeSessionId }
+                    body: { 
+                        session_id: stripeSessionId,
+                        site_url: siteUrl
+                    }
                 });
 
                 if (error) throw error;

@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { session_id } = await req.json()
+    const { session_id, site_url } = await req.json()
 
     if (!session_id) {
       return new Response(JSON.stringify({ error: 'Falta el session_id.' }), {
@@ -46,7 +46,7 @@ serve(async (req) => {
     }
 
     // Determine the site URL and validate its scheme
-    let siteUrl = Deno.env.get('SITE_URL') || req.headers.get('origin') || 'http://localhost:5500'
+    let siteUrl = site_url || Deno.env.get('SITE_URL') || req.headers.get('origin') || 'http://localhost:5500'
     if (!siteUrl || siteUrl === 'null' || !siteUrl.startsWith('http')) {
       siteUrl = 'http://localhost:5500'
     }

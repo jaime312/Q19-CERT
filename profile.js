@@ -7516,11 +7516,12 @@ async function comprarClaseSuelta(event) {
     });
 
     try {
+        const siteUrl = window.location.origin + (window.location.pathname.endsWith('/') ? window.location.pathname.slice(0, -1) : (window.location.pathname.includes('.') ? window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) : window.location.pathname));
         const { data, error } = await client.functions.invoke('create-checkout-session', {
             body: {
                 lookup_key: 'clase_suelta',
                 user_id: currentUser.id,
-                site_url: window.location.origin
+                site_url: siteUrl
             }
         });
 
@@ -7608,11 +7609,12 @@ async function comprarBonoMensual(event) {
     });
 
     try {
+        const siteUrl = window.location.origin + (window.location.pathname.endsWith('/') ? window.location.pathname.slice(0, -1) : (window.location.pathname.includes('.') ? window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) : window.location.pathname));
         const { data, error } = await client.functions.invoke('create-checkout-session', {
             body: {
                 lookup_key: 'bono_mensual', // Direct generic lookup key for Bono Mensual subscription!
                 user_id: currentUser.id,
-                site_url: window.location.origin
+                site_url: siteUrl
             }
         });
 
