@@ -366,13 +366,14 @@
             });
 
             try {
+                const dummyEmail = `guest_${stripeSessionId || Math.random().toString(36).substring(2)}@genyoga.es`;
                 const { data, error } = await client.functions.invoke('book-guest-class', {
                     body: {
                         session_id: stripeSessionId,
                         clase_id: claseId,
                         nombre: nombre,
                         apellidos: apellidos,
-                        email: ""
+                        email: dummyEmail
                     }
                 });
 
