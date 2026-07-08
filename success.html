@@ -287,14 +287,15 @@
         async function cargarClasesDisponiblesInvitado() {
             const selectEl = document.getElementById('guest-clase-select');
             try {
-                const nowIso = new Date().toISOString();
+                // Enforce that guest classes must start in more than 12 hours
+                const minDateIso = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString();
                 
-                // Fetch classes of tipo_clase 'yoga' starting from today
+                // Fetch classes of tipo_clase 'yoga' starting after the 12-hour limit
                 const { data: clases, error: errClases } = await client
                     .from('clases')
                     .select('*, profesionales(*)')
                     .eq('tipo_clase', 'yoga')
-                    .gte('fecha_inicio', nowIso)
+                    .gte('fecha_inicio', minDateIso)
                     .order('fecha_inicio')
                     .limit(15);
 
@@ -323,7 +324,7 @@
                 
                 clases.forEach(c => {
                     const ocupadas = bookingsMap[c.id] || 0;
-                    const capacidad = c.capacidad_alumnos || 0;
+                    const capacidad = c.capacidad_max || 0;
                     const libres = Math.max(0, capacidad - ocupadas);
                     
                     if (libres > 0) {

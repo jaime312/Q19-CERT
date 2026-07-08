@@ -82,7 +82,7 @@ serve(async (req) => {
     // 4. Retrieve class to check free spots
     const { data: clase, error: classError } = await supabase
       .from('clases')
-      .select('capacidad_alumnos')
+      .select('capacidad_max')
       .eq('id', clase_id)
       .single()
 
@@ -104,7 +104,7 @@ serve(async (req) => {
     }
 
     const currentBookingsCount = bookings ? bookings.length : 0
-    if (currentBookingsCount >= (clase.capacidad_alumnos || 0)) {
+    if (currentBookingsCount >= (clase.capacidad_max || 0)) {
       return new Response(JSON.stringify({ error: 'Lo sentimos, esta clase ya está completa. Por favor, selecciona otro horario.' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
