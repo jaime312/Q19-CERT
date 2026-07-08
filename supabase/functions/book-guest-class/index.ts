@@ -111,24 +111,42 @@ serve(async (req) => {
       })
     }
 
-    // 5. Create guest profile
-    const guestUserId = crypto.randomUUID()
+    // 5. Create guest auth user and profile
     const guestEmail = email || `guest_${session_id}@genyoga.es`
-    console.log(`Creando perfil temporal para invitado: ${guestUserId} (${guestEmail})`)
+    console.log(`Creando usuario de autenticación temporal para invitado: ${guestEmail}`)
+
+    const { data: authUserData, error: authError } = await supabase.auth.admin.createUser({
+      email: guestEmail,
+      email_confirm: true,
+      user_metadata: { nombre, apellidos }
+    })
+
+    if (authError || !authUserData?.user) {
+      console.error("Error creating guest auth user:", authError)
+      return new Response(JSON.stringify({ error: `Error al registrar el usuario: ${authError?.message || 'No se recibió información del usuario.'}` }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const guestUserId = authUserData.user.id
+    console.log(`Insertando/actualizando perfil temporal para invitado: ${guestUserId}`)
 
     const { error: profileError } = await supabase
       .from('profiles')
-      .insert([{
+      .upsert({
         id: guestUserId,
         email: guestEmail,
         nombre: nombre,
         apellidos: `${apellidos} [Stripe: ${session_id}]`,
         rol: 'alumno',
         bonos: 0
-      }])
+      })
 
     if (profileError) {
       console.error("Error creating guest profile:", profileError)
+      // Clean up created auth user
+      await supabase.auth.admin.deleteUser(guestUserId)
       return new Response(JSON.stringify({ error: `Error al registrar el perfil: ${profileError.message}` }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -148,8 +166,9 @@ serve(async (req) => {
 
     if (bookingError) {
       console.error("Error creating guest booking:", bookingError)
-      // Attempt to clean up the profile we just created so they can retry
+      // Clean up the profile and the auth user so they can retry
       await supabase.from('profiles').delete().eq('id', guestUserId)
+      await supabase.auth.admin.deleteUser(guestUserId)
 
       return new Response(JSON.stringify({ error: `Error al registrar la reserva: ${bookingError.message}` }), {
         status: 500,

@@ -1229,7 +1229,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <!-- Footer spacing (Matches classes.html layout) -->
         <div class="w-full flex items-center justify-center z-15 pb-4 select-none pointer-events-none">
-            <span class="text-[9px] uppercase tracking-[0.2em] font-bold text-[#795244]/40">v5.6 | &copy; 2026 Gen Yoga</span>
+            <span class="text-[9px] uppercase tracking-[0.2em] font-bold text-[#795244]/40">v5.7 | &copy; 2026 Gen Yoga</span>
         </div>
     </div>
 
@@ -2088,38 +2088,10 @@ function renderProfesionalesLanding(profesionales) {
                 });
 
                 if (result.isConfirmed) {
-                    // Pedir datos del invitado antes de ir al pago
-                    const { value: guestForm } = await Swal.fire({
-                        title: 'Datos para la Reserva',
-                        html:
-                            '<div style="text-align: left; margin-left: 10%; margin-bottom: 4px;"><label style="font-size: 11px; font-weight: bold; color: #795244;">Nombre *</label></div>' +
-                            '<input id="swal-input-nombre" class="swal2-input" placeholder="Tu nombre" style="margin-top: 0; margin-bottom: 12px; width: 80%; height: 38px; font-size: 14px;">' +
-                            '<div style="text-align: left; margin-left: 10%; margin-bottom: 4px;"><label style="font-size: 11px; font-weight: bold; color: #795244;">Apellidos</label></div>' +
-                            '<input id="swal-input-apellidos" class="swal2-input" placeholder="Tus apellidos" style="margin-top: 0; margin-bottom: 12px; width: 80%; height: 38px; font-size: 14px;">',
-                        focusConfirm: false,
-                        showCancelButton: true,
-                        confirmButtonText: 'Continuar al Pago',
-                        cancelButtonText: 'Cancelar',
-                        confirmButtonColor: '#795244',
-                        background: '#fff',
-                        color: '#333',
-                        preConfirm: () => {
-                            const nombre = document.getElementById('swal-input-nombre').value.trim();
-                            const apellidos = document.getElementById('swal-input-apellidos').value.trim();
-                            if (!nombre) {
-                                Swal.showValidationMessage('El nombre es obligatorio');
-                                return false;
-                            }
-                            return { nombre, apellidos };
-                        }
-                    });
-
-                    if (guestForm) {
-                        localStorage.setItem('guest_nombre', guestForm.nombre);
-                        localStorage.setItem('guest_apellidos', guestForm.apellidos);
-                        localStorage.removeItem('guest_email');
-                        iniciarPagoStripe('guest');
-                    }
+                    localStorage.removeItem('guest_nombre');
+                    localStorage.removeItem('guest_apellidos');
+                    localStorage.removeItem('guest_email');
+                    iniciarPagoStripe('guest');
                 } else if (result.isDenied) {
                     // Redirect to login
                     window.location.href = 'profile.html?buy=clase_suelta';
