@@ -3720,7 +3720,7 @@ async function cargarConfiguracionesApp() {
                 console.log("Migrando horas_limite_cancelacion de 12 a 24...");
                 const cancelConfig = data.find(c => c.clave === 'horas_limite_cancelacion');
                 if (cancelConfig) {
-                    await client.from('configuracion').update({ valor: '24' }).eq('id', cancelConfig.id);
+                    await client.from('configuracion').update({ valor: '24' }).eq('clave', cancelConfig.clave);
                     configuracionesApp['horas_limite_cancelacion'] = '24';
                 }
             }
@@ -7698,7 +7698,7 @@ async function cargarConfiguracion() {
                                             </button>
                                             <div class="flex items-center gap-1 px-2">
                                                 <input type="number" id="input-horas-cancelacion" value="${targetConfig.valor}" 
-                                                       onchange="actualizarConfigRapido('${targetConfig.id}', this.value)"
+                                                       onchange="actualizarConfigRapido('${targetConfig.clave}', this.value)"
                                                        class="w-10 bg-transparent text-center font-black text-xl text-gray-800 outline-none p-0 remove-arrow">
                                                 <span class="text-gray-400 font-bold text-[10px] uppercase tracking-wide pt-1">H</span>
                                             </div>
@@ -7720,7 +7720,7 @@ async function cargarConfiguracion() {
                                             </button>
                                             <div class="flex items-center gap-1 px-2">
                                                 <input type="number" id="input-horas-reserva" value="${targetConfigReserva ? targetConfigReserva.valor : 12}" 
-                                                       onchange="actualizarConfigRapido('${targetConfigReserva ? targetConfigReserva.id : ''}', this.value)"
+                                                       onchange="actualizarConfigRapido('${targetConfigReserva ? targetConfigReserva.clave : 'horas_limite_reserva'}', this.value)"
                                                        class="w-10 bg-transparent text-center font-black text-xl text-gray-800 outline-none p-0 remove-arrow">
                                                 <span class="text-gray-400 font-bold text-[10px] uppercase tracking-wide pt-1">H</span>
                                             </div>
@@ -7971,7 +7971,7 @@ async function cargarConfiguracion() {
         val += delta;
         if (val < 0) val = 0;
         input.value = val;
-        await actualizarConfigRapido(targetConfig.id, val.toString());
+        await actualizarConfigRapido(targetConfig.clave, val.toString());
         configuracionesApp['horas_limite_cancelacion'] = val.toString();
     };
 
@@ -7982,11 +7982,11 @@ async function cargarConfiguracion() {
         if (val < 0) val = 0;
         input.value = val;
         if (targetConfigReserva) {
-            await actualizarConfigRapido(targetConfigReserva.id, val.toString());
+            await actualizarConfigRapido(targetConfigReserva.clave, val.toString());
         } else {
-            const { data } = await client.from('configuracion').select('id').eq('clave', 'horas_limite_reserva').single();
+            const { data } = await client.from('configuracion').select('clave').eq('clave', 'horas_limite_reserva').single();
             if (data) {
-                await actualizarConfigRapido(data.id, val.toString());
+                await actualizarConfigRapido(data.clave, val.toString());
             }
         }
         configuracionesApp['horas_limite_reserva'] = val.toString();
@@ -8075,17 +8075,16 @@ async function cargarConfiguracion() {
     renderIconPicker();
 }
 
-async function actualizarConfigRapido(id, nuevoValor) {
-    const { error } = await client.from('configuracion').update({ valor: nuevoValor }).eq('id', id);
+async function actualizarConfigRapido(clave, nuevoValor) {
+    const { error } = await client
+        .from('configuracion')
+        .update({ valor: nuevoValor })
+        .eq('clave', clave);
     if (error) {
         Swal.fire('Error', error.message, 'error');
         cargarConfiguracion();
     } else {
-        // Actualizar caché local
-        const { data: configItem } = await client.from('configuracion').select('clave').eq('id', id).single();
-        if (configItem) {
-            configuracionesApp[configItem.clave] = nuevoValor;
-        }
+        configuracionesApp[clave] = nuevoValor;
         const Toast = Swal.mixin({ toast: true, position: 'bottom-end', showConfirmButton: false, timer: 1500 });
         Toast.fire({ icon: 'success', title: 'Configuración actualizada' });
     }
