@@ -15,8 +15,8 @@ serve(async (req) => {
   try {
     const { session_id, clase_id, nombre, apellidos, email } = await req.json()
 
-    if (!session_id || !clase_id || !nombre || !email) {
-      return new Response(JSON.stringify({ error: 'Faltan datos requeridos (session_id, clase_id, nombre, email).' }), {
+    if (!session_id || !clase_id || !nombre) {
+      return new Response(JSON.stringify({ error: 'Faltan datos requeridos (session_id, clase_id, nombre).' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -113,13 +113,14 @@ serve(async (req) => {
 
     // 5. Create guest profile
     const guestUserId = crypto.randomUUID()
-    console.log(`Creando perfil temporal para invitado: ${guestUserId} (${email})`)
+    const guestEmail = email || `guest_${session_id}@genyoga.es`
+    console.log(`Creando perfil temporal para invitado: ${guestUserId} (${guestEmail})`)
 
     const { error: profileError } = await supabase
       .from('profiles')
       .insert([{
         id: guestUserId,
-        email: email,
+        email: guestEmail,
         nombre: nombre,
         apellidos: `${apellidos} [Stripe: ${session_id}]`,
         rol: 'alumno',

@@ -14,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    const { lookup_key, user_id, site_url } = await req.json()
+    const { lookup_key, user_id, site_url, from } = await req.json()
 
     if (!user_id) {
       return new Response(JSON.stringify({ error: 'Falta el ID de usuario (user_id).' }), {
@@ -105,8 +105,8 @@ serve(async (req) => {
       ],
       mode: mode,
       client_reference_id: user_id,
-      success_url: `${siteUrl}/success.html?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${siteUrl}/cancel.html`,
+      success_url: `${siteUrl}/success.html?session_id={CHECKOUT_SESSION_ID}${user_id === 'guest' ? '&guest=true' : ''}${from ? `&from=${from}` : ''}`,
+      cancel_url: `${siteUrl}/cancel.html${from ? `?from=${from}` : ''}`,
       payment_method_types: ['card'],
     }
 

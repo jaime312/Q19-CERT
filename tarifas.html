@@ -1229,7 +1229,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <!-- Footer spacing (Matches classes.html layout) -->
         <div class="w-full flex items-center justify-center z-15 pb-4 select-none pointer-events-none">
-            <span class="text-[9px] uppercase tracking-[0.2em] font-bold text-[#795244]/40">v5.2 | &copy; 2026 Gen Yoga</span>
+            <span class="text-[9px] uppercase tracking-[0.2em] font-bold text-[#795244]/40">v5.4 | &copy; 2026 Gen Yoga</span>
         </div>
     </div>
 
@@ -2048,9 +2048,8 @@ function renderProfesionalesLanding(profesionales) {
         }
 
         // --- GUEST STRIPE CHECKOUT INTEGRATION ---
-        const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
-        const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-        const supabaseClient = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
+        // Reuse Supabase client declared in the inlined app.js script block
+        const supabaseClient = client;
 
         async function adquirirClaseSuelta(event) {
             if (event) {
@@ -2096,9 +2095,7 @@ function renderProfesionalesLanding(profesionales) {
                             '<div style="text-align: left; margin-left: 10%; margin-bottom: 4px;"><label style="font-size: 11px; font-weight: bold; color: #795244;">Nombre *</label></div>' +
                             '<input id="swal-input-nombre" class="swal2-input" placeholder="Tu nombre" style="margin-top: 0; margin-bottom: 12px; width: 80%; height: 38px; font-size: 14px;">' +
                             '<div style="text-align: left; margin-left: 10%; margin-bottom: 4px;"><label style="font-size: 11px; font-weight: bold; color: #795244;">Apellidos</label></div>' +
-                            '<input id="swal-input-apellidos" class="swal2-input" placeholder="Tus apellidos" style="margin-top: 0; margin-bottom: 12px; width: 80%; height: 38px; font-size: 14px;">' +
-                            '<div style="text-align: left; margin-left: 10%; margin-bottom: 4px;"><label style="font-size: 11px; font-weight: bold; color: #795244;">Email de confirmación *</label></div>' +
-                            '<input id="swal-input-email" type="email" class="swal2-input" placeholder="ejemplo@correo.com" style="margin-top: 0; margin-bottom: 4px; width: 80%; height: 38px; font-size: 14px;">',
+                            '<input id="swal-input-apellidos" class="swal2-input" placeholder="Tus apellidos" style="margin-top: 0; margin-bottom: 12px; width: 80%; height: 38px; font-size: 14px;">',
                         focusConfirm: false,
                         showCancelButton: true,
                         confirmButtonText: 'Continuar al Pago',
@@ -2109,19 +2106,18 @@ function renderProfesionalesLanding(profesionales) {
                         preConfirm: () => {
                             const nombre = document.getElementById('swal-input-nombre').value.trim();
                             const apellidos = document.getElementById('swal-input-apellidos').value.trim();
-                            const email = document.getElementById('swal-input-email').value.trim();
-                            if (!nombre || !email) {
-                                Swal.showValidationMessage('Nombre y Email son obligatorios');
+                            if (!nombre) {
+                                Swal.showValidationMessage('El nombre es obligatorio');
                                 return false;
                             }
-                            return { nombre, apellidos, email };
+                            return { nombre, apellidos };
                         }
                     });
 
                     if (guestForm) {
                         localStorage.setItem('guest_nombre', guestForm.nombre);
                         localStorage.setItem('guest_apellidos', guestForm.apellidos);
-                        localStorage.setItem('guest_email', guestForm.email);
+                        localStorage.removeItem('guest_email');
                         iniciarPagoStripe('guest');
                     }
                 } else if (result.isDenied) {
@@ -2147,7 +2143,8 @@ function renderProfesionalesLanding(profesionales) {
                     body: {
                         lookup_key: 'clase_suelta',
                         user_id: userId,
-                        site_url: siteUrl
+                        site_url: siteUrl,
+                        from: 'tarifas'
                     }
                 });
 

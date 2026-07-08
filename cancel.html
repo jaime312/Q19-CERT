@@ -43,15 +43,15 @@
         <!-- Redirect Message -->
         <div class="bg-amber-50/60 border border-amber-500/10 px-4 py-2.5 rounded-xl text-amber-800 text-xs font-semibold flex items-center gap-2 mb-8">
             <i class="ph-bold ph-spinner text-sm animate-spin"></i>
-            <span>Redirigiéndote a tarifas en <span id="countdown">5</span> segundos...</span>
+            <span id="redirect-message">Redirigiéndote a tarifas en <span id="countdown-dynamic">5</span> segundos...</span>
         </div>
 
         <!-- Buttons -->
         <div class="flex flex-col gap-3 w-full">
-            <a href="tarifas.html" class="w-full py-3.5 bg-cocoa hover:bg-black text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md hover:scale-[1.02] active:scale-[0.98]">
+            <a id="btn-primary" href="tarifas.html" class="w-full py-3.5 bg-cocoa hover:bg-black text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md hover:scale-[1.02] active:scale-[0.98]">
                 Volver a Tarifas
             </a>
-            <a href="profile.html" class="w-full py-3.5 bg-gray-50 hover:bg-gray-100 text-cocoa/60 hover:text-cocoa text-center text-xs font-bold uppercase tracking-wider rounded-xl border border-cocoa/10 transition shadow-sm">
+            <a id="btn-secondary" href="profile.html" class="w-full py-3.5 bg-gray-50 hover:bg-gray-100 text-cocoa/60 hover:text-cocoa text-center text-xs font-bold uppercase tracking-wider rounded-xl border border-cocoa/10 transition shadow-sm">
                 Ir a mi Perfil
             </a>
         </div>
@@ -65,17 +65,53 @@
     <!-- Script to redirect -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const from = urlParams.get('from') || 'tarifas';
+            
+            const btnPrimary = document.getElementById('btn-primary');
+            const btnSecondary = document.getElementById('btn-secondary');
+            const redirectMessage = document.getElementById('redirect-message');
+            
+            let redirectUrl = 'tarifas.html';
+            
+            if (from === 'profile') {
+                redirectUrl = 'profile.html';
+                if (btnPrimary) {
+                    btnPrimary.href = 'profile.html';
+                    btnPrimary.textContent = 'Volver a mi Perfil';
+                }
+                if (btnSecondary) {
+                    btnSecondary.href = 'tarifas.html';
+                    btnSecondary.textContent = 'Ver Tarifas';
+                }
+                if (redirectMessage) {
+                    redirectMessage.innerHTML = `Redirigiéndote a tu perfil en <span id="countdown-dynamic">5</span> segundos...`;
+                }
+            } else {
+                if (btnPrimary) {
+                    btnPrimary.href = 'tarifas.html';
+                    btnPrimary.textContent = 'Volver a Tarifas';
+                }
+                if (btnSecondary) {
+                    btnSecondary.href = 'profile.html';
+                    btnSecondary.textContent = 'Ir a mi Perfil';
+                }
+                if (redirectMessage) {
+                    redirectMessage.innerHTML = `Redirigiéndote a tarifas en <span id="countdown-dynamic">5</span> segundos...`;
+                }
+            }
+
             // Countdown timer redirect
             let seconds = 5;
-            const countdownEl = document.getElementById('countdown');
+            const dynamicCountdownEl = document.getElementById('countdown-dynamic');
             
             const interval = setInterval(() => {
                 seconds--;
-                if (countdownEl) countdownEl.textContent = seconds;
+                if (dynamicCountdownEl) dynamicCountdownEl.textContent = seconds;
                 
                 if (seconds <= 0) {
                     clearInterval(interval);
-                    window.location.href = 'tarifas.html';
+                    window.location.href = redirectUrl;
                 }
             }, 1000);
         });

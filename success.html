@@ -89,10 +89,6 @@
                         <input type="text" id="guest-apellidos" class="w-full px-3 py-2 bg-white border border-cocoa/20 rounded-lg focus:ring-2 focus:ring-olive outline-none shadow-sm text-sm text-cocoa transition" placeholder="Tus apellidos">
                     </div>
                 </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-cocoa/50 uppercase tracking-wider mb-1">Email de confirmación</label>
-                    <input type="email" id="guest-email" class="w-full px-3 py-2 bg-white border border-cocoa/20 rounded-lg focus:ring-2 focus:ring-olive outline-none shadow-sm text-sm text-cocoa transition" placeholder="ejemplo@correo.com">
-                </div>
             </div>
 
             <button onclick="confirmarReservaInvitado()" class="mt-6 w-full py-3.5 bg-cocoa hover:bg-black text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
@@ -162,7 +158,6 @@
                         // Prefill guest form details collected by Stripe or localStorage
                         document.getElementById('guest-nombre').value = data.nombre || localStorage.getItem('guest_nombre') || '';
                         document.getElementById('guest-apellidos').value = data.apellidos || localStorage.getItem('guest_apellidos') || '';
-                        document.getElementById('guest-email').value = data.email || localStorage.getItem('guest_email') || '';
                         
                         document.getElementById('guest-success').classList.remove('hidden');
                         // Make card wider to fit the form details nicely
@@ -178,10 +173,24 @@
                 }
             } catch (e) {
                 console.error("Verification error:", e);
-                // Fallback to standard checkout card
                 document.getElementById('loading-state').classList.add('hidden');
-                document.getElementById('standard-success').classList.remove('hidden');
-                startCountdown(5);
+                
+                const searchParams = new URLSearchParams(window.location.search);
+                const isGuestParam = searchParams.get('guest') === 'true';
+                
+                if (isGuestParam) {
+                    // Fallback to guest screen if it was a guest purchase
+                    document.getElementById('guest-nombre').value = localStorage.getItem('guest_nombre') || '';
+                    document.getElementById('guest-apellidos').value = localStorage.getItem('guest_apellidos') || '';
+                    
+                    document.getElementById('guest-success').classList.remove('hidden');
+                    document.getElementById('main-card').classList.replace('max-w-md', 'max-w-lg');
+                    await cargarClasesDisponiblesInvitado();
+                } else {
+                    // Fallback to standard checkout card
+                    document.getElementById('standard-success').classList.remove('hidden');
+                    startCountdown(5);
+                }
             }
         });
 
@@ -338,14 +347,13 @@
             const claseId = document.getElementById('guest-clase-select').value;
             const nombre = document.getElementById('guest-nombre').value.trim();
             const apellidos = document.getElementById('guest-apellidos').value.trim();
-            const email = document.getElementById('guest-email').value.trim();
 
             if (!claseId) {
                 Swal.fire({ icon: 'warning', title: 'Atención', text: 'Por favor, selecciona una clase de Yoga.' });
                 return;
             }
-            if (!nombre || !email) {
-                Swal.fire({ icon: 'warning', title: 'Atención', text: 'Nombre y Email son campos obligatorios.' });
+            if (!nombre) {
+                Swal.fire({ icon: 'warning', title: 'Atención', text: 'El nombre es un campo obligatorio.' });
                 return;
             }
 
@@ -363,7 +371,7 @@
                         clase_id: claseId,
                         nombre: nombre,
                         apellidos: apellidos,
-                        email: email
+                        email: ""
                     }
                 });
 

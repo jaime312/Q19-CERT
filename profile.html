@@ -10855,7 +10855,8 @@ async function comprarClaseSuelta(event) {
             body: {
                 lookup_key: 'clase_suelta',
                 user_id: currentUser.id,
-                site_url: siteUrl
+                site_url: siteUrl,
+                from: 'profile'
             }
         });
 
@@ -10948,7 +10949,8 @@ async function comprarBonoMensual(event) {
             body: {
                 lookup_key: 'bono_mensual', // Direct generic lookup key for Bono Mensual subscription!
                 user_id: currentUser.id,
-                site_url: siteUrl
+                site_url: siteUrl,
+                from: 'profile'
             }
         });
 
