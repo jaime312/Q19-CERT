@@ -5,6 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0"
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
 serve(async (req) => {
@@ -57,9 +58,9 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_ANON_KEY') || ''
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const guestEmail = email || `guest_${session_id}@genyoga.es`
 
     // 3. Verify if this session was already used to prevent duplicate bookings
-    const guestEmail = email || `guest_${session_id}@genyoga.es`
     const { data: existingProfiles, error: duplicateCheckError } = await supabase
       .from('profiles')
       .select('id')
@@ -113,7 +114,6 @@ serve(async (req) => {
     }
 
     // 5. Create guest auth user and profile
-    const guestEmail = email || `guest_${session_id}@genyoga.es`
     console.log(`Creando usuario de autenticación temporal para invitado: ${guestEmail}`)
 
     const { data: authUserData, error: authError } = await supabase.auth.admin.createUser({
