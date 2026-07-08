@@ -52,10 +52,11 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_ANON_KEY') || ''
     const supabase = createClient(supabaseUrl, supabaseKey)
 
+    const guestEmail = `guest_${session_id}@genyoga.es`
     const { data: profiles, error: dbError } = await supabase
       .from('profiles')
       .select('id')
-      .like('apellidos', `%[Stripe: ${session_id}]%`)
+      .eq('email', guestEmail)
 
     if (dbError) {
       console.error("Database query error checking duplicate session:", dbError)

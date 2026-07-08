@@ -59,10 +59,11 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     // 3. Verify if this session was already used to prevent duplicate bookings
+    const guestEmail = email || `guest_${session_id}@genyoga.es`
     const { data: existingProfiles, error: duplicateCheckError } = await supabase
       .from('profiles')
       .select('id')
-      .like('apellidos', `%[Stripe: ${session_id}]%`)
+      .eq('email', guestEmail)
 
     if (duplicateCheckError) {
       console.error("Database query error checking duplicate session:", duplicateCheckError)
@@ -138,8 +139,8 @@ serve(async (req) => {
         id: guestUserId,
         email: guestEmail,
         nombre: nombre,
-        apellidos: `${apellidos} [Stripe: ${session_id}]`,
-        rol: 'alumno',
+        apellidos: apellidos,
+        rol: 'cliente_temporal',
         bonos: 0
       })
 
