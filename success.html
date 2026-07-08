@@ -159,10 +159,10 @@
                     if (data.alreadyRedeemed) {
                         document.getElementById('guest-redeemed').classList.remove('hidden');
                     } else {
-                        // Prefill guest form details collected by Stripe
-                        document.getElementById('guest-nombre').value = data.nombre || '';
-                        document.getElementById('guest-apellidos').value = data.apellidos || '';
-                        document.getElementById('guest-email').value = data.email || '';
+                        // Prefill guest form details collected by Stripe or localStorage
+                        document.getElementById('guest-nombre').value = data.nombre || localStorage.getItem('guest_nombre') || '';
+                        document.getElementById('guest-apellidos').value = data.apellidos || localStorage.getItem('guest_apellidos') || '';
+                        document.getElementById('guest-email').value = data.email || localStorage.getItem('guest_email') || '';
                         
                         document.getElementById('guest-success').classList.remove('hidden');
                         // Make card wider to fit the form details nicely
@@ -253,7 +253,7 @@
             if (!stripeSessionId) return;
 
             Swal.fire({
-                title: 'Conectando con Stripe...',
+                title: 'Conectando con la pasarela de pagos...',
                 text: 'Por favor, espera un momento.',
                 allowOutsideClick: false,
                 didOpen: () => Swal.showLoading(),
@@ -377,6 +377,10 @@
                     } catch(e){}
                     throw new Error(errMsg);
                 }
+
+                localStorage.removeItem('guest_nombre');
+                localStorage.removeItem('guest_apellidos');
+                localStorage.removeItem('guest_email');
 
                 Swal.fire({
                     icon: 'success',
