@@ -93,41 +93,6 @@ h1, h2, h3, h4, h5, h6, .brand-font {
 }
 
 /* ======================================================= */
-/* CURSOR PERSONALIZADO NATIVO (CHICA MORENA HACIENDO YOGA) */
-/* ======================================================= */
-
-/* Cursores nativos estables en escritorio (también tras volver desde Stripe/bfcache) */
-body.platform-web {
-    cursor: default !important;
-}
-
-body.platform-web a,
-body.platform-web button,
-body.platform-web select,
-body.platform-web .cursor-pointer,
-body.platform-web [onclick] {
-    cursor: pointer !important;
-}
-
-/* Permitir cursor de texto nativo en campos de formulario por usabilidad */
-body.platform-web input,
-body.platform-web textarea {
-    cursor: text !important;
-}
-
-/* Restaurar punteros en elementos interactivos para Apps */
-body.platform-ios a,
-body.platform-android a,
-body.platform-ios button,
-body.platform-android button,
-body.platform-ios input,
-body.platform-android input,
-body.platform-ios select,
-body.platform-android select {
-    cursor: auto !important;
-}
-
-/* ======================================================= */
 /* FANTASY VIDEO LOGO                                      */
 /* ======================================================= */
 
@@ -501,4 +466,3 @@ body.platform-android select {
         .swal2-popup .swal2-styled.swal2-deny:hover {
             background-color: #dc2626 !important;
         }
-
