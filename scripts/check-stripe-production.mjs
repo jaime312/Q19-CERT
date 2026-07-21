@@ -12,6 +12,14 @@ function requireText(source, expected, label) {
   if (!source.includes(expected)) errors.push(`${label}: falta ${expected}`);
 }
 
+function requireBefore(source, first, second, label) {
+  const firstIndex = source.indexOf(first);
+  const secondIndex = source.indexOf(second);
+  if (firstIndex < 0 || secondIndex < 0 || firstIndex >= secondIndex) {
+    errors.push(`${label}: ${first} debe ejecutarse antes de ${second}`);
+  }
+}
+
 function forbid(source, pattern, label) {
   if (pattern.test(source)) errors.push(`${label}: contiene ${pattern}`);
 }
@@ -56,11 +64,20 @@ requireText(shared, "startsWith('sk_live_')", 'Configuración LIVE');
 requireText(shared, "startsWith('whsec_')", 'Firma del webhook');
 requireText(shared, "startsWith('bpc_')", 'Configuración del portal');
 requireText(shared, 'price.unit_amount !== expectedAmount', 'Validación de importes');
+requireText(shared, "buildOriginSet('ALLOWED_ORIGINS'", 'Lista de orígenes CORS');
+requireText(shared, 'config.allowedOrigins.has(origin)', 'Validación CORS por lista blanca');
+requireText(shared, "buildOriginSet('PAYMENT_ALLOWED_ORIGINS'", 'Lista de orígenes de pago LIVE');
+requireText(shared, 'config.paymentAllowedOrigins.has(origin)', 'Bloqueo de pagos fuera de producción');
+requireText(shared, "'https://genyoga.studio'", 'Origen LIVE principal fijado en código');
+requireText(shared, "'https://www.genyoga.studio'", 'Origen LIVE www fijado en código');
+requireText(shared, "requireEnv('PAYMENT_ALLOWED_ORIGINS')", 'Orígenes de pago obligatorios');
+requireText(shared, 'siteUrl !== PRODUCTION_SITE_ORIGIN', 'SITE_URL canónica sin rutas de certificación');
 requireText(checkout, 'getAuthenticatedUser', 'Identidad de Checkout');
 requireText(checkout, 'getValidatedCatalog', 'Catálogo de Checkout');
 requireText(portal, 'checkoutSession.client_reference_id !== user!.id', 'Propiedad del portal');
 requireText(portal, 'configuration: config.portalConfigurationId!', 'Configuración LIVE del portal');
 requireText(checkout, 'idempotencyKey', 'Idempotencia de Checkout');
+requireText(checkout, 'checkoutAttemptId', 'Idempotencia individual de invitados');
 requireText(getSession, 'validateCheckoutPurchase', 'Validación de retorno');
 requireText(guestBooking, 'stripe_redeem_guest_checkout', 'Canje invitado');
 requireText(webhook, 'constructEventAsync', 'Firma Stripe');
@@ -69,6 +86,25 @@ requireText(webhook, "supabase.rpc('stripe_fulfill_checkout'", 'Fulfillment ató
 requireText(webhook, "event.type === 'invoice.paid'", 'Renovaciones');
 requireText(webhook, 'parent?.subscription_details?.subscription', 'Compatibilidad Invoice Basil');
 requireText(webhook, "event.type === 'customer.subscription.deleted'", 'Cancelaciones');
+
+for (const [source, label] of [
+  [checkout, 'Checkout'],
+  [portal, 'Portal'],
+  [getSession, 'Consulta Checkout'],
+  [guestBooking, 'Reserva invitado'],
+]) {
+  requireText(source, 'readCorsConfig()', `CORS temprano en ${label}`);
+  requireText(source, 'assertPaymentOrigin(req, config)', `Guard LIVE en ${label}`);
+  requireBefore(
+    source,
+    'assertPaymentOrigin(req, config)',
+    'const stripe = createStripeClient(config)',
+    `Orden del guard LIVE en ${label}`,
+  );
+}
+
+requireText(frontendSources[2], 'APP_DEPLOYMENT_ENVIRONMENT', 'Entorno explícito en success.html');
+requireText(frontendSources[2], 'ensureLivePaymentEnvironment()', 'Guard frontend en success.html');
 
 for (const rpc of [
   'stripe_fulfill_checkout',

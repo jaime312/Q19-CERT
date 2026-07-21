@@ -18,7 +18,7 @@ la gestión de su suscripción y sus facturas.
 ## 2. Configurar secretos en Supabase
 
 El proyecto enlazado es `jkjifmrrlyncuwpjhxvk`. En Supabase Dashboard abre
-**Edge Functions > Secrets** y configura las seis variables documentadas en
+**Edge Functions > Secrets** y configura las ocho variables documentadas en
 `supabase/functions/.env.example`:
 
 - `STRIPE_SECRET_KEY`
@@ -27,11 +27,41 @@ El proyecto enlazado es `jkjifmrrlyncuwpjhxvk`. En Supabase Dashboard abre
 - `STRIPE_PRICE_CLASE_SUELTA`
 - `STRIPE_PRICE_BONO_MENSUAL`
 - `SITE_URL`
+- `ALLOWED_ORIGINS`
+- `PAYMENT_ALLOWED_ORIGINS`
 
 `SITE_URL` debe ser la base HTTPS pública exacta que contiene `success.html`,
 `cancel.html` y `profile.html`, sin barra final. Para el despliegue actual es
 `https://genyoga.studio`. No hay que copiar
 `SUPABASE_SERVICE_ROLE_KEY`: Supabase la proporciona a las Edge Functions.
+
+`ALLOWED_ORIGINS` es una lista separada por comas con los demás orígenes HTTPS
+desde los que se publica el mismo frontend. No debe contener rutas: para GitHub
+Pages se autoriza el origen de la cuenta, no `/GEN-YOGA`. En producción usa:
+
+```text
+https://www.genyoga.studio,https://jaime312.github.io
+```
+
+El origen de `SITE_URL` se permite siempre de forma automática. No uses `*` ni
+añadas dominios que no controlas.
+
+`PAYMENT_ALLOWED_ORIGINS` es una lista más restrictiva: determina desde qué
+orígenes se pueden crear o consultar pagos LIVE y abrir Customer Portal. En
+producción debe ser exactamente:
+
+```text
+https://genyoga.studio,https://www.genyoga.studio
+```
+
+La función falla de forma cerrada si falta esta variable, si `SITE_URL` contiene
+una ruta o si cualquiera de los orígenes no es uno de esos dos dominios fijados
+en código. Una configuración accidental no puede habilitar pagos LIVE en CERT.
+
+No incluyas `jaime312.github.io`: la web Q19-CERT debe usar otro proyecto
+Supabase con claves, Prices y webhook de Stripe TEST. CORS puede conservar el
+origen de certificación para devolver un error explicativo, pero nunca autoriza
+por sí solo un pago LIVE.
 
 Como alternativa al Dashboard, crea localmente
 `supabase/functions/.env.production.local` a partir del ejemplo y ejecuta:

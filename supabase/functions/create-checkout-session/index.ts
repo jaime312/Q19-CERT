@@ -4,13 +4,16 @@ import {
   PURCHASE_TYPES,
   HttpError,
   assertAllowedOrigin,
+  assertPaymentOrigin,
   corsHeaders,
   createAdminClient,
   createStripeClient,
   getAuthenticatedUser,
   getValidatedCatalog,
   handleOptions,
+  isUuid,
   jsonResponse,
+  readCorsConfig,
   readProductionConfig,
   requirePost,
   safeErrorResponse,
@@ -19,13 +22,15 @@ import {
 serve(async (req) => {
   let headers: Record<string, string> = {}
   try {
-    const config = readProductionConfig()
-    headers = corsHeaders(req, config)
-    const preflight = handleOptions(req, config)
+    const corsConfig = readCorsConfig()
+    headers = corsHeaders(req, corsConfig)
+    const preflight = handleOptions(req, corsConfig)
     if (preflight) return preflight
 
-    assertAllowedOrigin(req, config)
+    assertAllowedOrigin(req, corsConfig)
     requirePost(req)
+    const config = readProductionConfig()
+    assertPaymentOrigin(req, config)
 
     let body: Record<string, unknown>
     try {
@@ -43,6 +48,14 @@ serve(async (req) => {
     const isGuest = requestedUserId === 'guest'
     if (isGuest && lookupKey !== PURCHASE_TYPES.CLASE_SUELTA) {
       throw new HttpError(400, 'Los invitados solo pueden adquirir una clase suelta.')
+    }
+    const requestedAttemptId = String(body.checkout_attempt_id || '').trim()
+    const checkoutAttemptId = isGuest && isUuid(requestedAttemptId)
+      ? requestedAttemptId
+      : (isGuest ? crypto.randomUUID() : '')
+    const appVersion = String(body.app_version || 'legacy').trim()
+    if (!/^(?:legacy|\d+\.\d+(?:\.\d+)?)$/.test(appVersion)) {
+      throw new HttpError(400, 'La versión de la aplicación no es válida.')
     }
 
     const stripe = createStripeClient(config)
@@ -94,10 +107,13 @@ serve(async (req) => {
     const metadata: Stripe.MetadataParam = {
       app: 'gen_yoga',
       environment: 'production',
+      frontend_environment: 'production',
+      app_version: appVersion,
       purchase_type: purchaseType,
       app_user_id: appUserId,
       source,
     }
+    if (isGuest) metadata.checkout_attempt_id = checkoutAttemptId
 
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       line_items: [{ price: price.id, quantity: 1 }],
@@ -130,7 +146,7 @@ serve(async (req) => {
       'production',
       'checkout',
       purchaseType,
-      appUserId,
+      isGuest ? checkoutAttemptId : appUserId,
       idempotencyWindow,
     ].join(':')
     const session = await stripe.checkout.sessions.create(sessionParams, { idempotencyKey })

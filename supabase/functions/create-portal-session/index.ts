@@ -2,12 +2,14 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import {
   HttpError,
   assertAllowedOrigin,
+  assertPaymentOrigin,
   corsHeaders,
   createAdminClient,
   createStripeClient,
   getAuthenticatedUser,
   handleOptions,
   jsonResponse,
+  readCorsConfig,
   readProductionConfig,
   requirePost,
   safeErrorResponse,
@@ -17,13 +19,15 @@ import {
 serve(async (req) => {
   let headers: Record<string, string> = {}
   try {
-    const config = readProductionConfig({ requirePortalConfiguration: true })
-    headers = corsHeaders(req, config)
-    const preflight = handleOptions(req, config)
+    const corsConfig = readCorsConfig()
+    headers = corsHeaders(req, corsConfig)
+    const preflight = handleOptions(req, corsConfig)
     if (preflight) return preflight
 
-    assertAllowedOrigin(req, config)
+    assertAllowedOrigin(req, corsConfig)
     requirePost(req)
+    const config = readProductionConfig({ requirePortalConfiguration: true })
+    assertPaymentOrigin(req, config)
 
     let body: Record<string, unknown>
     try {

@@ -12,7 +12,11 @@ export const PURCHASE_TYPES = {
 
 export type PurchaseType = typeof PURCHASE_TYPES[keyof typeof PURCHASE_TYPES]
 
-export type ProductionConfig = {
+export type CorsConfig = {
+  allowedOrigins: ReadonlySet<string>
+}
+
+export type ProductionConfig = CorsConfig & {
   stripeSecretKey: string
   webhookSecret?: string
   portalConfigurationId?: string
@@ -20,6 +24,7 @@ export type ProductionConfig = {
   priceBonoMensual: string
   siteUrl: string
   siteOrigin: string
+  paymentAllowedOrigins: ReadonlySet<string>
   supabaseUrl: string
   supabaseServiceRoleKey: string
 }
@@ -37,6 +42,11 @@ export type ValidatedPurchase = {
 }
 
 const catalogCache = new Map<string, Promise<ValidatedCatalog>>()
+const PRODUCTION_SITE_ORIGIN = 'https://genyoga.studio'
+const LIVE_PAYMENT_ORIGINS = new Set([
+  PRODUCTION_SITE_ORIGIN,
+  'https://www.genyoga.studio',
+])
 
 export class HttpError extends Error {
   status: number
@@ -74,6 +84,68 @@ function normaliseSiteUrl(rawValue: string): { siteUrl: string; siteOrigin: stri
   return { siteUrl, siteOrigin: parsed.origin }
 }
 
+function normaliseAllowedOrigin(rawValue: string, variableName: string): string {
+  let parsed: URL
+  try {
+    parsed = new URL(rawValue)
+  } catch {
+    throw new Error(`${variableName} contiene una URL no válida: ${rawValue}`)
+  }
+
+  if (parsed.protocol !== 'https:') {
+    throw new Error(`Todos los valores de ${variableName} deben utilizar HTTPS.`)
+  }
+  if (
+    parsed.username ||
+    parsed.password ||
+    parsed.search ||
+    parsed.hash ||
+    (parsed.pathname && parsed.pathname !== '/')
+  ) {
+    throw new Error(`${variableName} solo puede contener orígenes HTTPS, sin rutas ni parámetros.`)
+  }
+  return parsed.origin
+}
+
+function buildOriginSet(variableName: string, defaultOrigins: string[]): ReadonlySet<string> {
+  const allowedOrigins = new Set<string>(defaultOrigins)
+  const configuredOrigins = Deno.env.get(variableName)?.trim()
+  if (!configuredOrigins) return allowedOrigins
+
+  const values = configuredOrigins.split(',').map((value) => value.trim())
+  if (values.some((value) => !value)) {
+    throw new Error(`${variableName} contiene un valor vacío.`)
+  }
+  if (values.length > 20) {
+    throw new Error(`${variableName} contiene demasiados orígenes.`)
+  }
+  for (const value of values) allowedOrigins.add(normaliseAllowedOrigin(value, variableName))
+  return allowedOrigins
+}
+
+function buildAllowedOrigins(siteOrigin: string): ReadonlySet<string> {
+  return buildOriginSet('ALLOWED_ORIGINS', [siteOrigin])
+}
+
+function buildPaymentAllowedOrigins(): ReadonlySet<string> {
+  requireEnv('PAYMENT_ALLOWED_ORIGINS')
+  const paymentAllowedOrigins = buildOriginSet('PAYMENT_ALLOWED_ORIGINS', [])
+  if (paymentAllowedOrigins.size === 0) {
+    throw new Error('PAYMENT_ALLOWED_ORIGINS debe incluir al menos un origen productivo.')
+  }
+  for (const origin of paymentAllowedOrigins) {
+    if (!LIVE_PAYMENT_ORIGINS.has(origin)) {
+      throw new Error(`PAYMENT_ALLOWED_ORIGINS no puede autorizar un origen no productivo: ${origin}`)
+    }
+  }
+  return paymentAllowedOrigins
+}
+
+export function readCorsConfig(): CorsConfig {
+  const { siteOrigin } = normaliseSiteUrl(requireEnv('SITE_URL'))
+  return { allowedOrigins: buildAllowedOrigins(siteOrigin) }
+}
+
 export function readProductionConfig(options: {
   requireWebhookSecret?: boolean
   requirePortalConfiguration?: boolean
@@ -93,6 +165,11 @@ export function readProductionConfig(options: {
   }
 
   const { siteUrl, siteOrigin } = normaliseSiteUrl(requireEnv('SITE_URL'))
+  if (siteOrigin !== PRODUCTION_SITE_ORIGIN || siteUrl !== PRODUCTION_SITE_ORIGIN) {
+    throw new Error('SITE_URL debe ser exactamente https://genyoga.studio, sin rutas.')
+  }
+  const allowedOrigins = buildAllowedOrigins(siteOrigin)
+  const paymentAllowedOrigins = buildPaymentAllowedOrigins()
   const webhookSecret = options.requireWebhookSecret ? requireEnv('STRIPE_WEBHOOK_SECRET') : undefined
   if (webhookSecret && !webhookSecret.startsWith('whsec_')) {
     throw new Error('STRIPE_WEBHOOK_SECRET no tiene un formato válido.')
@@ -112,6 +189,8 @@ export function readProductionConfig(options: {
     priceBonoMensual,
     siteUrl,
     siteOrigin,
+    allowedOrigins,
+    paymentAllowedOrigins,
     supabaseUrl: requireEnv('SUPABASE_URL'),
     supabaseServiceRoleKey: requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
   }
@@ -179,28 +258,41 @@ export function getValidatedCatalog(
   return promise
 }
 
-export function corsHeaders(req: Request, config: ProductionConfig): Record<string, string> {
+export function corsHeaders(req: Request, config: CorsConfig): Record<string, string> {
   const origin = req.headers.get('origin')
   const headers: Record<string, string> = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Vary': 'Origin',
   }
-  if (origin === config.siteOrigin) headers['Access-Control-Allow-Origin'] = origin
+  if (origin && config.allowedOrigins.has(origin)) headers['Access-Control-Allow-Origin'] = origin
   return headers
 }
 
-export function assertAllowedOrigin(req: Request, config: ProductionConfig): void {
+export function assertAllowedOrigin(req: Request, config: CorsConfig): void {
   const origin = req.headers.get('origin')
-  if (origin && origin !== config.siteOrigin) {
+  if (origin && !config.allowedOrigins.has(origin)) {
     throw new HttpError(403, 'Origen no permitido.')
   }
 }
 
-export function handleOptions(req: Request, config: ProductionConfig): Response | null {
+export function assertPaymentOrigin(
+  req: Request,
+  config: Pick<ProductionConfig, 'paymentAllowedOrigins'>,
+): void {
+  const origin = req.headers.get('origin')
+  if (!origin || !config.paymentAllowedOrigins.has(origin)) {
+    throw new HttpError(
+      403,
+      'Los pagos LIVE están desactivados en certificación. Utiliza la web de producción para pagos reales.',
+    )
+  }
+}
+
+export function handleOptions(req: Request, config: CorsConfig): Response | null {
   if (req.method !== 'OPTIONS') return null
   const origin = req.headers.get('origin')
-  if (origin && origin !== config.siteOrigin) {
+  if (origin && !config.allowedOrigins.has(origin)) {
     return jsonResponse({ error: 'Origen no permitido.' }, 403, corsHeaders(req, config))
   }
   return new Response('ok', { status: 200, headers: corsHeaders(req, config) })

@@ -130,15 +130,18 @@ h1, h2, h3, h4, h5, h6, .brand-font {
 
 /* ======================================================= */
 
-/* Forzar cursor de Yoga en escritorio para toda la web */
+/* Cursores nativos estables en escritorio (también tras volver desde Stripe/bfcache) */
 
-body.platform-web,
+body.platform-web {
+  cursor: default !important;
+}
+
 body.platform-web a,
 body.platform-web button,
 body.platform-web select,
 body.platform-web .cursor-pointer,
 body.platform-web [onclick] {
-  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' style='font-size:24px;'><text y='24'>🧘🏽‍♀️</text></svg>") 12 12, auto !important;
+  cursor: pointer !important;
 }
 
 /* Permitir cursor de texto nativo en campos de formulario por usabilidad */

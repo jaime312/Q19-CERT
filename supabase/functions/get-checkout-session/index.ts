@@ -3,6 +3,7 @@ import {
   PURCHASE_TYPES,
   HttpError,
   assertAllowedOrigin,
+  assertPaymentOrigin,
   corsHeaders,
   createAdminClient,
   createStripeClient,
@@ -10,6 +11,7 @@ import {
   getValidatedCatalog,
   handleOptions,
   jsonResponse,
+  readCorsConfig,
   readProductionConfig,
   requirePost,
   safeErrorResponse,
@@ -19,13 +21,15 @@ import {
 serve(async (req) => {
   let headers: Record<string, string> = {}
   try {
-    const config = readProductionConfig()
-    headers = corsHeaders(req, config)
-    const preflight = handleOptions(req, config)
+    const corsConfig = readCorsConfig()
+    headers = corsHeaders(req, corsConfig)
+    const preflight = handleOptions(req, corsConfig)
     if (preflight) return preflight
 
-    assertAllowedOrigin(req, config)
+    assertAllowedOrigin(req, corsConfig)
     requirePost(req)
+    const config = readProductionConfig()
+    assertPaymentOrigin(req, config)
 
     let body: Record<string, unknown>
     try {
