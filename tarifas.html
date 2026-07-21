@@ -1229,7 +1229,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <!-- Footer spacing (Matches classes.html layout) -->
         <div class="w-full flex items-center justify-center z-15 pb-4 select-none pointer-events-none">
-            <span id="app-version-label" class="text-[9px] uppercase tracking-[0.2em] font-bold text-[#795244]/40">v6.1 | &copy; 2026 Gen Yoga</span>
+            <span id="app-version-label" class="text-[9px] uppercase tracking-[0.2em] font-bold text-[#795244]/40">v6.2 | &copy; 2026 Gen Yoga</span>
         </div>
     </div>
 
@@ -1242,7 +1242,7 @@ document.addEventListener('DOMContentLoaded', () => {
 const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
 const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
 const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
-const APP_VERSION = '6.1';
+const APP_VERSION = '6.2';
 const APP_DEPLOYMENT_ENVIRONMENT = (() => {
     const origin = window.location.origin.toLowerCase();
     const isCertificationPath = /^\/Q19-CERT(?:\/|$)/.test(window.location.pathname);
@@ -1252,11 +1252,11 @@ const APP_DEPLOYMENT_ENVIRONMENT = (() => {
 })();
 
 function ensureProductionPayments() {
-    if (APP_DEPLOYMENT_ENVIRONMENT === 'production') return true;
+    if (APP_DEPLOYMENT_ENVIRONMENT === 'production' || APP_DEPLOYMENT_ENVIRONMENT === 'certification') return true;
     Swal.fire({
         icon: 'info',
-        title: 'Pagos desactivados en certificación',
-        text: 'Esta versión no puede generar cobros reales. Para probar pagos debe utilizarse un entorno separado con Stripe TEST.',
+        title: 'Pagos no permitidos en desarrollo',
+        text: 'En el entorno de desarrollo local no se pueden realizar cobros reales.',
         confirmButtonColor: '#795244'
     });
     return false;
@@ -1293,9 +1293,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (APP_DEPLOYMENT_ENVIRONMENT === 'certification' && !document.getElementById('certification-environment-badge')) {
         const badge = document.createElement('div');
         badge.id = 'certification-environment-badge';
-        badge.textContent = `CERTIFICACIÓN · v${APP_VERSION} · PAGOS LIVE DESACTIVADOS`;
+        badge.textContent = `CERTIFICACIÓN · v${APP_VERSION}`;
         badge.setAttribute('role', 'status');
-        badge.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:10000;padding:7px 12px;border-radius:999px;background:#7f1d1d;color:#fff;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.08em;box-shadow:0 4px 14px rgba(0,0,0,.22);white-space:nowrap;';
+        badge.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:10000;padding:7px 12px;border-radius:999px;background:#795244;color:#fff;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.08em;box-shadow:0 4px 14px rgba(0,0,0,.22);white-space:nowrap;';
         document.body.appendChild(badge);
     }
 });

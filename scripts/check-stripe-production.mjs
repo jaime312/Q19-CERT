@@ -70,6 +70,7 @@ requireText(shared, "buildOriginSet('PAYMENT_ALLOWED_ORIGINS'", 'Lista de oríge
 requireText(shared, 'config.paymentAllowedOrigins.has(origin)', 'Bloqueo de pagos fuera de producción');
 requireText(shared, "'https://genyoga.studio'", 'Origen LIVE principal fijado en código');
 requireText(shared, "'https://www.genyoga.studio'", 'Origen LIVE www fijado en código');
+requireText(shared, "'https://jaime312.github.io'", 'Origen LIVE certificación fijado en código');
 requireText(shared, "requireEnv('PAYMENT_ALLOWED_ORIGINS')", 'Orígenes de pago obligatorios');
 requireText(shared, 'siteUrl !== PRODUCTION_SITE_ORIGIN', 'SITE_URL canónica sin rutas de certificación');
 requireText(checkout, 'getAuthenticatedUser', 'Identidad de Checkout');

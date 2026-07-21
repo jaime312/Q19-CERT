@@ -43,9 +43,12 @@ export type ValidatedPurchase = {
 
 const catalogCache = new Map<string, Promise<ValidatedCatalog>>()
 const PRODUCTION_SITE_ORIGIN = 'https://genyoga.studio'
+const CERTIFICATION_SITE_ORIGIN = 'https://jaime312.github.io'
+const CERTIFICATION_BASE_URL = 'https://jaime312.github.io/GEN-YOGA'
 const LIVE_PAYMENT_ORIGINS = new Set([
   PRODUCTION_SITE_ORIGIN,
   'https://www.genyoga.studio',
+  CERTIFICATION_SITE_ORIGIN,
 ])
 
 export class HttpError extends Error {
@@ -284,9 +287,23 @@ export function assertPaymentOrigin(
   if (!origin || !config.paymentAllowedOrigins.has(origin)) {
     throw new HttpError(
       403,
-      'Los pagos LIVE están desactivados en certificación. Utiliza la web de producción para pagos reales.',
+      'Los pagos LIVE no están permitidos desde este origen.',
     )
   }
+}
+
+export function resolveReturnBaseUrl(
+  req: Request,
+  config: Pick<ProductionConfig, 'siteUrl' | 'paymentAllowedOrigins'>,
+): string {
+  const origin = req.headers.get('origin')
+  if (origin === CERTIFICATION_SITE_ORIGIN) {
+    return CERTIFICATION_BASE_URL
+  }
+  if (origin && config.paymentAllowedOrigins.has(origin)) {
+    return origin
+  }
+  return config.siteUrl
 }
 
 export function handleOptions(req: Request, config: CorsConfig): Response | null {

@@ -16,6 +16,7 @@ import {
   readCorsConfig,
   readProductionConfig,
   requirePost,
+  resolveReturnBaseUrl,
   safeErrorResponse,
 } from "../_shared/stripe-production.ts"
 
@@ -115,12 +116,13 @@ serve(async (req) => {
     }
     if (isGuest) metadata.checkout_attempt_id = checkoutAttemptId
 
+    const returnBaseUrl = resolveReturnBaseUrl(req, config)
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       line_items: [{ price: price.id, quantity: 1 }],
       mode: purchaseType === PURCHASE_TYPES.BONO_MENSUAL ? 'subscription' : 'payment',
       client_reference_id: appUserId,
-      success_url: `${config.siteUrl}/success.html?session_id={CHECKOUT_SESSION_ID}${isGuest ? '&guest=true' : ''}&from=${source}`,
-      cancel_url: `${config.siteUrl}/cancel.html?from=${source}`,
+      success_url: `${returnBaseUrl}/success.html?session_id={CHECKOUT_SESSION_ID}${isGuest ? '&guest=true' : ''}&from=${source}`,
+      cancel_url: `${returnBaseUrl}/cancel.html?from=${source}`,
       payment_method_types: ['card'],
       metadata,
     }

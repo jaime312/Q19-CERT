@@ -12,6 +12,7 @@ import {
   readCorsConfig,
   readProductionConfig,
   requirePost,
+  resolveReturnBaseUrl,
   safeErrorResponse,
   stripeObjectId,
 } from "../_shared/stripe-production.ts"
@@ -95,7 +96,7 @@ serve(async (req) => {
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
       configuration: config.portalConfigurationId!,
-      return_url: `${config.siteUrl}/profile.html`,
+      return_url: `${resolveReturnBaseUrl(req, config)}/profile.html`,
     })
     if (!portalSession.livemode || !portalSession.url) {
       throw new Error('Stripe no devolvió un portal LIVE válido.')

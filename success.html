@@ -132,7 +132,7 @@
         
         <!-- Footer logo -->
         <div class="mt-8 opacity-45 flex items-center gap-1">
-            <span id="app-version-label" class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga · v6.1</span>
+            <span id="app-version-label" class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga · v6.2</span>
         </div>
     </div>
 
@@ -141,7 +141,7 @@
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
         const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
-        const APP_VERSION = '6.1';
+        const APP_VERSION = '6.2';
         const APP_DEPLOYMENT_ENVIRONMENT = (() => {
             const origin = window.location.origin.toLowerCase();
             const isCertificationPath = /^\/Q19-CERT(?:\/|$)/.test(window.location.pathname);
@@ -158,18 +158,18 @@
             if (APP_DEPLOYMENT_ENVIRONMENT !== 'certification' || document.getElementById('certification-badge')) return;
             const badge = document.createElement('div');
             badge.id = 'certification-badge';
-            badge.textContent = `CERTIFICACIÓN · v${APP_VERSION} · PAGOS LIVE DESACTIVADOS`;
+            badge.textContent = `CERTIFICACIÓN · v${APP_VERSION}`;
             badge.setAttribute('role', 'status');
-            badge.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:10000;padding:7px 12px;border-radius:999px;background:#7f1d1d;color:#fff;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.08em;box-shadow:0 4px 14px rgba(0,0,0,.22);white-space:nowrap;';
+            badge.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:10000;padding:7px 12px;border-radius:999px;background:#795244;color:#fff;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.08em;box-shadow:0 4px 14px rgba(0,0,0,.22);white-space:nowrap;';
             document.body.appendChild(badge);
         }
 
         function ensureLivePaymentEnvironment() {
-            if (APP_DEPLOYMENT_ENVIRONMENT === 'production') return true;
+            if (APP_DEPLOYMENT_ENVIRONMENT === 'production' || APP_DEPLOYMENT_ENVIRONMENT === 'certification') return true;
             Swal.fire({
                 icon: 'info',
-                title: 'Pagos LIVE desactivados',
-                text: 'Esta compilación no puede verificar cobros, abrir el portal ni canjear compras reales. Utiliza el entorno productivo o un entorno separado con Stripe TEST.',
+                title: 'Entorno no soportado',
+                text: 'En el entorno de desarrollo local no se pueden verificar cobros reales.',
                 confirmButtonColor: '#795244'
             });
             return false;
@@ -177,9 +177,9 @@
 
         document.addEventListener('DOMContentLoaded', async () => {
             addDeploymentBadge();
-            if (APP_DEPLOYMENT_ENVIRONMENT !== 'production') {
+            if (APP_DEPLOYMENT_ENVIRONMENT !== 'production' && APP_DEPLOYMENT_ENVIRONMENT !== 'certification') {
                 mostrarErrorVerificacion(
-                    `Esta es la compilación de ${APP_DEPLOYMENT_ENVIRONMENT === 'certification' ? 'CERTIFICACIÓN' : 'DESARROLLO'} v${APP_VERSION}. No puede verificar ni gestionar pagos LIVE de producción.`,
+                    `Esta es la compilación de DESARROLLO v${APP_VERSION}. No puede verificar ni gestionar pagos LIVE.`,
                     false
                 );
                 return;

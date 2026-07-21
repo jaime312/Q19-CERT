@@ -46,22 +46,13 @@ https://www.genyoga.studio,https://jaime312.github.io
 El origen de `SITE_URL` se permite siempre de forma automática. No uses `*` ni
 añadas dominios que no controlas.
 
-`PAYMENT_ALLOWED_ORIGINS` es una lista más restrictiva: determina desde qué
-orígenes se pueden crear o consultar pagos LIVE y abrir Customer Portal. En
-producción debe ser exactamente:
+`PAYMENT_ALLOWED_ORIGINS` determina desde qué orígenes se pueden crear o consultar pagos LIVE y abrir Customer Portal. En v6.2 debe ser exactamente:
 
 ```text
-https://genyoga.studio,https://www.genyoga.studio
+https://genyoga.studio,https://www.genyoga.studio,https://jaime312.github.io
 ```
 
-La función falla de forma cerrada si falta esta variable, si `SITE_URL` contiene
-una ruta o si cualquiera de los orígenes no es uno de esos dos dominios fijados
-en código. Una configuración accidental no puede habilitar pagos LIVE en CERT.
-
-No incluyas `jaime312.github.io`: la web Q19-CERT debe usar otro proyecto
-Supabase con claves, Prices y webhook de Stripe TEST. CORS puede conservar el
-origen de certificación para devolver un error explicativo, pero nunca autoriza
-por sí solo un pago LIVE.
+La navegación entre páginas de ambos entornos se mantiene 100% separada (sin saltos de dominio), y ambas webs (producción y certificación en GitHub) procesan pagos en el entorno real de Stripe. La función valida que los orígenes pertenezcan a la lista blanca fijada en código.
 
 Como alternativa al Dashboard, crea localmente
 `supabase/functions/.env.production.local` a partir del ejemplo y ejecuta:
