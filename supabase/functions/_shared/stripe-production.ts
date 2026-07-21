@@ -279,11 +279,23 @@ export function assertAllowedOrigin(req: Request, config: CorsConfig): void {
   }
 }
 
+export function getRequestOrigin(req: Request): string | null {
+  const origin = req.headers.get('origin')?.trim()
+  if (origin) return origin
+  const referer = req.headers.get('referer')?.trim()
+  if (referer) {
+    try {
+      return new URL(referer).origin
+    } catch {}
+  }
+  return null
+}
+
 export function assertPaymentOrigin(
   req: Request,
   config: Pick<ProductionConfig, 'paymentAllowedOrigins'>,
 ): void {
-  const origin = req.headers.get('origin')
+  const origin = getRequestOrigin(req)
   if (!origin || !config.paymentAllowedOrigins.has(origin)) {
     throw new HttpError(
       403,
@@ -296,7 +308,7 @@ export function resolveReturnBaseUrl(
   req: Request,
   config: Pick<ProductionConfig, 'siteUrl' | 'paymentAllowedOrigins'>,
 ): string {
-  const origin = req.headers.get('origin')
+  const origin = getRequestOrigin(req)
   if (origin === CERTIFICATION_SITE_ORIGIN) {
     return CERTIFICATION_BASE_URL
   }

@@ -814,7 +814,13 @@ const translations = {
         "rates_tab_yoga": "CLASES",
         "rates_tab_psy": "CONSULTAS",
         "rates_tab_workshops": "TALLERES",
-        "teachers_title": "Maestros"
+        "teachers_title": "Maestros",
+        "teachers_hero_our": "Nuestros",
+        "teachers_hero_teachers": "Maestros",
+        "teachers_scroll_meet": "Conócelos",
+        "teachers_no_category": "No hay profesores en esta categoría.",
+        "teachers_fallback_spec": "Profesor de GEN Yoga",
+        "teachers_view_card": "Ver ficha de"
     },
     en: {
         "nav_sessions": "SESSIONS",
@@ -829,7 +835,13 @@ const translations = {
         "rates_tab_yoga": "CLASSES",
         "rates_tab_psy": "CONSULTATIONS",
         "rates_tab_workshops": "WORKSHOPS",
-        "teachers_title": "Teachers"
+        "teachers_title": "Teachers",
+        "teachers_hero_our": "Our",
+        "teachers_hero_teachers": "Teachers",
+        "teachers_scroll_meet": "Meet them",
+        "teachers_no_category": "No teachers in this category.",
+        "teachers_fallback_spec": "GEN Yoga Teacher",
+        "teachers_view_card": "View profile of"
     }
 };
 
@@ -837,23 +849,23 @@ const professionalTranslations = {
     "en": {
         "Yanira": {
             "nombre": "Yanira",
-            "especialidad": "Vinyasa & Restorative Yoga",
-            "descripcion": `BACKGROUND:\nOriginally from the United States, with Salvadoran roots.\n\nQUALIFICATIONS:\n• Master's in International Education\n• Master's in Educational Leadership\n• Yoga Alliance Certified Yoga Instructor`
+            "especialidad": "Vinyasa & Restorative Yoga | classes,workshops",
+            "descripcion": `ABOUT ME:\nCertified yoga instructor with a close approach uniting movement, breath and calm.\n\nBACKGROUND:\nOriginally from the United States, with Salvadoran roots.\n\nQUALIFICATIONS:\n• Master's in International Education\n• Master's in Educational Leadership\n• Yoga Alliance Certified Yoga Instructor\n\nTE ACOMPAÑO:\nPractices adapted to all levels focusing on alignment, conscious breathing and inner peace.\n\nME DEFINE:\n"Movement and Serenity"`
         },
         "Silvia": {
             "nombre": "Silvia",
-            "especialidad": "Hatha & Iyengar Yoga, Ayurveda",
-            "descripcion": `QUALIFICATIONS: Hatha Yoga and Iyengar Yoga by AIPYS. Ayurveda Therapist.\n\nABOUT ME:\nI am a Yoga teacher with more than 25 years dedicated to teaching.`
+            "especialidad": "Hatha & Iyengar Yoga, Ayurveda | classes",
+            "descripcion": `ABOUT ME:\nYoga teacher with more than 25 years dedicated to teaching and conscious guidance.\n\nQUALIFICATIONS:\n• Hatha Yoga and Iyengar Yoga by AIPYS\n• Ayurveda Therapist\n\nTE ACOMPAÑO:\nPrecise alignment, adjustment and Ayurvedic principles for physical and mental well-being.\n\nME DEFINE:\n"Dedication and Care"`
         },
         "Ángel Javier": {
             "nombre": "Ángel Javier",
-            "especialidad": "Yoga for Men & Therapeutic Yoga",
-            "descripcion": `ABOUT ME:\nI have 6 years of experience in the practice of yoga, studying and practicing Iyengar Yoga.`
+            "especialidad": "Yoga for Men & Therapeutic Yoga | classes",
+            "descripcion": `ABOUT ME:\nInstructor specialized in an accessible, safe practice adapted to each body.\n\nQUALIFICATIONS:\n• 6 years of experience in yoga practice\n• Specialized in Iyengar Yoga\n\nTE ACOMPAÑO:\nTherapeutic adjustment and accessible practice for men and all bodies.\n\nME DEFINE:\n"Presence and Strength"`
         },
         "Miriam": {
             "nombre": "Miriam",
-            "especialidad": "Psychotherapy, Nutrition & Workshops",
-            "descripcion": `QUALIFICATIONS:\nGraduate in Psychology from the University of Valencia.\nMaster's in Eating Disorders.`
+            "especialidad": "Psychotherapy, Nutrition & Workshops | consultations",
+            "descripcion": `ABOUT ME:\nPsychologist specialized in emotional well-being, conscious eating and holistic guidance.\n\nQUALIFICATIONS:\n• Graduate in Psychology from University of Valencia\n• Master's in Eating Disorders\n\nTE ACOMPAÑO:\nIntegral psychotherapy, mindful nutrition and growth workshops.\n\nME DEFINE:\n"Empathy and Harmony"`
         }
     }
 };
@@ -893,7 +905,31 @@ function setLanguage(lang) {
     window.currentLang = currentLang;
     document.documentElement.lang = lang;
     safeSetItem('yoga-lang', lang);
+
+    const btnEs = document.getElementById('lang-btn-es');
+    const btnEn = document.getElementById('lang-btn-en');
+    if (btnEs && btnEn) {
+        if (lang === 'es') {
+            btnEs.style.fontWeight = '900';
+            btnEs.style.textDecoration = 'underline';
+            btnEs.style.opacity = '1';
+            btnEn.style.fontWeight = '500';
+            btnEn.style.textDecoration = 'none';
+            btnEn.style.opacity = '0.5';
+        } else {
+            btnEn.style.fontWeight = '900';
+            btnEn.style.textDecoration = 'underline';
+            btnEn.style.opacity = '1';
+            btnEs.style.fontWeight = '500';
+            btnEs.style.textDecoration = 'none';
+            btnEs.style.opacity = '0.5';
+        }
+    }
+
     applyTranslations();
+    if (typeof fetchProfesionalesLanding === 'function') {
+        fetchProfesionalesLanding();
+    }
     window.dispatchEvent(new CustomEvent('languageChanged', { detail: { lang } }));
 }
 
@@ -943,12 +979,12 @@ function escapeHtmlPublic(str) {
             <img class="teachers-hero__portrait teachers-hero__portrait--right-bottom" src="img/maestra-yanira-recortada.png" alt="" aria-hidden="true" loading="eager" />
 
             <h1 id="teachers-hero-title" class="teachers-hero__title">
-                <span class="teachers-hero__title-line teachers-hero__title-line--orange">Nuestros</span>
-                <span class="teachers-hero__title-line teachers-hero__title-line--green">Maestros</span>
+                <span class="teachers-hero__title-line teachers-hero__title-line--orange" data-i18n="teachers_hero_our">Nuestros</span>
+                <span class="teachers-hero__title-line teachers-hero__title-line--green" data-i18n="teachers_hero_teachers">Maestros</span>
             </h1>
 
             <a href="#maestros-grid-section" class="teachers-hero__scroll">
-                <span>Conócelos</span>
+                <span data-i18n="teachers_scroll_meet">Conócelos</span>
                 <i class="ph-bold ph-caret-down" aria-hidden="true"></i>
             </a>
         </section>
@@ -1252,8 +1288,8 @@ function escapeHtmlPublic(str) {
 
             if (!profesionales || profesionales.length === 0) {
                 container.className = 'teachers-gallery__grid teachers-gallery__grid--1';
-                container.innerHTML = `<div class="text-center text-[#744833]/70 italic py-10 font-bold">
-                    No hay profesores en esta categoría.
+                container.innerHTML = `<div class="text-center text-[#744833]/70 italic py-10 font-bold" data-i18n="teachers_no_category">
+                    ${t('teachers_no_category')}
                 </div>`;
                 return;
             }
@@ -1262,7 +1298,7 @@ function escapeHtmlPublic(str) {
 
             profesionales.forEach((prof, index) => {
                 const nombre = prof.nombre || 'PROFESOR';
-                const especialidadTexto = getEspecialidadTexto(prof.especialidad) || 'Profesor de GEN Yoga';
+                const especialidadTexto = getEspecialidadTexto(prof.especialidad) || t('teachers_fallback_spec');
                 const doodlesSvg = getTeacherDoodlesSvg(nombre);
                 const photoUrl = prof.foto_cutout || getTeacherPhoto(nombre);
 
@@ -1271,7 +1307,7 @@ function escapeHtmlPublic(str) {
                 card.onclick = () => openTeacherModal(prof);
                 card.tabIndex = 0;
                 card.setAttribute('role', 'button');
-                card.setAttribute('aria-label', `Ver ficha de ${nombre}`);
+                card.setAttribute('aria-label', `${t('teachers_view_card')} ${nombre}`);
                 card.addEventListener('keydown', (event) => {
                     if (event.key === 'Enter' || event.key === ' ') {
                         event.preventDefault();
@@ -1469,6 +1505,25 @@ function escapeHtmlPublic(str) {
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            let langDiv = document.getElementById('floating-lang-selector');
+            if (!langDiv) {
+                langDiv = document.createElement('div');
+                langDiv.id = 'floating-lang-selector';
+                langDiv.style.cssText = 'position:fixed;top:16px;right:24px;z-index:9998;background-color:#795244;border:1px solid rgba(248, 246, 242, 0.15);border-radius:9999px;padding:4px 10px;display:flex;align-items:center;gap:4px;font-size:11px;color:#f8f6f2;box-shadow:0 6px 16px rgba(38, 22, 12, 0.2);user-select:none;font-family:system-ui, -apple-system, sans-serif;pointer-events:auto;';
+                langDiv.innerHTML = `
+                    <button id="lang-btn-es" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:2px 6px; outline:none; font-weight:900; text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:4px; color:#f8f6f2; opacity:1;">ES</button>
+                    <span style="color:rgba(248, 246, 242, 0.25); font-size:11px; pointer-events:none;">/</span>
+                    <button id="lang-btn-en" style="cursor:pointer; font-family:inherit; border:none; background:none; padding:2px 6px; outline:none; font-weight:500; text-decoration:none; color:#f8f6f2; opacity:0.5;">EN</button>
+                `;
+                document.body.appendChild(langDiv);
+            }
+
+            const btnEs = document.getElementById('lang-btn-es');
+            const btnEn = document.getElementById('lang-btn-en');
+            if (btnEs) btnEs.addEventListener('click', () => setLanguage('es'));
+            if (btnEn) btnEn.addEventListener('click', () => setLanguage('en'));
+
+            setLanguage(currentLang);
             fetchProfesionalesLanding();
         });
 

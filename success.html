@@ -132,7 +132,7 @@
         
         <!-- Footer logo -->
         <div class="mt-8 opacity-45 flex items-center gap-1">
-            <span id="app-version-label" class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga · v6.2</span>
+            <span id="app-version-label" class="brand-font italic text-sm font-bold text-cocoa">GEN Yoga</span>
         </div>
     </div>
 
@@ -141,7 +141,7 @@
         const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
         const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
         const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
-        const APP_VERSION = '6.2';
+        const APP_VERSION = '6.3';
         const APP_DEPLOYMENT_ENVIRONMENT = (() => {
             const origin = window.location.origin.toLowerCase();
             const isCertificationPath = /^\/Q19-CERT(?:\/|$)/.test(window.location.pathname);
@@ -152,17 +152,6 @@
         
         let stripeSessionId = '';
         let redirectCountdownTimer = null;
-
-        function addDeploymentBadge() {
-            document.documentElement.dataset.appEnvironment = APP_DEPLOYMENT_ENVIRONMENT;
-            if (APP_DEPLOYMENT_ENVIRONMENT !== 'certification' || document.getElementById('certification-badge')) return;
-            const badge = document.createElement('div');
-            badge.id = 'certification-badge';
-            badge.textContent = `CERTIFICACIÓN · v${APP_VERSION}`;
-            badge.setAttribute('role', 'status');
-            badge.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:10000;padding:7px 12px;border-radius:999px;background:#795244;color:#fff;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.08em;box-shadow:0 4px 14px rgba(0,0,0,.22);white-space:nowrap;';
-            document.body.appendChild(badge);
-        }
 
         function ensureLivePaymentEnvironment() {
             if (APP_DEPLOYMENT_ENVIRONMENT === 'production' || APP_DEPLOYMENT_ENVIRONMENT === 'certification') return true;
@@ -176,7 +165,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
-            addDeploymentBadge();
+            document.documentElement.dataset.appEnvironment = APP_DEPLOYMENT_ENVIRONMENT;
             if (APP_DEPLOYMENT_ENVIRONMENT !== 'production' && APP_DEPLOYMENT_ENVIRONMENT !== 'certification') {
                 mostrarErrorVerificacion(
                     `Esta es la compilación de DESARROLLO v${APP_VERSION}. No puede verificar ni gestionar pagos LIVE.`,
