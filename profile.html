@@ -239,6 +239,7 @@ const translations = {
         "profile_capacity": "Aforo",
         "profile_request": "Solicitar",
         "profile_request_activation": "Solicitar activación",
+        "profile_manage_billing": "Gestionar suscripción y facturación",
         "profile_week_short": "Sem",
         "profile_month_short": "Mes",
         "profile_expires": "Vence",
@@ -526,6 +527,7 @@ const translations = {
         "profile_capacity": "Capacity",
         "profile_request": "Request",
         "profile_request_activation": "Request activation",
+        "profile_manage_billing": "Manage subscription and billing",
         "profile_week_short": "Week",
         "profile_month_short": "Month",
         "profile_expires": "Expires",
@@ -3374,6 +3376,8 @@ let userSaldoNutricion = 0;
 let userBonoMensualActivo = false;
 let userBonoMensualInicio = null;
 let userBonoMensualFin = null;
+let userStripeCustomerId = null;
+let userStripeSubscriptionStatus = '';
 let allUsersCache = [];
 let allClasesCache = [];
 let allPsicologiaCache = [];
@@ -4173,6 +4177,16 @@ async function renderSaldosCliente() {
     const weekShort = profileT('profile_week_short', 'Sem');
     const monthShort = profileT('profile_month_short', 'Mes');
     const expires = profileT('profile_expires', 'Vence');
+    const manageBilling = profileT('profile_manage_billing', 'Gestionar suscripción y facturación');
+    const portalStatuses = new Set([
+        'active', 'trialing', 'past_due', 'unpaid', 'incomplete',
+        'incomplete_expired', 'paused', 'canceled'
+    ]);
+    const canManageBilling = !!userStripeCustomerId || portalStatuses.has(userStripeSubscriptionStatus);
+    const manageBillingButtonHtml = canManageBilling ? `
+        <button onclick="gestionarSuscripcionStripe(event)" class="w-full py-2.5 bg-cocoa text-white hover:bg-black text-[10px] font-bold uppercase tracking-wider rounded-xl transition shadow-sm flex items-center justify-center gap-1.5" title="${escapeHtml(manageBilling)}">
+            <i class="ph-bold ph-receipt"></i> ${escapeHtml(manageBilling)}
+        </button>` : '';
     
     const bonoIndividualHtml = `
         <div class="bg-white px-3 py-2 rounded-2xl border border-gray-200 shadow-sm hover:border-olive transition cursor-default min-w-[145px]"
@@ -4248,7 +4262,7 @@ async function renderSaldosCliente() {
             const stats = await getBonoMensualStats();
             const fechaFin = userBonoMensualFin ? new Date(userBonoMensualFin).toLocaleDateString(getCurrentLocale()) : '--/--/----';
             profileHtml += `
-                <div class="bg-white/90 p-4 rounded-3xl border border-[#10B981] text-center min-w-[180px] flex flex-col justify-center items-center shadow-md">
+                <div class="bg-white/90 p-4 rounded-3xl border border-[#10B981] text-center min-w-[220px] flex flex-col justify-between items-center shadow-md">
                     <div>
                         <span class="block text-[10px] text-emerald-600 font-bold uppercase tracking-wider mb-2">${escapeHtml(monthlyActive)}</span>
                         <div class="flex justify-center items-center gap-3 mt-2 text-sm text-cocoa font-bold">
@@ -4263,6 +4277,7 @@ async function renderSaldosCliente() {
                         </div>
                         <span class="block text-[9px] text-gray-400 mt-2.5 uppercase tracking-wider font-light">${escapeHtml(expires)}: ${escapeHtml(fechaFin)}</span>
                     </div>
+                    ${canManageBilling ? `<div class="mt-3 w-full">${manageBillingButtonHtml}</div>` : ''}
                 </div>
             `;
         } else {
@@ -4274,9 +4289,12 @@ async function renderSaldosCliente() {
                             ${escapeHtml(inactive)}
                         </div>
                     </div>
-                    <button onclick="comprarBonoMensual(event)" class="mt-4 w-full py-2.5 text-white hover:bg-black text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md flex items-center justify-center gap-1.5 hover:scale-[1.02] active:scale-[0.98]" style="background-color: #e06b53;">
-                        <i class="ph-bold ph-credit-card text-xs"></i> Comprar (90€/mes)
-                    </button>
+                    <div class="mt-4 w-full space-y-2">
+                        ${manageBillingButtonHtml}
+                        <button onclick="comprarBonoMensual(event)" class="w-full py-2.5 text-white hover:bg-black text-xs font-bold uppercase tracking-widest rounded-xl transition shadow-md flex items-center justify-center gap-1.5 hover:scale-[1.02] active:scale-[0.98]" style="background-color: #e06b53;">
+                            <i class="ph-bold ph-credit-card text-xs"></i> Comprar (90€/mes)
+                        </button>
+                    </div>
                 </div>
             `;
         }
@@ -4285,29 +4303,32 @@ async function renderSaldosCliente() {
 }
 
 async function checkProfile() {
-    // 1. Intentamos cargar el perfil con todas las columnas
-    let { data, error } = await client.from('profiles')
-        .select('rol, bonos, saldo_psicologia, saldo_nutricion, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin')
-        .eq('id', currentUser.id)
-        .single();
+    // Las primeras variantes incluyen el Customer persistente de Stripe. Las
+    // alternativas mantienen compatibilidad mientras termina de propagarse el
+    // esquema o en instalaciones antiguas que no tienen saldos opcionales.
+    const profileSelectVariants = [
+        'rol, bonos, saldo_psicologia, saldo_nutricion, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin, stripe_customer_id, stripe_subscription_status',
+        'rol, bonos, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin, stripe_customer_id, stripe_subscription_status',
+        'rol, bonos, saldo_psicologia, saldo_nutricion, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin',
+        'rol, bonos, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin',
+        'rol, bonos'
+    ];
+    let data = null;
+    let error = null;
 
-    // 2. Si falla, es probable que no existan las columnas de psicología o nutrición. 
-    // Intentamos cargar sin esas columnas pero incluyendo bono_mensual_activo, bono_mensual_inicio y bono_mensual_fin.
-    if (error && /saldo_psicologia|saldo_nutricion/i.test(error.message || '')) {
-        console.warn('Faltan columnas de saldo de psicología/nutrición en profiles. Intentando con bono mensual...', error);
-        ({ data, error } = await client.from('profiles')
-            .select('rol, bonos, bono_mensual_activo, bono_mensual_inicio, bono_mensual_fin')
+    for (const columns of profileSelectVariants) {
+        const result = await client.from('profiles')
+            .select(columns)
             .eq('id', currentUser.id)
-            .single());
-    }
+            .single();
 
-    // 3. Si sigue fallando (por ejemplo, si tampoco existe bono_mensual_activo), recurrimos a la consulta mínima básica.
-    if (error && /bono_mensual_activo|bono_mensual_inicio|bono_mensual_fin/i.test(error.message || '')) {
-        console.warn('Faltan columnas de bono mensual en profiles. Recurriendo a consulta básica.', error);
-        ({ data, error } = await client.from('profiles')
-            .select('rol, bonos')
-            .eq('id', currentUser.id)
-            .single());
+        data = result.data;
+        error = result.error;
+        if (!error) break;
+
+        const missingOptionalColumn = /saldo_psicologia|saldo_nutricion|bono_mensual_activo|bono_mensual_inicio|bono_mensual_fin|stripe_customer_id|stripe_subscription_status/i
+            .test(error.message || '');
+        if (!missingOptionalColumn) break;
     }
 
     if (error) {
@@ -4329,6 +4350,12 @@ async function checkProfile() {
         userBonoMensualActivo = !!data.bono_mensual_activo;
         userBonoMensualInicio = data.bono_mensual_inicio;
         userBonoMensualFin = data.bono_mensual_fin;
+        userStripeCustomerId = typeof data.stripe_customer_id === 'string'
+            ? data.stripe_customer_id.trim()
+            : null;
+        userStripeSubscriptionStatus = typeof data.stripe_subscription_status === 'string'
+            ? data.stripe_subscription_status.trim().toLowerCase()
+            : '';
 
         await renderSaldosCliente();
 
@@ -10853,12 +10880,10 @@ async function comprarClaseSueltaDirecto() {
 
     try {
         localStorage.setItem('stripe_checkout_origin', 'profile');
-        const siteUrl = window.location.origin + (window.location.pathname.endsWith('/') ? window.location.pathname.slice(0, -1) : (window.location.pathname.includes('.') ? window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) : window.location.pathname));
         const { data, error } = await client.functions.invoke('create-checkout-session', {
             body: {
                 lookup_key: 'clase_suelta',
                 user_id: currentUser.id,
-                site_url: siteUrl,
                 from: 'profile'
             }
         });
@@ -10937,12 +10962,10 @@ async function comprarClaseSuelta(event) {
 
     try {
         localStorage.setItem('stripe_checkout_origin', 'profile');
-        const siteUrl = window.location.origin + (window.location.pathname.endsWith('/') ? window.location.pathname.slice(0, -1) : (window.location.pathname.includes('.') ? window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) : window.location.pathname));
         const { data, error } = await client.functions.invoke('create-checkout-session', {
             body: {
                 lookup_key: 'clase_suelta',
                 user_id: currentUser.id,
-                site_url: siteUrl,
                 from: 'profile'
             }
         });
@@ -11032,12 +11055,10 @@ async function comprarBonoMensual(event) {
 
     try {
         localStorage.setItem('stripe_checkout_origin', 'profile');
-        const siteUrl = window.location.origin + (window.location.pathname.endsWith('/') ? window.location.pathname.slice(0, -1) : (window.location.pathname.includes('.') ? window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) : window.location.pathname));
         const { data, error } = await client.functions.invoke('create-checkout-session', {
             body: {
                 lookup_key: 'bono_mensual', // Direct generic lookup key for Bono Monthly subscription!
                 user_id: currentUser.id,
-                site_url: siteUrl,
                 from: 'profile'
             }
         });
@@ -11068,6 +11089,74 @@ async function comprarBonoMensual(event) {
             icon: 'error',
             title: 'Error de conexión',
             text: error.message || 'No se pudo conectar con el servidor de pagos. Inténtalo de nuevo más tarde.',
+            confirmButtonColor: '#D27D60'
+        });
+    }
+}
+
+async function gestionarSuscripcionStripe(event) {
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+
+    if (!currentUser?.id) {
+        return Swal.fire({
+            icon: 'warning',
+            title: 'Inicia sesión',
+            text: 'Debes iniciar sesión para gestionar tu suscripción.',
+            confirmButtonColor: '#795244'
+        });
+    }
+
+    Swal.fire({
+        title: 'Abriendo facturación segura...',
+        text: 'Por favor, espera un momento.',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+        background: '#fff',
+        color: '#333'
+    });
+
+    try {
+        const { data: authData, error: authError } = await client.auth.getSession();
+        const session = authData?.session;
+        if (authError || !session?.access_token || session.user?.id !== currentUser.id) {
+            throw new Error('Tu sesión ha caducado. Inicia sesión de nuevo.');
+        }
+
+        const { data, error } = await client.functions.invoke('create-portal-session', {
+            body: {},
+            headers: {
+                Authorization: `Bearer ${session.access_token}`
+            }
+        });
+
+        if (error) {
+            let errorMsg = error.message || 'No se pudo iniciar el portal de facturación.';
+            try {
+                if (error.context && typeof error.context.json === 'function') {
+                    const errorJson = await error.context.json();
+                    if (errorJson?.error) errorMsg = errorJson.error;
+                }
+            } catch (parseError) {
+                console.warn('No se pudo leer el error del portal de facturación:', parseError);
+            }
+            throw new Error(errorMsg);
+        }
+
+        const portalUrl = new URL(data?.url || '');
+        if (portalUrl.protocol !== 'https:' || portalUrl.hostname !== 'billing.stripe.com') {
+            throw new Error('Stripe no devolvió una URL de facturación válida.');
+        }
+
+        window.location.assign(portalUrl.href);
+    } catch (error) {
+        console.error('Error al abrir Customer Portal:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'No se pudo abrir la facturación',
+            text: error.message || 'Inténtalo de nuevo más tarde.',
             confirmButtonColor: '#D27D60'
         });
     }

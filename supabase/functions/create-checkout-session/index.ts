@@ -1,126 +1,145 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import Stripe from "https://esm.sh/stripe@14.22.0?target=deno"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0"
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import {
+  PURCHASE_TYPES,
+  HttpError,
+  assertAllowedOrigin,
+  corsHeaders,
+  createAdminClient,
+  createStripeClient,
+  getAuthenticatedUser,
+  getValidatedCatalog,
+  handleOptions,
+  jsonResponse,
+  readProductionConfig,
+  requirePost,
+  safeErrorResponse,
+} from "../_shared/stripe-production.ts"
 
 serve(async (req) => {
-  // Handle CORS options request
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
-
+  let headers: Record<string, string> = {}
   try {
-    const { lookup_key, user_id, site_url, from } = await req.json()
+    const config = readProductionConfig()
+    headers = corsHeaders(req, config)
+    const preflight = handleOptions(req, config)
+    if (preflight) return preflight
 
-    if (!user_id) {
-      return new Response(JSON.stringify({ error: 'Falta el ID de usuario (user_id).' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
+    assertAllowedOrigin(req, config)
+    requirePost(req)
 
-    const stripeKey = Deno.env.get('STRIPE_SECRET_KEY')
-    if (!stripeKey) {
-      return new Response(JSON.stringify({ error: 'STRIPE_SECRET_KEY no está configurado en Supabase.' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
-    const stripe = new Stripe(stripeKey, {
-      apiVersion: '2023-10-16',
-      httpClient: Stripe.createFetchHttpClient(),
-    })
-
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_ANON_KEY') || ''
-    const supabase = createClient(supabaseUrl, supabaseKey)
-
-    // Resolve generic keys to actual price IDs from environment variables, with live defaults
-    let priceId = ''
-    const key = (lookup_key || '').trim()
-
-    if (key === 'clase_suelta') {
-      priceId = Deno.env.get('STRIPE_PRICE_CLASE_SUELTA') || 'price_1TqVYPC3eulgiYPc2k62Sapd'
-    } else if (key === 'bono_mensual') {
-      priceId = Deno.env.get('STRIPE_PRICE_BONO_MENSUAL') || 'price_1TqVZ8C3eulgiYPciTZlAY6B'
-
-      // Check if user already has an active monthly plan to prevent double purchase
-      console.log(`Verificando si el usuario ${user_id} ya tiene un bono mensual activo...`)
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('bono_mensual_activo')
-        .eq('id', user_id)
-        .maybeSingle()
-
-      if (profile && profile.bono_mensual_activo) {
-        return new Response(JSON.stringify({ error: 'Ya tienes una suscripción activa al Bono Mensual. No es necesario adquirir otra.' }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        })
-      }
-    } else if (key.startsWith('price_')) {
-      priceId = key
-    } else {
-      // Fallback
-      priceId = Deno.env.get('STRIPE_PRICE_CLASE_SUELTA') || 'price_1TqVYPC3eulgiYPc2k62Sapd'
-    }
-
-    // Retrieve the price from Stripe to determine mode
-    let mode = 'payment'
+    let body: Record<string, unknown>
     try {
-      console.log(`Verificando precio en Stripe: ${priceId}`)
-      const priceObj = await stripe.prices.retrieve(priceId)
-      mode = priceObj.type === 'recurring' ? 'subscription' : 'payment'
-    } catch (e) {
-      console.warn("No se pudo verificar el tipo de precio en Stripe, usando valor predeterminado", e)
-      // Fallback logic
-      if (priceId === (Deno.env.get('STRIPE_PRICE_BONO_MENSUAL') || 'price_1TqVZ8C3eulgiYPciTZlAY6B')) {
-        mode = 'subscription'
-      } else {
-        mode = 'payment'
+      body = await req.json()
+    } catch {
+      throw new HttpError(400, 'El cuerpo de la solicitud no es válido.')
+    }
+
+    const lookupKey = String(body.lookup_key || '').trim()
+    if (lookupKey !== PURCHASE_TYPES.CLASE_SUELTA && lookupKey !== PURCHASE_TYPES.BONO_MENSUAL) {
+      throw new HttpError(400, 'Producto no permitido.')
+    }
+
+    const requestedUserId = String(body.user_id || '').trim()
+    const isGuest = requestedUserId === 'guest'
+    if (isGuest && lookupKey !== PURCHASE_TYPES.CLASE_SUELTA) {
+      throw new HttpError(400, 'Los invitados solo pueden adquirir una clase suelta.')
+    }
+
+    const stripe = createStripeClient(config)
+    const supabase = createAdminClient(config)
+    const catalog = await getValidatedCatalog(stripe, config)
+
+    const user = isGuest ? null : await getAuthenticatedUser(req, supabase, true)
+    if (!isGuest && requestedUserId !== user?.id) {
+      throw new HttpError(403, 'El usuario de la compra no coincide con la sesión autenticada.')
+    }
+
+    let stripeCustomerId: string | null = null
+    if (user) {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('bono_mensual_activo, bono_mensual_fin, stripe_subscription_status, stripe_customer_id')
+        .eq('id', user.id)
+        .single()
+
+      if (error || !profile) throw new Error('No se pudo cargar el perfil del comprador.')
+
+      const manualMonthlyEnd = profile.bono_mensual_fin
+        ? Date.parse(String(profile.bono_mensual_fin))
+        : Number.NaN
+      const hasCurrentManualMonthly = Boolean(profile.bono_mensual_activo) && (
+        !profile.bono_mensual_fin ||
+        Number.isNaN(manualMonthlyEnd) ||
+        manualMonthlyEnd > Date.now()
+      )
+
+      if (
+        lookupKey === PURCHASE_TYPES.BONO_MENSUAL &&
+        (hasCurrentManualMonthly || ['active', 'trialing', 'past_due'].includes(profile.stripe_subscription_status || ''))
+      ) {
+        throw new HttpError(409, 'Ya tienes un Bono Mensual vinculado a tu cuenta.')
       }
+      if (profile.stripe_customer_id && !String(profile.stripe_customer_id).startsWith('cus_')) {
+        throw new Error('El identificador Stripe del perfil no es válido.')
+      }
+      stripeCustomerId = profile.stripe_customer_id || null
     }
 
-    // Determine the site URL. Validate that it starts with a valid scheme (http/https).
-    let siteUrl = site_url || Deno.env.get('SITE_URL') || req.headers.get('origin') || 'http://localhost:5500'
-    
-    // Clean null origins (common when opening static files directly via file://) or invalid values
-    if (!siteUrl || siteUrl === 'null' || !siteUrl.startsWith('http')) {
-      siteUrl = 'http://localhost:5500'
+    const purchaseType = lookupKey
+    const price = purchaseType === PURCHASE_TYPES.CLASE_SUELTA
+      ? catalog.claseSuelta
+      : catalog.bonoMensual
+    const appUserId = isGuest ? 'guest' : user!.id
+    const source = body.from === 'profile' ? 'profile' : 'tarifas'
+    const metadata: Stripe.MetadataParam = {
+      app: 'gen_yoga',
+      environment: 'production',
+      purchase_type: purchaseType,
+      app_user_id: appUserId,
+      source,
     }
 
-    console.log(`Creando Checkout Session para usuario: ${user_id}. Price ID: ${priceId}. Modo: ${mode}. URL de retorno: ${siteUrl}`)
-
-    const sessionParams: any = {
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      mode: mode,
-      client_reference_id: user_id,
-      success_url: `${siteUrl}/success.html?session_id={CHECKOUT_SESSION_ID}${user_id === 'guest' ? '&guest=true' : ''}${from ? `&from=${from}` : ''}`,
-      cancel_url: `${siteUrl}/cancel.html${from ? `?from=${from}` : ''}`,
+    const sessionParams: Stripe.Checkout.SessionCreateParams = {
+      line_items: [{ price: price.id, quantity: 1 }],
+      mode: purchaseType === PURCHASE_TYPES.BONO_MENSUAL ? 'subscription' : 'payment',
+      client_reference_id: appUserId,
+      success_url: `${config.siteUrl}/success.html?session_id={CHECKOUT_SESSION_ID}${isGuest ? '&guest=true' : ''}&from=${source}`,
+      cancel_url: `${config.siteUrl}/cancel.html?from=${source}`,
       payment_method_types: ['card'],
+      metadata,
     }
 
-    const session = await stripe.checkout.sessions.create(sessionParams)
+    if (stripeCustomerId) {
+      sessionParams.customer = stripeCustomerId
+    } else if (user?.email) {
+      sessionParams.customer_email = user.email
+    }
 
-    return new Response(JSON.stringify({ url: session.url }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    if (purchaseType === PURCHASE_TYPES.CLASE_SUELTA) {
+      if (!stripeCustomerId) sessionParams.customer_creation = 'always'
+      sessionParams.payment_intent_data = { metadata }
+    } else {
+      sessionParams.subscription_data = { metadata }
+    }
+
+    // Reuse the same Checkout Session for rapid retries/double-clicks. This keeps
+    // two concurrent requests from creating two immediately payable subscriptions.
+    const idempotencyWindow = Math.floor(Date.now() / (10 * 60 * 1000))
+    const idempotencyKey = [
+      'genyoga',
+      'production',
+      'checkout',
+      purchaseType,
+      appUserId,
+      idempotencyWindow,
+    ].join(':')
+    const session = await stripe.checkout.sessions.create(sessionParams, { idempotencyKey })
+    if (!session.livemode || !session.url) {
+      throw new Error('Stripe no devolvió una sesión LIVE válida.')
+    }
+
+    return jsonResponse({ url: session.url }, 200, headers)
   } catch (error) {
-    console.error("Error en create-checkout-session:", error)
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    return safeErrorResponse(error, headers)
   }
 })

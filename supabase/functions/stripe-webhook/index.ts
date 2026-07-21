@@ -1,180 +1,174 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import Stripe from "https://esm.sh/stripe@14.22.0?target=deno"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0"
+import {
+  PURCHASE_TYPES,
+  HttpError,
+  createAdminClient,
+  createStripeClient,
+  getValidatedCatalog,
+  jsonResponse,
+  readProductionConfig,
+  stripeObjectId,
+  subscriptionIsEntitled,
+  unixSecondsToIso,
+  validateCheckoutPurchase,
+  validateMonthlySubscription,
+  type ValidatedCatalog,
+} from "../_shared/stripe-production.ts"
+
+type InvoiceWithBasilParent = Stripe.Invoice & {
+  parent?: {
+    subscription_details?: {
+      subscription?: string | Stripe.Subscription | null
+    } | null
+  } | null
+}
 
 serve(async (req) => {
-  const stripeKey = Deno.env.get('STRIPE_SECRET_KEY')
-  const endpointSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET')
-  
-  if (!stripeKey) {
-    return new Response("Missing STRIPE_SECRET_KEY", { status: 500 })
+  if (req.method !== 'POST') {
+    return jsonResponse({ error: 'Método no permitido.' }, 405)
   }
 
-  const stripe = new Stripe(stripeKey, {
-    apiVersion: '2023-10-16',
-    httpClient: Stripe.createFetchHttpClient(),
-  })
-  
-  const signature = req.headers.get("stripe-signature")
-  let event
-
   try {
-    const body = await req.text()
-    if (endpointSecret && signature) {
+    const config = readProductionConfig({ requireWebhookSecret: true })
+    const signature = req.headers.get('stripe-signature')
+    if (!signature) throw new HttpError(400, 'Falta la firma de Stripe.')
+
+    const stripe = createStripeClient(config)
+    const supabase = createAdminClient(config)
+    const catalog = await getValidatedCatalog(stripe, config)
+
+    let event: Stripe.Event
+    try {
       event = await stripe.webhooks.constructEventAsync(
-        body,
+        await req.text(),
         signature,
-        endpointSecret
+        config.webhookSecret!,
       )
-    } else {
-      // Unverified mode (local/testing fallback if secret is missing)
-      event = JSON.parse(body)
-      console.warn("⚠️ Webhook running without webhook signature verification secret.")
+    } catch (error) {
+      console.warn('Firma Stripe rechazada:', error instanceof Error ? error.message : 'firma inválida')
+      throw new HttpError(400, 'Firma de Stripe no válida.')
     }
-  } catch (err) {
-    console.error(`Webhook signature verification failed: ${err.message}`)
-    return new Response(`Webhook Error: ${err.message}`, { status: 400 })
-  }
 
-  console.log(`Recibido evento webhook de Stripe: ${event.type}`)
+    if (!event.livemode) throw new HttpError(400, 'Solo se aceptan eventos LIVE.')
 
-  try {
     if (event.type === 'checkout.session.completed') {
-      const sessionObject = event.data.object
-      
-      console.log(`Buscando detalles de línea para la sesión: ${sessionObject.id}`)
-      // Retrieve the session with line_items expanded to verify which product was purchased
-      const session = await stripe.checkout.sessions.retrieve(
-        sessionObject.id,
-        { expand: ['line_items'] }
-      )
+      const eventSession = event.data.object as Stripe.Checkout.Session
+      const session = await stripe.checkout.sessions.retrieve(eventSession.id, {
+        expand: ['line_items'],
+      })
+      const purchase = validateCheckoutPurchase(session, catalog)
 
-      const userId = session.client_reference_id
-      const lineItem = session.line_items?.data?.[0]
-      const priceId = lineItem?.price?.id
-
-      if (userId && priceId) {
-        console.log(`Procesando compra de precio ${priceId} para el usuario: ${userId}`)
-        
-        if (userId === 'guest') {
-          console.log(`Fulfillment de invitado: Pago completado para Stripe Session. No se requiere saldo de cuenta.`)
-          return new Response(JSON.stringify({ received: true, isGuest: true }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-          })
+      let subscription: Stripe.Subscription | null = null
+      if (purchase.purchaseType === PURCHASE_TYPES.BONO_MENSUAL) {
+        const subscriptionId = stripeObjectId(session.subscription)
+        if (!subscriptionId) throw new HttpError(400, 'La sesión mensual no contiene suscripción.')
+        subscription = await stripe.subscriptions.retrieve(subscriptionId)
+        const validatedSubscription = validateMonthlySubscription(subscription, catalog)
+        if (validatedSubscription.appUserId !== purchase.appUserId) {
+          throw new HttpError(400, 'La suscripción no pertenece al comprador.')
         }
-        
-        const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
-        const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_ANON_KEY') || ''
-        const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
-        const priceClaseSuelta = Deno.env.get('STRIPE_PRICE_CLASE_SUELTA') || 'price_1TqVYPC3eulgiYPc2k62Sapd'
-        const priceBonoMensual = Deno.env.get('STRIPE_PRICE_BONO_MENSUAL') || 'price_1TqVZ8C3eulgiYPciTZlAY6B'
-
-        // Purchase of Single Class (Clase suelta)
-        if (priceId === priceClaseSuelta) {
-          // Fetch current profile to increment balance
-          const { data: profile, error: fetchError } = await supabase
-            .from('profiles')
-            .select('bonos')
-            .eq('id', userId)
-            .maybeSingle()
-
-          if (!profile) {
-            console.warn(`Perfil no encontrado para usuario ${userId}. Creando uno nuevo con 1 clase suelta...`)
-            const { error: insertError } = await supabase
-              .from('profiles')
-              .insert({
-                id: userId,
-                bonos: 1,
-                rol: 'alumno'
-              })
-
-            if (insertError) {
-              console.error(`Error al crear perfil con clase suelta:`, insertError)
-              return new Response(`Insert profile error: ${insertError.message}`, { status: 500 })
-            }
-            console.log(`Éxito: Se creó perfil con 1 clase suelta para el usuario ${userId}`)
-          } else {
-            const currentBonos = profile ? (parseInt(profile.bonos, 10) || 0) : 0
-            const newBonos = currentBonos + 1
-
-            const { error: updateError } = await supabase
-              .from('profiles')
-              .update({ bonos: newBonos })
-              .eq('id', userId)
-
-            if (updateError) {
-              console.error(`Error al actualizar bonos para clase suelta:`, updateError)
-              return new Response(`Update profile error: ${updateError.message}`, { status: 500 })
-            }
-            console.log(`Éxito: Se añadió 1 clase suelta al usuario ${userId}. Nuevo saldo: ${newBonos}`)
-          }
-        } 
-        // Purchase of Monthly Voucher (Bono mensual)
-        else if (priceId === priceBonoMensual) {
-          const now = new Date()
-          const oneMonthLater = new Date()
-          oneMonthLater.setMonth(now.getMonth() + 1)
-
-          console.log(`Activando bono mensual para el usuario ${userId}`)
-
-          // Check if profile exists
-          const { data: profile, error: fetchError } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('id', userId)
-            .maybeSingle()
-
-          if (!profile) {
-            console.warn(`Perfil no encontrado para usuario ${userId}. Creando uno nuevo con bono mensual...`)
-            const { error: insertError } = await supabase
-              .from('profiles')
-              .insert({
-                id: userId,
-                bonos: 0,
-                rol: 'alumno',
-                bono_mensual_activo: true,
-                bono_mensual_inicio: now.toISOString(),
-                bono_mensual_fin: oneMonthLater.toISOString()
-              })
-
-            if (insertError) {
-              console.error(`Error al crear perfil con bono mensual:`, insertError)
-              return new Response(`Insert monthly profile error: ${insertError.message}`, { status: 500 })
-            }
-            console.log(`Éxito: Se creó perfil y se activó bono mensual para el usuario ${userId}`)
-          } else {
-            const { error: updateError } = await supabase
-              .from('profiles')
-              .update({
-                bono_mensual_activo: true,
-                bono_mensual_inicio: now.toISOString(),
-                bono_mensual_fin: oneMonthLater.toISOString()
-              })
-              .eq('id', userId)
-
-            if (updateError) {
-              console.error(`Error al activar bono mensual:`, updateError)
-              return new Response(`Update monthly profile error: ${updateError.message}`, { status: 500 })
-            }
-            console.log(`Éxito: Bono mensual activado automáticamente para el usuario ${userId}`)
-          }
-        } 
-        else {
-          console.warn(`⚠️ Compra completada con un ID de precio desconocido: ${priceId}`)
-        }
-      } else {
-        console.warn("⚠️ checkout.session.completed recibido pero falta el client_reference_id (userId) o el priceId.")
       }
+
+      const { error } = await supabase.rpc('stripe_fulfill_checkout', {
+        p_event_id: event.id,
+        p_event_type: event.type,
+        p_event_created: event.created,
+        p_checkout_session_id: session.id,
+        p_user_id: purchase.appUserId === 'guest' ? null : purchase.appUserId,
+        p_is_guest: purchase.appUserId === 'guest',
+        p_purchase_type: purchase.purchaseType,
+        p_price_id: purchase.price.id,
+        p_payment_intent_id: stripeObjectId(session.payment_intent),
+        p_subscription_id: stripeObjectId(session.subscription),
+        p_customer_id: stripeObjectId(session.customer),
+        p_amount_total: session.amount_total,
+        p_currency: session.currency,
+        p_payment_status: session.payment_status,
+        p_period_start: subscription ? unixSecondsToIso(subscription.current_period_start) : null,
+        p_period_end: subscription ? unixSecondsToIso(subscription.current_period_end) : null,
+        p_subscription_status: subscription?.status || null,
+        p_cancel_at_period_end: subscription?.cancel_at_period_end || false,
+        p_livemode: true,
+      })
+      if (error) throw new Error(`Fallo de fulfillment transaccional: ${error.message}`)
+    } else if (event.type === 'invoice.paid' || event.type === 'invoice.payment_failed') {
+      const invoice = event.data.object as Stripe.Invoice
+      if (!invoice.livemode || invoice.currency.toLowerCase() !== 'eur') {
+        throw new HttpError(400, 'La factura no es una factura LIVE en EUR.')
+      }
+      if (event.type === 'invoice.paid' && !invoice.paid) {
+        throw new HttpError(400, 'La factura todavía no está pagada.')
+      }
+
+      // Basil (2025-03-31) moved this relationship under
+      // invoice.parent.subscription_details.subscription. Keep both paths because
+      // webhook payloads may use a newer shape than our pinned API retrievals.
+      const modernInvoice = invoice as InvoiceWithBasilParent
+      const subscriptionId = stripeObjectId(invoice.subscription) || stripeObjectId(
+        modernInvoice.parent?.subscription_details?.subscription,
+      )
+      if (!subscriptionId) throw new HttpError(400, 'La factura no está vinculada a una suscripción.')
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+      await syncSubscriptionEvent(
+        supabase,
+        event,
+        subscription,
+        catalog,
+        event.type === 'invoice.paid' && subscriptionIsEntitled(subscription.status),
+      )
+    } else if (
+      event.type === 'customer.subscription.updated' ||
+      event.type === 'customer.subscription.deleted'
+    ) {
+      const eventSubscription = event.data.object as Stripe.Subscription
+      // Always retrieve through the client pinned to 2023-10-16. This normalises
+      // period fields even when the incoming webhook uses a newer Stripe shape.
+      const subscription = await stripe.subscriptions.retrieve(eventSubscription.id)
+      await syncSubscriptionEvent(
+        supabase,
+        event,
+        subscription,
+        catalog,
+        event.type !== 'customer.subscription.deleted' && subscriptionIsEntitled(subscription.status),
+      )
     }
-    
-    return new Response(JSON.stringify({ received: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    })
+
+    return jsonResponse({ received: true }, 200)
   } catch (error) {
-    console.error(`Error procesando evento Stripe: ${error.message}`)
-    return new Response(`Internal Webhook Error: ${error.message}`, { status: 500 })
+    if (error instanceof HttpError) {
+      return jsonResponse({ error: error.message }, error.status)
+    }
+    console.error('Error procesando webhook Stripe:', error)
+    return jsonResponse({ error: 'No se pudo procesar el evento Stripe.' }, 500)
   }
 })
+
+async function syncSubscriptionEvent(
+  supabase: ReturnType<typeof createAdminClient>,
+  event: Stripe.Event,
+  subscription: Stripe.Subscription,
+  catalog: ValidatedCatalog,
+  entitled: boolean,
+): Promise<void> {
+  const validated = validateMonthlySubscription(subscription, catalog)
+  const customerId = stripeObjectId(subscription.customer)
+  if (!customerId) throw new HttpError(400, 'La suscripción no contiene cliente.')
+
+  const { error } = await supabase.rpc('stripe_sync_subscription', {
+    p_event_id: event.id,
+    p_event_type: event.type,
+    p_event_created: event.created,
+    p_user_id: validated.appUserId,
+    p_subscription_id: subscription.id,
+    p_customer_id: customerId,
+    p_price_id: validated.priceId,
+    p_status: subscription.status,
+    p_period_start: unixSecondsToIso(subscription.current_period_start),
+    p_period_end: unixSecondsToIso(subscription.current_period_end),
+    p_cancel_at_period_end: subscription.cancel_at_period_end,
+    p_entitled: entitled,
+    p_livemode: true,
+  })
+  if (error) throw new Error(`Fallo al sincronizar suscripción: ${error.message}`)
+}

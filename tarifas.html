@@ -1229,7 +1229,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <!-- Footer spacing (Matches classes.html layout) -->
         <div class="w-full flex items-center justify-center z-15 pb-4 select-none pointer-events-none">
-            <span class="text-[9px] uppercase tracking-[0.2em] font-bold text-[#795244]/40">v5.10 | &copy; 2026 Gen Yoga</span>
+            <span class="text-[9px] uppercase tracking-[0.2em] font-bold text-[#795244]/40">v6.0 | &copy; 2026 Gen Yoga</span>
         </div>
     </div>
 
@@ -2111,12 +2111,10 @@ function renderProfesionalesLanding(profesionales) {
 
             try {
                 localStorage.setItem('stripe_checkout_origin', 'tarifas');
-                const siteUrl = window.location.origin + (window.location.pathname.endsWith('/') ? window.location.pathname.slice(0, -1) : (window.location.pathname.includes('.') ? window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) : window.location.pathname));
                 const { data, error } = await supabaseClient.functions.invoke('create-checkout-session', {
                     body: {
                         lookup_key: 'clase_suelta',
                         user_id: userId,
-                        site_url: siteUrl,
                         from: 'tarifas'
                     }
                 });

@@ -1,85 +1,84 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import Stripe from "https://esm.sh/stripe@14.22.0?target=deno"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0"
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import {
+  PURCHASE_TYPES,
+  HttpError,
+  assertAllowedOrigin,
+  corsHeaders,
+  createAdminClient,
+  createStripeClient,
+  getAuthenticatedUser,
+  getValidatedCatalog,
+  handleOptions,
+  jsonResponse,
+  readProductionConfig,
+  requirePost,
+  safeErrorResponse,
+  validateCheckoutPurchase,
+} from "../_shared/stripe-production.ts"
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
-
+  let headers: Record<string, string> = {}
   try {
-    const { session_id } = await req.json()
+    const config = readProductionConfig()
+    headers = corsHeaders(req, config)
+    const preflight = handleOptions(req, config)
+    if (preflight) return preflight
 
-    if (!session_id) {
-      return new Response(JSON.stringify({ error: 'Falta el session_id.' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+    assertAllowedOrigin(req, config)
+    requirePost(req)
+
+    let body: Record<string, unknown>
+    try {
+      body = await req.json()
+    } catch {
+      throw new HttpError(400, 'El cuerpo de la solicitud no es válido.')
+    }
+    const sessionId = String(body.session_id || '').trim()
+    if (!sessionId.startsWith('cs_live_')) throw new HttpError(400, 'La sesión LIVE no es válida.')
+
+    const stripe = createStripeClient(config)
+    const supabase = createAdminClient(config)
+    const catalog = await getValidatedCatalog(stripe, config)
+
+    const session = await stripe.checkout.sessions.retrieve(sessionId, { expand: ['line_items'] })
+    const purchase = validateCheckoutPurchase(session, catalog)
+    const isGuest = purchase.appUserId === 'guest'
+
+    if (isGuest) {
+      if (purchase.purchaseType !== PURCHASE_TYPES.CLASE_SUELTA) {
+        throw new HttpError(403, 'La compra de invitado no es válida.')
+      }
+    } else {
+      const user = await getAuthenticatedUser(req, supabase, true)
+      if (user?.id !== purchase.appUserId) {
+        throw new HttpError(403, 'La sesión de pago pertenece a otro usuario.')
+      }
     }
 
-    const stripeKey = Deno.env.get('STRIPE_SECRET_KEY')
-    if (!stripeKey) {
-      return new Response(JSON.stringify({ error: 'STRIPE_SECRET_KEY no está configurado.' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+    let alreadyRedeemed = false
+    if (isGuest) {
+      const { data, error } = await supabase
+        .from('stripe_purchases')
+        .select('guest_redeemed_at')
+        .eq('checkout_session_id', session.id)
+        .maybeSingle()
+      if (error) throw new Error('No se pudo comprobar el canje de invitado.')
+      alreadyRedeemed = !!data?.guest_redeemed_at
     }
 
-    const stripe = new Stripe(stripeKey, {
-      apiVersion: '2023-10-16',
-      httpClient: Stripe.createFetchHttpClient(),
-    })
+    const rawName = isGuest ? (session.customer_details?.name || '').trim() : ''
+    const nameParts = rawName.split(/\s+/).filter(Boolean)
 
-    console.log(`Buscando sesión de checkout: ${session_id}`)
-    const session = await stripe.checkout.sessions.retrieve(session_id)
-
-    const isGuest = session.client_reference_id === 'guest'
-    const email = session.customer_details?.email || ''
-    const rawName = session.customer_details?.name || ''
-    
-    // Split Stripe customer name into first name and last name
-    const nameParts = rawName.trim().split(/\s+/)
-    const nombre = nameParts[0] || ''
-    const apellidos = nameParts.slice(1).join(' ') || ''
-
-    // Verify if this session is already redeemed
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_ANON_KEY') || ''
-    const supabase = createClient(supabaseUrl, supabaseKey)
-
-    const guestEmail = `guest_${session_id}@genyoga.es`
-    const { data: profiles, error: dbError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('email', guestEmail)
-
-    if (dbError) {
-      console.error("Database query error checking duplicate session:", dbError)
-    }
-
-    const alreadyRedeemed = profiles && profiles.length > 0
-
-    return new Response(JSON.stringify({
+    return jsonResponse({
       isGuest,
-      email,
-      nombre,
-      apellidos,
+      purchaseType: purchase.purchaseType,
+      email: isGuest ? (session.customer_details?.email || '') : '',
+      nombre: isGuest ? (nameParts[0] || '') : '',
+      apellidos: isGuest ? nameParts.slice(1).join(' ') : '',
       alreadyRedeemed,
-      paymentStatus: session.payment_status,
-    }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+      paymentStatus: 'paid',
+    }, 200, headers)
   } catch (error) {
-    console.error("Error en get-checkout-session:", error)
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    return safeErrorResponse(error, headers)
   }
 })
