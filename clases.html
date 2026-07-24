@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="application-version" content="6.5">
+    <meta name="application-version" content="6.7">
     <meta name="description" content="Descubre las clases de yoga de GEN Yoga en Albacete, sus estilos, horarios y condiciones de reserva.">
     <title>GEN Yoga | Clases</title>
     
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@1.16.0" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
+    <script src="teacher-profiles.js?v=6.7"></script>
     <script>
 // INLINED i18n.js
 // GEN Yoga Internationalization Module (i18n.js)
@@ -93,6 +94,7 @@ const translations = {
         "classes_tab_vinyasa": "VINYASA",
         "classes_tab_hombres": "HOMBRES",
         "classes_tab_restaurativa": "RESTAURATIVA",
+        "classes_calendar_btn": "Ver horario semanal",
 
         // tarifas.html (Pricing)
         "rates_title": "Tarifas",
@@ -103,7 +105,7 @@ const translations = {
         "rates_suelta_cat": "Yoga",
         "rates_suelta_feat1": "1 clase de yoga",
         "rates_suelta_feat2": "Reserva desde tu perfil o recepción",
-        "rates_suelta_feat3": "Cancelación hasta 12h antes de la clase",
+        "rates_suelta_feat3": "Cancelación según el plazo vigente",
         "rates_suelta_btn": "Comprar clase",
         "rates_mensual_badge": "★ Ahorra 25%",
         "rates_mensual_title": "Bono Mensual",
@@ -275,8 +277,8 @@ const translations = {
         "alert_yes_reserve": "Sí, reservar",
         "alert_no_credits": "Compra un bono extra",
         "alert_no_credits_desc": "Has alcanzado los límites de tu bono mensual (o no lo tienes activo) y no te quedan bonos disponibles. Compra un bono extra por 15€ para reservar.",
-        "alert_class_too_close": "La clase está demasiado cerca y no puedes reservar.",
-        "alert_cancel_too_close": "ya no se puede cancelar debido a que la clase es en menos de X horas.",
+        "alert_class_too_close": "Las reservas cierran {hours} h antes del inicio. Para esta clase ya ha pasado el plazo.",
+        "alert_cancel_too_close": "Ya no puedes cancelar: faltan {hours} h o menos para la clase. El bono reservado no se devuelve.",
         "alert_confirm_reservation": "Confirmar Reserva",
         "alert_reserve_mensual": "¿Quieres reservar esta clase usando tu <b>Bono Mensual</b>?",
         "alert_reserve_semana_limit": "Has alcanzado el límite semanal de <b>2 clases</b> de tu bono mensual para esta semana. ¿Quieres reservar usando <b>uno de tus bonos</b>?",
@@ -284,7 +286,7 @@ const translations = {
         "alert_reserve_suelta": "¿Quieres reservar esta clase usando <b>uno de tus bonos</b>?",
         "alert_booking_confirmed": "¡Clase Reservada!",
         "alert_booking_confirmed_desc": "Tu esterilla te espera. Namasté. 🙏",
-        "alert_cancel_confirmed": "Reserva cancelada. Clase devuelta.",
+        "alert_cancel_confirmed": "Reserva cancelada. Saldo actualizado.",
         "btn_reserve": "RESERVAR",
         "btn_no_balance": "Sin Saldo",
         "btn_full": "Completa",
@@ -296,8 +298,8 @@ const translations = {
         "title_cancel": "CANCELAR",
         
         // policy wording dynamic
-        "policy_booking_limit": "Reservas permitidas hasta <b>{res}h</b> antes de la clase.",
-        "policy_cancel_limit": "Cancelación permitida hasta <b>{can}h</b> antes de la clase.",
+        "policy_booking_limit": "Las reservas cierran <b>{res} h</b> antes del inicio.",
+        "policy_cancel_limit": "Puedes cancelar y recuperar el bono mientras falten más de <b>{can} h</b>. Al llegar a ese límite, la cancelación se bloquea y el bono no se devuelve.",
         "footer_address": "Calle San Carlos 2, Albacete"
     },
     en: {
@@ -378,6 +380,7 @@ const translations = {
         "classes_tab_hombres": "MEN YOGA",
         "classes_tab_restaurativa": "RESTORATIVE",
         "classes_scroll_arrow_doubt": "Any questions?",
+        "classes_calendar_btn": "View weekly schedule",
 
         // tarifas.html (Pricing)
         "rates_title": "Rates",
@@ -388,7 +391,7 @@ const translations = {
         "rates_suelta_cat": "Yoga",
         "rates_suelta_feat1": "1 yoga class",
         "rates_suelta_feat2": "Book from your profile or reception",
-        "rates_suelta_feat3": "Cancellation up to 12h before the class",
+        "rates_suelta_feat3": "Cancellation according to the current policy",
         "rates_suelta_btn": "Buy class",
         "rates_mensual_badge": "★ Save 25%",
         "rates_mensual_title": "Monthly Plan",
@@ -560,8 +563,8 @@ const translations = {
         "alert_yes_reserve": "Yes, book",
         "alert_no_credits": "Buy an extra credit",
         "alert_no_credits_desc": "You have reached your monthly class limits (or it is inactive) and you do not have any class credits left. Buy an extra credit for 15€ to book.",
-        "alert_class_too_close": "The class starts too soon and you cannot book.",
-        "alert_cancel_too_close": "cancellations are not allowed within less than X hours from the class.",
+        "alert_class_too_close": "Bookings close {hours} hours before the start. The deadline for this class has passed.",
+        "alert_cancel_too_close": "You can no longer cancel: the class starts in {hours} hours or less. The reserved credit is not refunded.",
         "alert_confirm_reservation": "Confirm Booking",
         "alert_reserve_mensual": "Do you want to book this class using your <b>Monthly Plan</b>?",
         "alert_reserve_semana_limit": "You have reached the weekly limit of <b>2 classes</b> on your monthly plan for this week. Do you want to book using <b>one of your class credits</b>?",
@@ -569,7 +572,7 @@ const translations = {
         "alert_reserve_suelta": "Do you want to book this class using <b>one of your class credits</b>?",
         "alert_booking_confirmed": "Class Booked!",
         "alert_booking_confirmed_desc": "Your yoga mat awaits you. Namaste. 🙏",
-        "alert_cancel_confirmed": "Booking cancelled. Class credited back.",
+        "alert_cancel_confirmed": "Booking cancelled. Balance updated.",
         "btn_reserve": "BOOK NOW",
         "btn_no_balance": "No Balance",
         "btn_full": "Full",
@@ -581,8 +584,8 @@ const translations = {
         "title_cancel": "CANCEL",
 
         // policy wording dynamic
-        "policy_booking_limit": "Bookings allowed up to <b>{res}h</b> before the class.",
-        "policy_cancel_limit": "Cancellations allowed up to <b>{can}h</b> before the class.",
+        "policy_booking_limit": "Bookings close <b>{res} hours</b> before the start.",
+        "policy_cancel_limit": "You can cancel and recover the credit while more than <b>{can} hours</b> remain. At that cutoff, cancellation is blocked and the credit is not refunded.",
         "footer_address": "2 San Carlos St, Albacete"
     }
 };
@@ -616,7 +619,9 @@ function translateProfessional(p) {
     if (!p) return p;
     const lang = window.currentLang || (typeof safeGetItem === 'function' ? safeGetItem('yoga-lang', 'es') : 'es');
     if (lang === 'en') {
-        const trans = professionalTranslations['en']?.[p.nombre] || professionalTranslations['en']?.[p.nombre + ' ' + (p.apellidos || '')];
+        const trans = window.GENTeacherProfiles?.getEnglishProfile(p)
+            || professionalTranslations['en']?.[p.nombre]
+            || professionalTranslations['en']?.[p.nombre + ' ' + (p.apellidos || '')];
         if (trans) {
             return {
                 ...p,
@@ -937,8 +942,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </script>
     
-    <link rel="stylesheet" href="styles.css?v=6.5" />
-    <link rel="stylesheet" href="tailwind-compiled.css?v=6.5" />
+    <link rel="stylesheet" href="tailwind-compiled.css?v=6.7" />
     <style>
         /* Reset and Lock Viewports for Fixed Presentation */
         html, body {
@@ -1007,6 +1011,26 @@ document.addEventListener('DOMContentLoaded', () => {
             #folders-deck {
                 height: 390px !important;
             }
+            .folder-card-container {
+                display: flex;
+                flex-direction: column;
+            }
+            .folder-card-container > div:first-child {
+                flex: 0 0 36px;
+            }
+            .folder-body {
+                flex: 1;
+                min-height: 0;
+                overflow: hidden;
+                padding: 1.5rem !important;
+                gap: 1.5rem !important;
+            }
+            .folder-body > div:first-child {
+                height: auto !important;
+                min-height: 0;
+                align-self: stretch;
+                aspect-ratio: auto !important;
+            }
             #slide-4-panel {
                 padding-top: 70px !important;
                 padding-bottom: 12px !important;
@@ -1037,6 +1061,26 @@ document.addEventListener('DOMContentLoaded', () => {
             #folders-deck {
                 height: 330px !important;
             }
+            #classes-stage {
+                margin-top: 0.5rem !important;
+                padding-bottom: 0.5rem !important;
+            }
+            .folder-body {
+                padding: 1rem !important;
+                gap: 1rem !important;
+            }
+            .folder-body h2 {
+                font-size: 2rem !important;
+                line-height: 1 !important;
+                margin-bottom: 0.5rem !important;
+            }
+            .folder-body p {
+                font-size: 0.75rem !important;
+                line-height: 1.4 !important;
+            }
+            #scroll-assist {
+                flex-basis: 3rem;
+            }
             #slide-4-panel {
                 padding-top: 50px !important;
                 padding-bottom: 8px !important;
@@ -1047,6 +1091,55 @@ document.addEventListener('DOMContentLoaded', () => {
             #slide-4-panel p {
                 font-size: 0.875rem !important;
                 margin-top: 0.25rem !important;
+            }
+        }
+
+        @media (max-width: 767px) and (max-height: 700px) {
+            #classes-stage {
+                margin-top: 0.5rem !important;
+                padding-bottom: 0.5rem !important;
+            }
+            #folders-deck {
+                height: 330px !important;
+            }
+            .folder-card-container {
+                display: flex;
+                flex-direction: column;
+            }
+            .folder-card-container > div:first-child {
+                flex: 0 0 18px;
+            }
+            .folder-body {
+                flex: 1;
+                min-height: 0;
+                overflow: hidden;
+                padding: 1rem !important;
+                gap: 0.75rem !important;
+            }
+            .folder-body > div:first-child {
+                height: 110px !important;
+                min-height: 110px;
+                flex: none;
+                aspect-ratio: auto !important;
+            }
+            .folder-body > div:last-child {
+                justify-content: flex-start;
+            }
+            .folder-body span {
+                font-size: 0.5625rem !important;
+                margin-bottom: 0.25rem !important;
+            }
+            .folder-body h2 {
+                font-size: 1.5rem !important;
+                line-height: 1 !important;
+                margin-bottom: 0.5rem !important;
+            }
+            .folder-body p {
+                font-size: 0.625rem !important;
+                line-height: 1.35 !important;
+            }
+            #scroll-assist {
+                flex-basis: 3rem;
             }
         }
 
@@ -1071,6 +1164,18 @@ document.addEventListener('DOMContentLoaded', () => {
             width: 100%;
             box-shadow: 0 20px 45px -15px rgba(38, 22, 12, 0.15);
             z-index: 20;
+        }
+
+        /* Reserve a real white strip below the folders instead of overlaying the help prompt. */
+        #scroll-assist {
+            position: relative;
+            bottom: auto;
+            left: auto;
+            transform: none;
+            flex: 0 0 3.5rem;
+            align-self: center;
+            justify-content: center;
+            width: max-content;
         }
 
         /* Slide Dots styles (Discreet minimal dots) */
@@ -1103,6 +1208,7 @@ document.addEventListener('DOMContentLoaded', () => {
             animation: soft-pulse 2.2s infinite ease-in-out;
         }
     </style>
+    <link rel="stylesheet" href="public-calendar.css?v=6.7">
 </head>
 <body class="subpixel-antialiased selection:bg-mutedgold selection:text-cocoa font-sans bg-[#f8f6f2] overflow-x-hidden">
 
@@ -1136,10 +1242,19 @@ document.addEventListener('DOMContentLoaded', () => {
             <h1 id="header-title" class="brand-font font-black text-[#795244] text-4xl md:text-6xl lg:text-7xl uppercase tracking-[0.1em] text-center transition-opacity duration-300" data-i18n="classes_title">
                 Escoge tus clases
             </h1>
+            <button id="public-calendar-launch" type="button"
+                class="gy-calendar-launch mt-3 md:mt-5"
+                onclick="window.GENPublicCalendar?.open()">
+                <span class="gy-calendar-launch__live" aria-hidden="true"></span>
+                <span data-i18n="classes_calendar_btn">Ver horario semanal</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M5 3v3M19 3v3M4 9h16M6 5h12a2 2 0 0 1 2 2v12H4V7a2 2 0 0 1 2-2Z"></path>
+                </svg>
+            </button>
         </div>
 
         <!-- Active Viewport Content Area -->
-        <div class="flex-grow w-full max-w-5xl mx-auto flex items-center justify-center relative z-20 pb-8 md:pb-12 mt-4 md:mt-8">
+        <div id="classes-stage" class="flex-grow w-full max-w-5xl mx-auto flex items-center justify-center relative z-20 pb-8 md:pb-12 mt-4 md:mt-8">
             
             <!-- ==================================== -->
             <!-- FOLDERS DECK (Cards 1, 2, 3)         -->
@@ -1158,7 +1273,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </svg>
                     </div>
                     <!-- Body (z-20) -->
-                    <div onclick="handleNavClick(this, 'profile.html')" 
+                    <div onclick="window.GENPublicCalendar?.open({ style: 'vinyasa' })"
                         class="folder-body bg-[#795244] flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer">
                         <div class="w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl shadow-inner relative bg-cocoa/10 pointer-events-none">
                             <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=800&q=80" alt="Vinyasa Flow" class="w-full h-full object-cover">
@@ -1169,6 +1284,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <p class="text-white/80 text-xs md:text-sm lg:text-base leading-relaxed font-light" data-i18n="classes_card_vinyasa_desc">
                                 Una clase dinámica donde cada respiración guía el movimiento. Conecta posturas en secuencias fluidas, suma fuerza, equilibrio y enfoque mientras tu cuerpo se mueve al ritmo de tu propia energía.
                             </p>
+                            <span class="gy-folder-calendar-link" data-i18n="classes_calendar_btn">Ver horario semanal</span>
                         </div>
                     </div>
                 </div>
@@ -1188,7 +1304,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div onclick="scrollToSlide(1)" class="absolute left-[22%] top-0 w-[20%] h-full cursor-pointer z-30"></div>
                     </div>
                     <!-- Body (z-20) -->
-                    <div onclick="handleNavClick(this, 'profile.html')" 
+                    <div onclick="window.GENPublicCalendar?.open({ style: 'yoga-para-hombres' })"
                         class="folder-body bg-[#e06b53] flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer">
                         <div class="w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl shadow-inner relative bg-cocoa/10 pointer-events-none">
                             <img src="https://images.unsplash.com/photo-1562088287-bde35a1ea917?auto=format&fit=crop&w=800&q=80" alt="Yoga para Hombres" class="w-full h-full object-cover">
@@ -1199,6 +1315,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <p class="text-white/80 text-xs md:text-sm lg:text-base leading-relaxed font-light" data-i18n="classes_card_hombres_desc">
                                 Un espacio pensado para fortalecer cuerpo y mente sin presión ni comparaciones. Trabaja flexibilidad, fuerza y respiración consciente en un ambiente cómodo, directo y hecho a tu medida.
                             </p>
+                            <span class="gy-folder-calendar-link" data-i18n="classes_calendar_btn">Ver horario semanal</span>
                         </div>
                     </div>
                 </div>
@@ -1219,7 +1336,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div onclick="scrollToSlide(2)" class="absolute left-[42%] top-0 w-[20%] h-full cursor-pointer z-30"></div>
                     </div>
                     <!-- Body (z-20) -->
-                    <div onclick="handleNavClick(this, 'profile.html')" 
+                    <div onclick="window.GENPublicCalendar?.open({ style: 'restaurativa' })"
                         class="folder-body bg-[#ee9785] flex flex-col md:flex-row p-6 md:p-10 gap-6 md:gap-10 cursor-pointer">
                         <div class="w-full md:w-[45%] aspect-[4/3] md:h-[320px] overflow-hidden rounded-2xl shadow-inner relative bg-cocoa/10 pointer-events-none">
                             <img src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80" alt="Yoga Restaurativa Suave" class="w-full h-full object-cover">
@@ -1230,6 +1347,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <p class="text-white/80 text-xs md:text-sm lg:text-base leading-relaxed font-light" data-i18n="classes_card_restaurativa_desc">
                                 Una práctica lenta y consciente diseñada para liberar tensión acumulada. Con posturas sostenidas y respiración profunda, esta clase invita a tu cuerpo y mente a descansar de verdad.
                             </p>
+                            <span class="gy-folder-calendar-link" data-i18n="classes_calendar_btn">Ver horario semanal</span>
                         </div>
                     </div>
                 </div>
@@ -1238,7 +1356,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
 
         <!-- Floating Scroll Indicator -->
-        <div id="scroll-assist" onclick="scrollNext()" class="fixed bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 opacity-0 pointer-events-none z-40 text-[#795244] transition-all duration-500 cursor-pointer">
+        <div id="scroll-assist" onclick="scrollNext()" class="flex flex-col items-center gap-1 opacity-0 pointer-events-none z-40 text-[#795244] transition-all duration-500 cursor-pointer">
             <span id="scroll-assist-text" class="text-[9px] uppercase tracking-[0.2em] font-bold" data-i18n="classes_scroll_arrow_text">Ver más clases</span>
             <svg id="scroll-assist-arrow" class="w-4 h-4 text-current scroll-indicator-anim" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3"></path>
@@ -1274,7 +1392,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     <!-- CTA Booking Button (fades and scales in dynamically) -->
                     <div id="cta-btn-wrapper" class="opacity-0 transform scale-90 transition-all duration-300">
-                        <a href="profile.html" 
+                        <a href="#calendario-publico"
+                            onclick="event.preventDefault(); window.GENPublicCalendar?.open()"
                             class="inline-block px-8 py-3.5 bg-[#795244] border-2 border-white text-white font-extrabold rounded-full text-xs md:text-sm uppercase tracking-widest hover:bg-white hover:text-[#795244] hover:scale-105 active:scale-95 transition-all duration-300 shadow-xl text-center"
                             data-i18n="classes_cta_btn">
                             Reservar mi primera clase
@@ -1323,10 +1442,218 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="flex flex-col items-end text-right text-sm gap-0.5 tracking-[0.1em] font-normal text-white">
                 <a href="politica-privacidad.html" class="hover:text-sand transition underline decoration-transparent hover:decoration-sand" data-i18n="footer_privacy">POLÍTICA DE PRIVACIDAD</a>
-                <span class="opacity-60 text-[10px]">v6.5 | @2026 Gen Yoga</span>
+                <span class="opacity-60 text-[10px]">v6.7 | @2026 Gen Yoga</span>
             </div>
         </div>
     </div>
+
+    <!-- Public, database-backed weekly calendar -->
+    <section id="public-calendar-panel" class="gy-calendar" role="dialog" aria-modal="true"
+        aria-labelledby="public-calendar-title" aria-hidden="true" hidden>
+        <div class="gy-calendar__decor gy-calendar__decor--one" aria-hidden="true"></div>
+        <div class="gy-calendar__decor gy-calendar__decor--two" aria-hidden="true"></div>
+
+        <div class="gy-calendar__shell">
+            <header class="gy-calendar__hero">
+                <div class="gy-calendar__topbar">
+                    <button id="public-calendar-close" type="button" class="gy-calendar__back">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="m15 18-6-6 6-6"></path>
+                        </svg>
+                        <span data-calendar-copy="back">Clases</span>
+                    </button>
+                    <span class="gy-calendar__live">
+                        <span aria-hidden="true"></span>
+                        <span data-calendar-copy="live">Horario conectado en directo</span>
+                    </span>
+                </div>
+
+                <div class="gy-calendar__heading">
+                    <p class="gy-calendar__eyebrow">GEN YOGA · ALBACETE</p>
+                    <h2 id="public-calendar-title"><span data-calendar-copy="schedule">Horario</span><em data-calendar-copy="weekly"> semanal</em></h2>
+                    <p data-calendar-copy="intro">Elige tu momento. Cada cambio realizado en el estudio aparece aquí automáticamente.</p>
+                </div>
+
+                <div class="gy-calendar__controls" aria-label="Navegación por semanas">
+                    <button id="calendar-prev-week" type="button" class="gy-calendar__nav-button" aria-label="Semana anterior">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
+                    </button>
+                    <button id="calendar-today" type="button" class="gy-calendar__today" data-calendar-copy="today">Hoy</button>
+                    <div class="gy-calendar__range">
+                        <span id="calendar-week-kicker" data-calendar-copy="weekOf">Semana del</span>
+                        <strong id="calendar-week-range" aria-live="polite"></strong>
+                    </div>
+                    <button id="calendar-next-week" type="button" class="gy-calendar__nav-button" aria-label="Semana siguiente">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+                    </button>
+                </div>
+            </header>
+
+            <main class="gy-calendar__content">
+                <div class="gy-calendar__filter-row">
+                    <div>
+                        <p class="gy-calendar__filter-label" data-calendar-copy="filter">Filtrar por práctica</p>
+                        <div id="calendar-style-filters" class="gy-calendar__filters" role="group" aria-label="Filtrar por práctica"></div>
+                    </div>
+                    <button id="calendar-clear-filters" type="button" class="gy-calendar__clear" hidden>
+                        <span data-calendar-copy="clear">Quitar filtros</span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+                    </button>
+                </div>
+
+                <div id="calendar-selection-note" class="gy-calendar__selection" hidden></div>
+                <div id="calendar-status" class="gy-calendar__status" role="status" aria-live="polite"></div>
+
+                <div id="calendar-skeleton" class="gy-calendar__skeleton" aria-hidden="true" hidden>
+                    <span></span><span></span><span></span><span></span>
+                </div>
+
+                <div id="calendar-error" class="gy-calendar__message" hidden>
+                    <div class="gy-calendar__message-icon" aria-hidden="true">!</div>
+                    <h3 data-calendar-copy="errorTitle">No hemos podido cargar el horario</h3>
+                    <p data-calendar-copy="errorText">Comprueba tu conexión y vuelve a intentarlo.</p>
+                    <button id="calendar-retry" type="button" data-calendar-copy="retry">Reintentar</button>
+                </div>
+
+                <div id="calendar-empty" class="gy-calendar__message" hidden>
+                    <div class="gy-calendar__lotus" aria-hidden="true">✦</div>
+                    <h3 data-calendar-copy="emptyTitle">Esta semana respira un poco más despacio</h3>
+                    <p id="calendar-empty-copy" data-calendar-copy="emptyText">No hay clases publicadas para esta selección.</p>
+                    <button id="calendar-empty-next" type="button" data-calendar-copy="nextWeek">Ver semana siguiente</button>
+                </div>
+
+                <div id="calendar-desktop" class="gy-calendar__table-wrap" hidden>
+                    <table class="gy-calendar__table">
+                        <caption class="sr-only" data-calendar-copy="caption">Horario semanal público de GEN Yoga</caption>
+                        <thead id="calendar-table-head"></thead>
+                        <tbody id="calendar-table-body"></tbody>
+                    </table>
+                </div>
+
+                <div id="calendar-mobile" class="gy-calendar__mobile" hidden>
+                    <div id="calendar-day-tabs" class="gy-calendar__day-tabs" role="tablist" aria-label="Días de la semana"></div>
+                    <div id="calendar-day-agenda" class="gy-calendar__agenda" role="tabpanel"></div>
+                </div>
+
+                <div class="gy-calendar__footer-note">
+                    <span><i aria-hidden="true"></i><span data-calendar-copy="updated">Datos actualizados desde el estudio</span></span>
+                    <span data-calendar-copy="timezone">Horario de Albacete · Europe/Madrid</span>
+                </div>
+
+                <section id="facilities-gallery" class="gy-facilities" aria-labelledby="facilities-title">
+                    <div class="gy-facilities__header">
+                        <div class="gy-facilities__heading">
+                            <p class="gy-facilities__eyebrow" data-calendar-copy="facilitiesEyebrow">El espacio</p>
+                            <h3 id="facilities-title" data-calendar-copy="facilitiesTitle">Instalaciones</h3>
+                            <p data-calendar-copy="facilitiesIntro">Luz, calma y todo lo necesario para que llegues, respires y solo tengas que estar.</p>
+                        </div>
+
+                        <div class="gy-facilities__controls">
+                            <button id="facilities-prev" type="button" class="gy-facilities__control"
+                                aria-controls="facilities-viewport" aria-label="Foto anterior">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="m15 18-6-6 6-6"></path>
+                                </svg>
+                            </button>
+                            <button id="facilities-toggle" type="button" class="gy-facilities__control gy-facilities__control--toggle"
+                                aria-controls="facilities-viewport" data-paused="false" aria-label="Pausar carrusel">
+                                <svg class="gy-facilities__pause-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M9 5v14M15 5v14"></path>
+                                </svg>
+                                <svg class="gy-facilities__play-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="m8 5 11 7-11 7Z"></path>
+                                </svg>
+                                <span data-facilities-toggle-copy>Pausar</span>
+                            </button>
+                            <button id="facilities-next" type="button" class="gy-facilities__control"
+                                aria-controls="facilities-viewport" aria-label="Foto siguiente">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="m9 18 6-6-6-6"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="facilities-carousel" class="gy-facilities__carousel" role="region"
+                        aria-roledescription="carousel" aria-label="Galería de instalaciones">
+                        <div id="facilities-viewport" class="gy-facilities__viewport" tabindex="0">
+                            <!--
+                                Imágenes libres provisionales, listas para sustituirse por los originales de Álvaro:
+                                Unsplash: TKyBEqQGfCM, oaJaBFVMUQ4, lnlhc2qj8BE.
+                                Pexels: 36895640, 35215418, 6339344.
+                            -->
+                            <div id="facilities-track" class="gy-facilities__track">
+                                <figure class="gy-facilities__slide" data-facilities-slide role="group" aria-roledescription="diapositiva">
+                                    <img src="https://images.unsplash.com/photo-1767605565789-5b18cdbbf6ae?auto=format&amp;fit=crop&amp;w=1600&amp;q=82"
+                                        srcset="https://images.unsplash.com/photo-1767605565789-5b18cdbbf6ae?auto=format&amp;fit=crop&amp;w=640&amp;q=78 640w, https://images.unsplash.com/photo-1767605565789-5b18cdbbf6ae?auto=format&amp;fit=crop&amp;w=960&amp;q=80 960w, https://images.unsplash.com/photo-1767605565789-5b18cdbbf6ae?auto=format&amp;fit=crop&amp;w=1600&amp;q=82 1600w"
+                                        sizes="(max-width: 767px) 84vw, (max-width: 1200px) 36vw, 540px"
+                                        width="1600" height="1100" loading="lazy" decoding="async"
+                                        alt="Esterillas preparadas junto a plantas en una sala luminosa">
+                                    <span class="gy-facilities__number" aria-hidden="true">01</span>
+                                    <figcaption data-calendar-copy="facilityOne">Luz natural</figcaption>
+                                </figure>
+                                <figure class="gy-facilities__slide" data-facilities-slide role="group" aria-roledescription="diapositiva">
+                                    <img src="https://images.pexels.com/photos/36895640/pexels-photo-36895640.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1600"
+                                        srcset="https://images.pexels.com/photos/36895640/pexels-photo-36895640.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=640 640w, https://images.pexels.com/photos/36895640/pexels-photo-36895640.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=960 960w, https://images.pexels.com/photos/36895640/pexels-photo-36895640.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1600 1600w"
+                                        sizes="(max-width: 767px) 84vw, (max-width: 1200px) 36vw, 540px"
+                                        width="1600" height="1100" loading="lazy" decoding="async"
+                                        alt="Rincón cálido de yoga con esterillas, mantas y plantas">
+                                    <span class="gy-facilities__number" aria-hidden="true">02</span>
+                                    <figcaption data-calendar-copy="facilityTwo">Todo a tu alcance</figcaption>
+                                </figure>
+                                <figure class="gy-facilities__slide" data-facilities-slide role="group" aria-roledescription="diapositiva">
+                                    <img src="https://images.unsplash.com/photo-1761971975962-9cc397e2ba2a?auto=format&amp;fit=crop&amp;w=1600&amp;q=82"
+                                        srcset="https://images.unsplash.com/photo-1761971975962-9cc397e2ba2a?auto=format&amp;fit=crop&amp;w=640&amp;q=78 640w, https://images.unsplash.com/photo-1761971975962-9cc397e2ba2a?auto=format&amp;fit=crop&amp;w=960&amp;q=80 960w, https://images.unsplash.com/photo-1761971975962-9cc397e2ba2a?auto=format&amp;fit=crop&amp;w=1600&amp;q=82 1600w"
+                                        sizes="(max-width: 767px) 84vw, (max-width: 1200px) 36vw, 540px"
+                                        width="1600" height="1100" loading="lazy" decoding="async"
+                                        alt="Sala de yoga moderna con grandes ventanales y esterillas">
+                                    <span class="gy-facilities__number" aria-hidden="true">03</span>
+                                    <figcaption data-calendar-copy="facilityThree">Sala de práctica</figcaption>
+                                </figure>
+                                <figure class="gy-facilities__slide" data-facilities-slide role="group" aria-roledescription="diapositiva">
+                                    <img src="https://images.pexels.com/photos/35215418/pexels-photo-35215418.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1600"
+                                        srcset="https://images.pexels.com/photos/35215418/pexels-photo-35215418.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=640 640w, https://images.pexels.com/photos/35215418/pexels-photo-35215418.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=960 960w, https://images.pexels.com/photos/35215418/pexels-photo-35215418.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1600 1600w"
+                                        sizes="(max-width: 767px) 84vw, (max-width: 1200px) 36vw, 540px"
+                                        width="1600" height="1100" loading="lazy" decoding="async"
+                                        alt="Sala amplia de yoga con suelo de madera y luz suave">
+                                    <span class="gy-facilities__number" aria-hidden="true">04</span>
+                                    <figcaption data-calendar-copy="facilityFour">Calma en cada detalle</figcaption>
+                                </figure>
+                                <figure class="gy-facilities__slide" data-facilities-slide role="group" aria-roledescription="diapositiva">
+                                    <img src="https://images.unsplash.com/photo-1687783615476-f4c12358ca9d?auto=format&amp;fit=crop&amp;w=1600&amp;q=82"
+                                        srcset="https://images.unsplash.com/photo-1687783615476-f4c12358ca9d?auto=format&amp;fit=crop&amp;w=640&amp;q=78 640w, https://images.unsplash.com/photo-1687783615476-f4c12358ca9d?auto=format&amp;fit=crop&amp;w=960&amp;q=80 960w, https://images.unsplash.com/photo-1687783615476-f4c12358ca9d?auto=format&amp;fit=crop&amp;w=1600&amp;q=82 1600w"
+                                        sizes="(max-width: 767px) 84vw, (max-width: 1200px) 36vw, 540px"
+                                        width="1600" height="1100" loading="lazy" decoding="async"
+                                        alt="Esterillas ordenadas sobre el suelo de madera de un estudio">
+                                    <span class="gy-facilities__number" aria-hidden="true">05</span>
+                                    <figcaption data-calendar-copy="facilityFive">Tu momento, tu espacio</figcaption>
+                                </figure>
+                                <figure class="gy-facilities__slide" data-facilities-slide role="group" aria-roledescription="diapositiva">
+                                    <img src="https://images.pexels.com/photos/6339344/pexels-photo-6339344.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1600"
+                                        srcset="https://images.pexels.com/photos/6339344/pexels-photo-6339344.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=640 640w, https://images.pexels.com/photos/6339344/pexels-photo-6339344.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=960 960w, https://images.pexels.com/photos/6339344/pexels-photo-6339344.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1600 1600w"
+                                        sizes="(max-width: 767px) 84vw, (max-width: 1200px) 36vw, 540px"
+                                        width="1600" height="1100" loading="lazy" decoding="async"
+                                        alt="Grupo practicando yoga en una sala acogedora">
+                                    <span class="gy-facilities__number" aria-hidden="true">06</span>
+                                    <figcaption data-calendar-copy="facilitySix">Práctica compartida</figcaption>
+                                </figure>
+                            </div>
+                        </div>
+
+                        <div class="gy-facilities__footer">
+                            <div id="facilities-dots" class="gy-facilities__dots" role="group" aria-label="Elegir fotografía"></div>
+                            <p class="gy-facilities__counter" aria-hidden="true">
+                                <span id="facilities-current">01</span>
+                                <i></i>
+                                <span>06</span>
+                            </p>
+                        </div>
+                        <p id="facilities-status" class="sr-only" aria-live="polite" aria-atomic="true"></p>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </section>
 
     <!-- Scroll height spacers (to allow native scroll physics, 6 sections in total) -->
     <div id="scroll-height-provider" class="w-full relative z-5 pointer-events-none">
@@ -1346,39 +1673,53 @@ document.addEventListener('DOMContentLoaded', () => {
 // --- CONFIGURACIÓN SUPABASE ---
 const SUPA_URL = 'https://jkjifmrrlyncuwpjhxvk.supabase.co';
 const SUPA_KEY = 'sb_publishable_xnIELom1ouXaBDJNYaWDAQ_VJNjlnIK';
-const APP_DEPLOYMENT_ENVIRONMENT = (() => {
-    const origin = window.location.origin.toLowerCase();
-    const isCertificationPath = /^\/Q19-CERT(?:\/|$)/.test(window.location.pathname);
-    if (origin === 'https://jaime312.github.io' && isCertificationPath) return 'certification';
-    if (origin === 'https://genyoga.studio' || origin === 'https://www.genyoga.studio') return 'production';
-    return 'development';
-})();
-const USING_PRODUCTION_BACKEND = (() => {
-    try { return new URL(SUPA_URL).hostname === 'jkjifmrrlyncuwpjhxvk.supabase.co'; }
-    catch (_) { return false; }
-})();
-const client = APP_DEPLOYMENT_ENVIRONMENT !== 'production' && USING_PRODUCTION_BACKEND
-    ? null
-    : (window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null);
+const client = window.supabase?.createClient ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
 let lastCancelVal = '24';
 let lastReservaVal = '12';
 
 function normalisePolicyHours(value, fallback) {
-    const parsed = Number.parseInt(String(value), 10);
-    return Number.isInteger(parsed) && parsed >= 0 && parsed <= 720 ? String(parsed) : fallback;
+    const parsed = Number(String(value));
+    return Number.isInteger(parsed) && parsed >= 0 && parsed <= 168 ? String(parsed) : fallback;
 }
 
 function updatePolicyText() {
     const cancelTextEl = document.getElementById('cancelacion-horas-text');
     if (cancelTextEl) {
-        const bookingLimitTxt = (window.t('policy_booking_limit') || 'Reservas permitidas hasta <b>{res}h</b> antes de la clase.').replace('{res}', lastReservaVal);
-        const cancelLimitTxt = (window.t('policy_cancel_limit') || 'Cancelación permitida hasta <b>{can}h</b> antes de la clase.').replace('{can}', lastCancelVal);
+        const bookingLimitTxt = (window.t('policy_booking_limit') || 'Las reservas cierran <b>{res} h</b> antes del inicio.').replace('{res}', lastReservaVal);
+        const cancelLimitTxt = (window.t('policy_cancel_limit') || 'Puedes cancelar y recuperar el bono mientras falten más de <b>{can} h</b>. Al llegar a ese límite, la cancelación se bloquea y el bono no se devuelve.').replace('{can}', lastCancelVal);
         cancelTextEl.innerHTML = `${bookingLimitTxt}<br>${cancelLimitTxt}`;
     }
 }
 
 window.addEventListener('languageChanged', updatePolicyText);
+
+async function loadPublicBookingPolicies() {
+    if (!client) return;
+    try {
+        const { data, error } = await client
+            .from('configuracion')
+            .select('clave, valor')
+            .in('clave', [
+                'horas_limite_cancelacion',
+                'horas_limite_reserva'
+            ]);
+        if (error) throw error;
+
+        lastCancelVal = normalisePolicyHours(
+            data?.find(c => c.clave === 'horas_limite_cancelacion')?.valor,
+            '24'
+        );
+        lastReservaVal = normalisePolicyHours(
+            data?.find(c => c.clave === 'horas_limite_reserva')?.valor,
+            '12'
+        );
+        updatePolicyText();
+    } catch (err) {
+        console.error('Error cargando las políticas de reserva:', err);
+        updatePolicyText();
+    }
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     // Platform detection (simplificado)
@@ -1400,19 +1741,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    // Cargar horas de cancelación y reserva límite de forma dinámica
-    const cancelTextEl = document.getElementById('cancelacion-horas-text');
-    if (cancelTextEl && client) {
-        client.from('configuracion').select('clave, valor').in('clave', ['horas_limite_cancelacion', 'horas_limite_reserva'])
-        .then(({ data, error }) => {
-            if (data && !error) {
-                lastCancelVal = normalisePolicyHours(data.find(c => c.clave === 'horas_limite_cancelacion')?.valor, '24');
-                lastReservaVal = normalisePolicyHours(data.find(c => c.clave === 'horas_limite_reserva')?.valor, '12');
-                updatePolicyText();
-            }
-        }).catch(err => console.error("Error cargando horas de reserva y cancelación:", err));
-    }
+    // Mostrar siempre los valores seguros y sustituirlos por los guardados en
+    // cuanto estén disponibles.
+    updatePolicyText();
+    loadPublicBookingPolicies();
 });
+
+if (client) {
+    client
+        .channel('public:booking-policies')
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'configuracion'
+            },
+            loadPublicBookingPolicies
+        )
+        .subscribe();
+}
 
 // 2. SISTEMA DE MODALES
 const modalOverlay = document.getElementById('modal-overlay');
@@ -1546,6 +1894,11 @@ window.handleNavClick = function (btn, url) {
 }
 
 </script>
+    <script src="public-calendar.js?v=6.7"></script>
+    <script>
+        window.GENPublicCalendar?.init({ client });
+    </script>
+    <script src="facilities-carousel.js?v=6.7"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const dots = document.querySelectorAll('.slide-dot');
@@ -1601,6 +1954,7 @@ window.handleNavClick = function (btn, url) {
 
             // Keyboard navigation (Arrow keys, Space and Page Up/Down)
             window.addEventListener('keydown', (e) => {
+                if (document.body.classList.contains('gy-calendar-open')) return;
                 if (e.target instanceof Element && e.target.closest('input, textarea, select, button, a, [contenteditable="true"]')) return;
                 if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
                     e.preventDefault();
